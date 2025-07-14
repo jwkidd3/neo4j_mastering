@@ -5,10 +5,20 @@
 
 ## Prerequisites
 
-- Completed Labs 1-4 successfully with social network data
-- Understanding of basic Cypher syntax and pattern matching
-- Familiarity with Neo4j Browser and query execution
-- Knowledge of social network relationships from Lab 3
+✅ **Already Installed in Your Environment:**
+- **Neo4j Desktop** (connection client)
+- **Docker Desktop** with Neo4j Enterprise 2025.06.0 running (container name: neo4j)
+- **Python 3.8+** with pip
+- **Jupyter Lab**
+- **Neo4j Python Driver** and required packages
+- **Web browser** (Chrome or Firefox)
+
+✅ **From Previous Labs:**
+- **Completed Labs 1-4** successfully with full social network data
+- **"Social" database** created and populated from Lab 3
+- **Understanding of Cypher** query language and complex patterns
+- **Remote connection** set up to Docker Neo4j Enterprise instance
+- **Familiarity with Neo4j Browser** interface and visualization
 
 ## Learning Outcomes
 
@@ -22,32 +32,57 @@ By the end of this lab, you will:
 - Analyze network connectivity patterns and path diversity
 - Master complex WHERE clause filtering on variable-length paths
 
-## Part 1: Variable-Length Path Fundamentals (15 minutes)
+## Part 1: Environment Setup and Variable-Length Path Fundamentals (15 minutes)
 
-### Step 1: Verify Social Network Data
-First, ensure your social network from Lab 3 is available:
+### Step 1: Connect to Social Database and Verify Data
+First, ensure your Docker Neo4j instance is running and connect to the social database:
+
+```cypher
+// Switch to social database created in Lab 3
+:use social
+```
 
 ```cypher
 // Check network structure and completeness
 MATCH (u:User) 
-RETURN count(u) AS total_users
+RETURN count(u) AS total_users,
+       count(DISTINCT u.location) AS unique_locations
+```
 
+```cypher
 MATCH ()-[r:FOLLOWS]->() 
 RETURN count(r) AS follow_relationships
+```
 
+```cypher
 MATCH ()-[r:LIKES]->() 
 RETURN count(r) AS like_relationships
+```
 
+```cypher
 MATCH (t:Topic) 
 RETURN count(t) AS total_topics
+```
 
+```cypher
 MATCH (p:Post)
 RETURN count(p) AS total_posts
 ```
 
 **Expected Results:** 6 users, 8+ follows, 6+ likes, 8 topics, 6+ posts
 
-### Step 2: Basic Variable-Length Path Syntax
+### Step 2: Review Network Structure from Lab 3
+```cypher
+// Display user network with usernames for reference
+MATCH (u:User)
+RETURN u.username AS username, 
+       u.fullName AS full_name,
+       u.location AS location,
+       u.followerCount AS followers
+ORDER BY followers DESC
+```
+
+### Step 3: Basic Variable-Length Path Syntax
 ```cypher
 // Basic variable-length path - explore unlimited depth carefully
 MATCH path = (alice:User {username: 'alice_codes'})-[:FOLLOWS*1..3]->(connected:User)
@@ -57,7 +92,7 @@ RETURN connected.username AS reachable_user,
 ORDER BY hops_away, reachable_user
 ```
 
-### Step 3: Bidirectional Variable Paths
+### Step 4: Bidirectional Variable Paths
 ```cypher
 // Find users connected in either direction (undirected search)
 MATCH path = (alice:User {username: 'alice_codes'})-[:FOLLOWS*1..2]-(connected:User)
@@ -68,7 +103,7 @@ RETURN DISTINCT connected.username AS connected_user,
 ORDER BY shortest_distance, connected_user
 ```
 
-### Step 4: Multiple Relationship Types in Variable Paths
+### Step 5: Multiple Relationship Types in Variable Paths
 ```cypher
 // Navigate through different types of relationships
 MATCH path = (alice:User {username: 'alice_codes'})-[:FOLLOWS|LIKES*1..3]->(target)
@@ -85,7 +120,7 @@ ORDER BY distance, target_type
 LIMIT 12
 ```
 
-### Step 5: Variable Paths with Property Filtering
+### Step 6: Variable Paths with Property Filtering
 ```cypher
 // Filter paths based on node and relationship properties
 MATCH path = (start:User {username: 'alice_codes'})-[:FOLLOWS*2..4]->(end:User)
@@ -101,7 +136,7 @@ ORDER BY hops, followers DESC
 
 ## Part 2: Shortest Path Algorithms (15 minutes)
 
-### Step 6: Single Shortest Path Analysis
+### Step 7: Single Shortest Path Analysis
 ```cypher
 // Find the shortest path between two specific users
 MATCH (alice:User {username: 'alice_codes'}), (bob:User {username: 'bob_travels'})
@@ -113,7 +148,7 @@ RETURN path,
        [rel IN relationships(path) | rel.relationship] AS relationship_qualities
 ```
 
-### Step 7: All Shortest Paths Discovery
+### Step 8: All Shortest Paths Discovery
 ```cypher
 // Find all shortest paths between users (multiple equivalent routes)
 MATCH (alice:User {username: 'alice_codes'}), (carol:User {username: 'carol_creates'})
@@ -124,7 +159,7 @@ RETURN distance,
        collect([node IN nodes(paths) | node.username]) AS all_path_routes
 ```
 
-### Step 8: Constrained Shortest Paths
+### Step 9: Constrained Shortest Paths
 ```cypher
 // Find shortest paths with specific constraints
 MATCH (alice:User {username: 'alice_codes'}), (target:User)
@@ -135,254 +170,264 @@ WHERE ALL(rel IN relationships(path) WHERE
 )
 RETURN target.username AS reachable_user,
        length(path) AS distance,
-       [rel IN relationships(path) | rel.relationship] AS relationship_qualities,
-       [rel IN relationships(path) | rel.since] AS relationship_dates
+       [rel IN relationships(path) | rel.relationship] AS connection_quality,
+       [node IN nodes(path) | node.username] AS path_users
 ORDER BY distance, reachable_user
 ```
 
-### Step 9: Weighted Shortest Path Calculation
+### Step 10: Shortest Path with Interest Alignment
 ```cypher
-// Calculate weighted paths based on relationship strength and recency
-MATCH path = (alice:User {username: 'alice_codes'})-[:FOLLOWS*1..4]-(target:User)
+// Find paths through users with shared interests
+MATCH (alice:User {username: 'alice_codes'}), (target:User)
 WHERE target <> alice
-WITH path, target,
-     reduce(weight = 0, rel IN relationships(path) | 
-       weight + 
-       // Relationship quality weight
-       CASE 
-         WHEN rel.relationship = 'close' THEN 1
-         WHEN rel.relationship = 'friend' THEN 2  
-         WHEN rel.relationship = 'colleague' THEN 3
-         WHEN rel.relationship = 'professional' THEN 4
-         ELSE 5
-       END +
-       // Recency weight (older relationships cost more)
-       CASE 
-         WHEN rel.since > datetime('2022-01-01') THEN 0
-         WHEN rel.since > datetime('2021-01-01') THEN 1
-         ELSE 2
-       END
-     ) AS total_weight
-RETURN target.username AS user,
-       length(path) AS hops,
-       total_weight,
-       round(total_weight * 1.0 / length(path) * 100) / 100 AS avg_weight_per_hop,
-       [node IN nodes(path) | node.username] AS path_users
-ORDER BY total_weight, hops
+MATCH path = shortestPath((alice)-[:FOLLOWS*]-(target))
+WHERE ANY(middle IN nodes(path)[1..-1] WHERE 
+  EXISTS((middle)-[:INTERESTED_IN]->(:Topic)<-[:INTERESTED_IN]-(alice))
+)
+RETURN target.username AS reachable_through_interests,
+       length(path) AS distance,
+       [node IN nodes(path) | node.username] AS shared_interest_path,
+       // Find shared interests in path
+       [middle IN nodes(path)[1..-1] WHERE 
+         EXISTS((middle)-[:INTERESTED_IN]->(:Topic)<-[:INTERESTED_IN]-(alice))
+       | middle.username] AS users_with_shared_interests
+ORDER BY distance
 LIMIT 8
 ```
 
 ## Part 3: Advanced Recommendation Systems (20 minutes)
 
-### Step 10: Enhanced Friend-of-Friend Recommendations
+### Step 11: Basic Friend Recommendations - Data Exploration
 ```cypher
-// Find potential friends through mutual connections with scoring
-MATCH (user:User {username: 'alice_codes'})-[:FOLLOWS]->(friend:User)-[:FOLLOWS]->(potential:User)
-WHERE NOT (user)-[:FOLLOWS]->(potential) 
-  AND potential <> user
-  AND potential.isPrivate = false  // Only recommend public profiles
+// First, let's see who Alice currently follows
+MATCH (alice:User {username: 'alice_codes'})-[:FOLLOWS]->(following:User)
+RETURN alice.username AS alice, 
+       following.username AS alice_follows
+ORDER BY following.username
+```
 
-// Calculate shared interests
-OPTIONAL MATCH (user)-[:INTERESTED_IN]->(topic:Topic)<-[:INTERESTED_IN]-(potential)
-WITH user, potential, 
-     count(DISTINCT friend) AS mutual_friends,
-     collect(DISTINCT friend.username) AS mutual_friend_names,
-     count(DISTINCT topic) AS shared_interests,
-     collect(DISTINCT topic.name) AS shared_topics
+### Step 12: Find Potential Recommendations
+```cypher
+// Find users Alice doesn't follow (potential recommendations)
+MATCH (alice:User {username: 'alice_codes'})
+MATCH (potential:User)
+WHERE alice <> potential 
+  AND NOT (alice)-[:FOLLOWS]->(potential)
+RETURN potential.username AS not_following,
+       potential.fullName AS full_name,
+       potential.location AS location
+ORDER BY potential.username
+```
 
-// Calculate location proximity bonus
-WITH *, 
-     CASE WHEN user.location = potential.location THEN 2 ELSE 0 END AS location_bonus,
-     mutual_friends * 3 + shared_interests * 2 AS base_score
+### Step 13: Calculate Mutual Connections
+```cypher
+// Find mutual connections for each potential friend
+MATCH (alice:User {username: 'alice_codes'})
+MATCH (potential:User)
+WHERE alice <> potential 
+  AND NOT (alice)-[:FOLLOWS]->(potential)
 
-RETURN potential.username AS recommended_user,
+OPTIONAL MATCH (alice)-[:FOLLOWS]->(mutual:User)<-[:FOLLOWS]-(potential)
+WITH potential, collect(DISTINCT mutual.username) AS mutual_friends
+
+RETURN potential.username AS recommendation,
+       potential.fullName AS full_name,
+       size(mutual_friends) AS mutual_count,
+       mutual_friends
+ORDER BY mutual_count DESC, recommendation
+```
+
+### Step 14: Add Interest-Based Scoring
+```cypher
+// Complete recommendation system with mutual friends and shared interests
+MATCH (alice:User {username: 'alice_codes'})
+MATCH (potential:User)
+WHERE alice <> potential 
+  AND NOT (alice)-[:FOLLOWS]->(potential)
+
+// Find mutual connections
+OPTIONAL MATCH (alice)-[:FOLLOWS]->(mutual:User)<-[:FOLLOWS]-(potential)
+WITH potential, count(DISTINCT mutual) AS mutual_connections
+
+// Find shared interests
+OPTIONAL MATCH (alice)-[:INTERESTED_IN]->(topic:Topic)<-[:INTERESTED_IN]-(potential)
+WITH potential, mutual_connections, count(DISTINCT topic) AS shared_interests
+
+// Calculate recommendation score
+WITH potential, mutual_connections, shared_interests,
+     (mutual_connections * 2) + shared_interests AS recommendation_score
+
+RETURN potential.username AS recommendation,
        potential.fullName AS full_name,
        potential.location AS location,
-       mutual_friends,
+       mutual_connections,
        shared_interests,
-       shared_topics,
-       base_score + location_bonus AS recommendation_score,
-       mutual_friend_names
-ORDER BY recommendation_score DESC, mutual_friends DESC
+       recommendation_score,
+       CASE 
+         WHEN recommendation_score >= 3 THEN 'Highly Recommended'
+         WHEN recommendation_score >= 1 THEN 'Recommended'
+         ELSE 'Consider'
+       END AS recommendation_level
+ORDER BY recommendation_score DESC, potential.username
+```
+
+### Step 15: Content-Based Discovery Engine
+```cypher
+// First, check what topics Alice is interested in
+MATCH (alice:User {username: 'alice_codes'})-[:INTERESTED_IN]->(topic:Topic)
+RETURN alice.username AS user, topic.name AS interests
+ORDER BY topic.name
+```
+
+```cypher
+// Find posts by people Alice follows that match her interests
+MATCH (alice:User {username: 'alice_codes'})-[:INTERESTED_IN]->(alice_topic:Topic)
+MATCH (alice)-[:FOLLOWS]->(followed:User)-[:POSTED]->(post:Post)-[:TAGGED_WITH]->(post_topic:Topic)
+WHERE alice_topic = post_topic
+
+RETURN post.postId AS recommended_post,
+       post.content AS content_preview,
+       followed.username AS posted_by,
+       post_topic.name AS matching_topic,
+       post.likes AS likes_count,
+       'Direct Interest Match' AS recommendation_reason
+ORDER BY post.likes DESC
 LIMIT 5
 ```
 
-### Step 11: Interest-Based Content Discovery
 ```cypher
-// Recommend users based on shared interests and content quality
-MATCH (user:User {username: 'alice_codes'})-[:INTERESTED_IN]->(topic:Topic)<-[:INTERESTED_IN]-(similar:User)
-WHERE user <> similar AND NOT (user)-[:FOLLOWS]->(similar)
+// Alternative: Find popular posts from Alice's network regardless of topic matching
+MATCH (alice:User {username: 'alice_codes'})-[:FOLLOWS*1..2]->(connected:User)-[:POSTED]->(post:Post)
+WITH post, connected, 
+     post.likes AS engagement_score,
+     CASE WHEN (alice)-[:FOLLOWS]->(connected) THEN 'Direct Connection' ELSE 'Friend of Friend' END AS connection_type
 
-// Find their content in shared topics
-MATCH (similar)-[:POSTED]->(post:Post)-[:TAGGED_WITH]->(topic)
-OPTIONAL MATCH (post)<-[:LIKES]-(liker:User)
+RETURN post.postId AS recommended_post,
+       post.content AS content_preview,
+       connected.username AS posted_by,
+       post.likes AS likes_count,
+       connection_type,
+       engagement_score AS relevance_score
+ORDER BY engagement_score DESC
+LIMIT 8
+```
 
-WITH user, similar, topic, post, count(DISTINCT liker) AS post_likes
-WITH user, similar, 
-     collect(DISTINCT topic.name) AS shared_topics,
-     count(DISTINCT post) AS relevant_posts,
-     avg(post_likes) AS avg_engagement_per_post,
-     sum(post_likes) AS total_engagement
+### Step 16: Interest Expansion Recommendations
+```cypher
+// First, see what Alice is currently interested in
+MATCH (alice:User {username: 'alice_codes'})-[:INTERESTED_IN]->(alice_topics:Topic)
+RETURN alice.username AS user, 
+       collect(alice_topics.name) AS current_interests
+```
 
-WHERE relevant_posts > 0
-RETURN similar.username AS recommended_user,
-       similar.fullName AS full_name,
-       similar.followerCount AS followers,
-       size(shared_topics) AS shared_interests,
-       shared_topics,
-       relevant_posts AS posts_in_shared_topics,
-       round(avg_engagement_per_post) AS avg_likes_per_post,
-       total_engagement
-ORDER BY shared_interests DESC, total_engagement DESC, followers DESC
+```cypher
+// Find new topics that Alice's network is interested in
+MATCH (alice:User {username: 'alice_codes'})-[:INTERESTED_IN]->(alice_topics:Topic)
+WITH alice, collect(alice_topics.name) AS current_interests
+
+MATCH (alice)-[:FOLLOWS*1..2]->(connected:User)-[:INTERESTED_IN]->(new_topic:Topic)
+WHERE NOT new_topic.name IN current_interests
+
+RETURN new_topic.name AS recommended_topic,
+       new_topic.description AS topic_description,
+       count(DISTINCT connected) AS connections_interested,
+       collect(DISTINCT connected.username) AS interested_users,
+       'Network Interest' AS recommendation_reason
+ORDER BY connections_interested DESC
+LIMIT 8
+```
+
+```cypher
+// Alternative: Find topics from popular posts in Alice's network
+MATCH (alice:User {username: 'alice_codes'})-[:INTERESTED_IN]->(alice_topics:Topic)
+WITH alice, collect(alice_topics.name) AS current_interests
+
+MATCH (alice)-[:FOLLOWS]->(followed:User)-[:POSTED]->(post:Post)-[:TAGGED_WITH]->(topic:Topic)
+WHERE NOT topic.name IN current_interests
+
+WITH topic, avg(post.likes) AS avg_engagement, count(post) AS post_count
+WHERE post_count >= 1
+
+RETURN topic.name AS recommended_topic,
+       topic.description AS topic_description,
+       post_count AS posts_about_topic,
+       round(avg_engagement) AS avg_likes_per_post,
+       'Popular Content' AS recommendation_reason
+ORDER BY avg_engagement DESC, post_count DESC
 LIMIT 6
 ```
 
-### Step 12: Multi-Hop Content Discovery Through Network
+## Part 4: Influence Propagation and Network Analysis (15 minutes)
+
+### Step 17: Viral Content Propagation Model
 ```cypher
-// Find interesting content through extended network with decay factor
-MATCH (user:User {username: 'alice_codes'})-[:FOLLOWS*1..3]->(author:User)-[:POSTED]->(post:Post)
-WHERE NOT (user)-[:FOLLOWS]->(author)  // Content from non-followed users
-  AND post.timestamp > datetime() - duration('P14D')  // Last 2 weeks
-
-// Calculate network distance and content engagement
-WITH user, post, author, 
-     min(length((user)-[:FOLLOWS*]->(author))) AS degrees_of_separation
-
-OPTIONAL MATCH (post)-[:TAGGED_WITH]->(topic:Topic)
-OPTIONAL MATCH (post)<-[:LIKES]-(liker:User)
-OPTIONAL MATCH (user)-[:INTERESTED_IN]->(user_topic:Topic)
-
-WITH post, author, topic, degrees_of_separation,
-     count(DISTINCT liker) AS likes,
-     CASE WHEN topic.name IN collect(user_topic.name) THEN 2 ELSE 0 END AS topic_bonus,
-     // Decay factor based on network distance
-     CASE degrees_of_separation
-       WHEN 1 THEN 1.0
-       WHEN 2 THEN 0.7
-       WHEN 3 THEN 0.4
-       ELSE 0.1
-     END AS distance_factor
-
-// Score content with decay and interest alignment
-WITH post, author, degrees_of_separation, likes, topic_bonus,
-     round((likes + topic_bonus) * distance_factor) AS content_score
-
-WHERE content_score >= 1  // Minimum score threshold
-RETURN post.content AS content,
-       author.username AS author,
-       collect(DISTINCT topic.name) AS topics,
-       likes AS raw_likes,
-       content_score,
-       degrees_of_separation,
-       post.timestamp AS posted_at
-ORDER BY content_score DESC, degrees_of_separation ASC
-LIMIT 8
+// First, let's see what posts exist in our network
+MATCH (p:Post)
+RETURN p.postId AS available_posts, p.content AS content_preview, p.likes AS likes
+ORDER BY p.likes DESC
+LIMIT 5
 ```
 
-### Step 13: Influence Propagation with Relationship Quality
 ```cypher
-// Model how influence spreads through network with relationship quality factors
-MATCH (influencer:User {username: 'carol_creates'})
-MATCH path = (influencer)-[:FOLLOWS*1..4]->(reached:User)
+// Simple viral spread model using any popular post
+MATCH (source_post:Post)
+WHERE source_post.likes > 0
+WITH source_post
+ORDER BY source_post.likes DESC
+LIMIT 1
 
-WITH influencer, reached, path, length(path) AS distance,
-     // Calculate influence decay based on relationship quality and distance
-     reduce(influence = 1.0, rel IN relationships(path) | 
-       influence * 
-       // Relationship quality multiplier
+MATCH (original_author:User)-[:POSTED]->(source_post)
+MATCH (original_author)-[:FOLLOWS*1..3]->(potential_viewer:User)
+
+// Calculate simple influence based on distance
+WITH source_post, original_author, potential_viewer,
+     length(shortestPath((original_author)-[:FOLLOWS*]-(potential_viewer))) AS distance,
+     source_post.likes AS original_engagement
+
+// Factor in user activity level
+OPTIONAL MATCH (potential_viewer)-[:LIKES]->(liked_posts:Post)
+WITH source_post, potential_viewer, distance, original_engagement,
+     count(liked_posts) AS viewer_activity
+
+// Simple viral probability calculation
+WITH potential_viewer, distance, original_engagement, viewer_activity,
+     (1.0 / distance) * 0.5 + (viewer_activity * 0.1) + (original_engagement * 0.01) AS viral_score
+
+RETURN potential_viewer.username AS potential_viewer,
+       distance AS degrees_from_source,
+       viewer_activity AS user_activity_level,
+       original_engagement AS source_post_likes,
+       round(viral_score * 100) / 100 AS viral_probability,
        CASE 
-         WHEN rel.relationship = 'close' THEN 0.95
-         WHEN rel.relationship = 'friend' THEN 0.85
-         WHEN rel.relationship = 'colleague' THEN 0.70
-         WHEN rel.relationship = 'professional' THEN 0.55
-         ELSE 0.40
-       END *
-       // Notification enabled multiplier
-       CASE WHEN rel.notificationsEnabled = true THEN 1.0 ELSE 0.8 END *
-       // Recency multiplier
-       CASE 
-         WHEN rel.since > datetime('2022-01-01') THEN 1.0
-         WHEN rel.since > datetime('2021-01-01') THEN 0.9
-         ELSE 0.8
-       END
-     ) AS influence_strength
-
-WHERE influence_strength > 0.05  // Minimum influence threshold (5%)
-
-// Add follower count amplification
-WITH *, 
-     influence_strength * (1 + log10(reached.followerCount + 1) / 10) AS amplified_influence
-
-RETURN reached.username AS influenced_user,
-       reached.followerCount AS user_followers,
-       distance AS hops_from_source,
-       round(influence_strength * 1000) / 10 AS influence_percentage,
-       round(amplified_influence * 1000) / 10 AS amplified_influence_percentage,
-       CASE 
-         WHEN amplified_influence > 0.6 THEN 'High Influence'
-         WHEN amplified_influence > 0.3 THEN 'Medium Influence'
-         WHEN amplified_influence > 0.1 THEN 'Low Influence'
-         ELSE 'Minimal Influence'
-       END AS influence_level,
-       [node IN nodes(path) | node.username] AS influence_path
-ORDER BY amplified_influence DESC
+         WHEN viral_score >= 2 THEN 'Likely to Engage'
+         WHEN viral_score >= 1 THEN 'May View'
+         ELSE 'Low Probability'
+       END AS engagement_prediction
+ORDER BY viral_score DESC
 LIMIT 10
 ```
 
-## Part 4: Complex Network Analysis Patterns (15 minutes)
-
-### Step 14: Network Diameter and Eccentricity Analysis
+### Step 18: Network Diameter and Eccentricity Analysis
 ```cypher
-// Calculate network diameter and individual node eccentricity
+// Calculate network diameter and user eccentricity (longest shortest path)
 MATCH (a:User), (b:User)
-WHERE a <> b AND id(a) < id(b)  // Avoid duplicate pairs
+WHERE a <> b
 MATCH path = shortestPath((a)-[:FOLLOWS*]-(b))
 WITH a, max(length(path)) AS eccentricity
-ORDER BY eccentricity DESC
-WITH collect({user: a.username, eccentricity: eccentricity}) AS user_eccentricities,
-     max(eccentricity) AS network_diameter
+WHERE eccentricity IS NOT NULL
 
-RETURN network_diameter,
-       [u IN user_eccentricities WHERE u.eccentricity = network_diameter | u.user] AS peripheral_users,
-       user_eccentricities[0..5] AS top_central_users
-```
-
-### Step 15: Path Redundancy and Network Resilience
-```cypher
-// Analyze path redundancy between users (network resilience)
-MATCH (alice:User {username: 'alice_codes'}), (target:User)
-WHERE alice <> target
-
-// Find all paths of length up to diameter + 1
-MATCH paths = allShortestPaths((alice)-[:FOLLOWS*1..5]-(target))
-WITH target, 
-     count(paths) AS path_count,
-     length(paths) AS shortest_distance,
-     collect(distinct [node IN nodes(paths) | node.username]) AS all_path_routes
-
-// Analyze path diversity
-WITH target, path_count, shortest_distance, all_path_routes,
-     size(reduce(all_nodes = [], path IN all_path_routes | all_nodes + path)) AS total_nodes_in_paths,
-     size(reduce(unique_nodes = [], path IN all_path_routes | 
-       unique_nodes + [node IN path WHERE NOT node IN unique_nodes])) AS unique_nodes_in_paths
-
-WHERE path_count > 0
-RETURN target.username AS connected_user,
-       shortest_distance,
-       path_count AS number_of_paths,
-       round(unique_nodes_in_paths * 100.0 / total_nodes_in_paths) AS path_diversity_percentage,
+RETURN a.username AS user,
+       eccentricity,
        CASE 
-         WHEN path_count = 1 THEN 'Single Point of Failure'
-         WHEN path_count <= 2 THEN 'Low Redundancy'
-         WHEN path_count <= 4 THEN 'Medium Redundancy'
-         ELSE 'High Redundancy'
-       END AS resilience_level,
-       all_path_routes
-ORDER BY path_count DESC, shortest_distance
-LIMIT 8
+         WHEN eccentricity <= 2 THEN 'Central'
+         WHEN eccentricity <= 3 THEN 'Semi-Central'
+         WHEN eccentricity <= 4 THEN 'Peripheral'
+         ELSE 'Remote'
+       END AS network_position
+ORDER BY eccentricity DESC
 ```
 
-### Step 16: Bridge Detection and Network Vulnerability
+### Step 19: Bridge Detection and Network Vulnerability
 ```cypher
 // Find users who appear frequently on shortest paths (bridge nodes)
 MATCH (a:User), (b:User)
@@ -414,7 +459,7 @@ ORDER BY times_on_shortest_paths DESC
 LIMIT 6
 ```
 
-### Step 17: Network Reachability and Influence Radius
+### Step 20: Network Reachability and Influence Radius
 ```cypher
 // Analyze each user's reachability and influence radius
 MATCH (user:User)
@@ -454,7 +499,7 @@ ORDER BY reachability_percentage DESC, direct_connections DESC
 
 ## Part 5: Query Performance Optimization (10 minutes)
 
-### Step 18: Query Profiling and Execution Analysis
+### Step 21: Query Profiling and Execution Analysis
 ```cypher
 // Profile a complex variable-length path query to identify bottlenecks
 PROFILE
@@ -469,92 +514,70 @@ ORDER BY target.followerCount DESC
 1. **Examine the execution plan** - identify expensive operations (high cost numbers)
 2. **Check row counts** at each step - look for operations processing many rows
 3. **Identify bottlenecks** - operations with high db hits or execution time
-4. **Note any cartesian products** - joins without proper filtering
+4. **Monitor memory usage** - ensure queries don't exceed available memory
 
-### Step 19: Optimized Query Patterns
+### Step 22: Optimized Query Rewrite
 ```cypher
-// Optimized version using strategic query structure
-MATCH (user:User)
-WHERE user.username = 'alice_codes'
-
-// Use WITH to control intermediate result size
-WITH user
-MATCH (user)-[:FOLLOWS*1..2]->(level2:User)
-WHERE level2.followerCount > 1000
-
-// Limit early to prevent large intermediate results
-WITH user, level2
-LIMIT 50
-
-// Extend to third level only for promising candidates
-MATCH (level2)-[:FOLLOWS]->(level3:User)
-WHERE level3.location CONTAINS 'York'
-  AND NOT level3 = user
-
-RETURN level3.username AS discovered_user,
-       level3.location AS location,
-       level3.followerCount AS followers,
-       min(length((user)-[:FOLLOWS*]->(level3))) AS shortest_distance
-ORDER BY followers DESC
-LIMIT 10
-```
-
-### Step 20: Index Optimization and Verification
-```cypher
-// Check existing indexes
-SHOW INDEXES
-
-// Create missing indexes for better performance
-CREATE INDEX user_username_index IF NOT EXISTS FOR (u:User) ON (u.username);
-CREATE INDEX user_location_index IF NOT EXISTS FOR (u:User) ON (u.location);
-CREATE INDEX user_follower_count_index IF NOT EXISTS FOR (u:User) ON (u.followerCount);
-CREATE INDEX follow_relationship_since IF NOT EXISTS FOR ()-[r:FOLLOWS]-() ON (r.since);
-```
-
-```cypher
-// Test optimized query performance with indexes
+// Optimized version with strategic filtering and limits
 PROFILE
-MATCH (user:User)
-WHERE user.username = 'alice_codes'
+MATCH (user:User {username: 'alice_codes'})
 WITH user
 MATCH (user)-[:FOLLOWS*1..3]->(target:User)
 WHERE target.location CONTAINS 'York'
-USING INDEX target:User(location)  // Hint to use location index
-RETURN target.username, target.location
+WITH target
+WHERE target.followerCount > 1000
+RETURN target.username, target.location, target.followerCount
+ORDER BY target.followerCount DESC
 LIMIT 10
 ```
 
-### Step 21: Memory-Efficient Complex Path Analysis
+### Step 23: Performance Best Practices Demo
 ```cypher
-// Memory-efficient approach for large network analysis
-MATCH (user:User {username: 'alice_codes'})
-
-// Process in stages to control memory usage
-WITH user
-MATCH (user)-[:FOLLOWS*1..2]->(second_degree:User)
-WITH user, collect(DISTINCT second_degree) AS level_2_users
-
-// Process level 2 connections in batches
-UNWIND level_2_users AS friend
-MATCH (friend)-[:FOLLOWS]->(potential:User)
-WHERE NOT (user)-[:FOLLOWS]->(potential) 
-  AND potential <> user
-  AND potential.isPrivate = false
-
-// Aggregate recommendation data
-WITH user, potential,
-     count(*) AS recommendation_strength,
-     collect(DISTINCT friend.username) AS connecting_friends
-
-WHERE recommendation_strength >= 2  // Minimum threshold
-
-RETURN potential.username AS recommendation,
-       potential.fullName AS full_name,
-       recommendation_strength,
-       connecting_friends,
-       size(connecting_friends) AS unique_connection_points
-ORDER BY recommendation_strength DESC, unique_connection_points DESC
+// Demonstrate index usage and early filtering
+EXPLAIN
+MATCH (alice:User {username: 'alice_codes'})  // Uses index on username
+WITH alice LIMIT 1  // Limit early to control expansion
+MATCH (alice)-[:FOLLOWS*1..2]->(connections:User)
+WHERE connections.followerCount > 1000  // Filter early
+WITH DISTINCT connections  // Remove duplicates before expensive operations
+ORDER BY connections.followerCount DESC
+RETURN connections.username, connections.followerCount
 LIMIT 5
+```
+
+## Troubleshooting Common Issues
+
+### If Docker Neo4j isn't running:
+```bash
+# Check container status
+docker ps -a | grep neo4j
+
+# Start the neo4j container
+docker start neo4j
+```
+
+### If wrong database:
+```cypher
+// Switch to social database
+:use social
+```
+
+### If connection fails:
+- **Verify container:** `docker ps | grep neo4j`
+- **Check connection:** bolt://localhost:7687
+- **Confirm credentials:** neo4j/password
+
+### Performance optimization tips:
+```cypher
+// Profile complex queries
+PROFILE MATCH (u:User)-[:FOLLOWS*2]-(potential) RETURN potential LIMIT 10
+
+// Use strategic WITH clauses
+MATCH (start:User) WHERE start.username = 'alice_codes'
+WITH start
+MATCH (start)-[:FOLLOWS*1..3]->(target)
+WITH target LIMIT 100
+// Continue processing...
 ```
 
 ## Lab Completion Checklist

@@ -5,14 +5,24 @@
 
 ## Prerequisites
 
-- Completed Lab 1 successfully
-- Neo4j Desktop project with social network data from Lab 1
-- Familiarity with basic Cypher syntax and Neo4j Browser interface
-- Understanding of nodes, relationships, and properties
+✅ **Already Installed in Your Environment:**
+- **Neo4j Desktop 2** (connection client)
+- **Docker Desktop** with Neo4j Enterprise 2025.06.0 running
+- **Python 3.8+** with pip
+- **Jupyter Lab**
+- **Neo4j Python Driver** and required packages
+- **Web browser** (Chrome or Firefox)
+
+✅ **From Previous Labs:**
+- **Completed Lab 1** with "social" database created
+- **Basic social network** with people and companies
+- **Remote connection** set up in Desktop 2
+- **Basic Cypher knowledge** and graph concepts
 
 ## Learning Outcomes
 
 By the end of this lab, you will:
+- Build upon the social network created in Lab 1
 - Create complex node and relationship structures with multiple labels
 - Master advanced WHERE clause filtering and conditional logic
 - Work with multiple data types including temporal, spatial, and collections
@@ -22,349 +32,348 @@ By the end of this lab, you will:
 - Build parameterized queries for dynamic data operations
 - Optimize query performance with indexes and constraints
 
-## Part 1: Advanced Node and Relationship Creation (15 minutes)
+## Part 1: Environment Setup and Verification (5 minutes)
 
-### Step 1: Clean Slate and Advanced Data Types
-Start by expanding your existing social network with more sophisticated data:
+### Step 1: Connect to Social Database
+Launch Neo4j Browser and ensure you're working with the social database from Lab 1:
 
 ```cypher
-// Create a person with rich temporal and collection data
-CREATE (emma:Person:Employee:Manager {
-  name: "Emma Wilson",
-  age: 34,
-  email: "emma.wilson@techcorp.com",
-  birthDate: date('1989-06-15'),
-  joinedCompany: datetime('2021-03-01T09:00:00'),
-  skills: ['Python', 'Machine Learning', 'Team Leadership', 'Data Science'],
-  certifications: ['AWS Solutions Architect', 'PMP', 'Scrum Master'],
-  performance_scores: [4.2, 4.5, 4.8, 4.3, 4.6],
-  salary: 145000,
-  location: point({latitude: 37.7749, longitude: -122.4194}),
-  isRemote: false
+// Switch to social database
+:use social
+```
+
+```cypher
+// Verify existing data from Lab 1
+MATCH (n) RETURN count(n) AS total_nodes, labels(n) AS node_types
+```
+
+```cypher
+// Clear the result panel
+:clear
+```
+
+**Expected Result:** Should show people and companies from Lab 1
+
+### Step 2: Verify Enterprise Features
+```cypher
+// Check available procedures (APOC should be available)
+SHOW PROCEDURES 
+WHERE name STARTS WITH "apoc"
+```
+
+```cypher
+// Check system information
+:sysinfo
+```
+
+**Expected Result:** Multiple APOC procedures available and Neo4j Enterprise 2025.06.0 connected
+
+## Part 2: Advanced Node and Relationship Creation (15 minutes)
+
+### Step 3: Extend Existing Social Network
+Build upon the people from Lab 1 with more sophisticated data:
+
+```cypher
+// Add rich data to Alice from Lab 1
+MATCH (alice:Person {name: "Alice Johnson"})
+SET alice:Employee:Manager,
+    alice.birthDate = date('1998-03-15'),
+    alice.joinedCompany = datetime('2020-09-01T09:00:00'),
+    alice.skills = ['Python', 'JavaScript', 'React', 'Node.js', 'GraphQL'],
+    alice.certifications = ['AWS Developer', 'React Certified'],
+    alice.performance_scores = [4.2, 4.5, 4.8, 4.3, 4.6],
+    alice.salary = 125000,
+    alice.location = point({latitude: 37.7749, longitude: -122.4194}),
+    alice.isRemote = false
+RETURN alice
+```
+
+### Step 4: Create Advanced Company Structures
+```cypher
+// Enhance TechCorp from Lab 1
+MATCH (tc:Company {name: "TechCorp"})
+SET tc:TechCompany,
+    tc.departments = ['Engineering', 'Product', 'Marketing', 'Sales'],
+    tc.stock_price = 284.50,
+    tc.revenue_2023 = 2400000000,
+    tc.locations = ['San Francisco', 'New York', 'Austin', 'London'],
+    tc.tech_stack = ['Neo4j', 'Python', 'React', 'Kubernetes', 'AWS']
+RETURN tc
+```
+
+### Step 5: Add Departments and Projects
+```cypher
+// Create department nodes
+CREATE (eng:Department {
+  name: "Engineering",
+  head: "Sarah Chen",
+  budget: 15000000,
+  size: 120,
+  established: date('2010-01-01')
+})
+
+CREATE (product:Department {
+  name: "Product",
+  head: "Mike Rodriguez",
+  budget: 8000000,
+  size: 45,
+  established: date('2012-06-01')
 })
 ```
 
-### Step 2: Create Complex Company Structures
 ```cypher
-// Create a more detailed company with nested information
-CREATE (techCorp2:Company:TechCompany {
-  name: "TechCorp Advanced Division",
-  industry: "Artificial Intelligence",
-  founded: date('2015-08-20'),
-  headquarters: point({latitude: 37.7849, longitude: -122.4094}),
-  employees: 1200,
-  departments: ['Engineering', 'Data Science', 'Product', 'Sales', 'Marketing'],
-  technologies: ['Python', 'Kubernetes', 'TensorFlow', 'React', 'GraphQL'],
-  revenue: 250000000,
-  isPublic: true,
-  stockTicker: "TCAD"
-})
-```
-
-### Step 3: Advanced Relationship Creation with Rich Metadata
-```cypher
-// Connect Emma to existing network with detailed relationships
-MATCH (emma:Person {name: "Emma Wilson"}), 
-      (alice:Person {name: "Alice Johnson"}),
-      (techCorp:Company {name: "TechCorp"})
-
-CREATE (emma)-[:MANAGES {
-  since: date('2022-01-15'),
-  teamSize: 8,
-  budget: 2500000,
-  responsibilities: ['Team Development', 'Technical Strategy', 'Hiring'],
-  reportingStructure: 'Director'
-}]->(alice),
-
-(emma)-[:WORKS_FOR {
-  position: "Senior Engineering Manager",
-  department: "Data Science",
-  since: datetime('2021-03-01T09:00:00'),
-  salary: 145000,
-  benefits: ['Health Insurance', 'Stock Options', '401k Match'],
-  workLocation: 'Hybrid'
-}]->(techCorp),
-
-(emma)-[:MENTORS {
-  since: date('2022-06-01'),
-  frequency: 'Weekly',
-  focusAreas: ['Career Development', 'Technical Skills', 'Leadership'],
-  meetingType: 'One-on-One'
-}]->(alice)
-```
-
-### Step 4: Create Project and Skill Networks
-```cypher
-// Create projects with complex metadata
-CREATE (aiProject:Project {
-  name: "Customer Intelligence Platform",
-  projectId: "CIP-2024-001",
-  startDate: date('2024-01-15'),
-  expectedEndDate: date('2024-08-30'),
-  budget: 1800000,
+// Create project nodes with rich metadata
+CREATE (platform:Project {
+  projectId: "PROJ-001",
+  name: "Next-Gen Platform",
   status: "In Progress",
-  technologies: ['Python', 'TensorFlow', 'Kubernetes', 'PostgreSQL'],
-  phases: ['Requirements', 'Design', 'Development', 'Testing', 'Deployment'],
-  currentPhase: "Development",
-  riskLevel: "Medium",
-  clientImportance: "High"
-}),
+  budget: 5000000,
+  startDate: date('2024-01-15'),
+  expectedEnd: date('2024-12-31'),
+  priority: "High",
+  technologies: ['Neo4j', 'Python', 'React', 'Kubernetes'],
+  team_size: 12,
+  completion_percentage: 45.7
+})
 
-(mobileApp:Project {
-  name: "Mobile Analytics Dashboard",
-  projectId: "MAD-2024-002", 
-  startDate: date('2024-02-01'),
-  expectedEndDate: date('2024-06-15'),
-  budget: 950000,
+CREATE (mobile:Project {
+  projectId: "PROJ-002", 
+  name: "Mobile App Redesign",
   status: "Planning",
-  technologies: ['React Native', 'Node.js', 'MongoDB', 'AWS'],
-  phases: ['Discovery', 'MVP', 'Full Features', 'Launch'],
-  currentPhase: "Discovery",
-  riskLevel: "Low",
-  clientImportance: "Medium"
+  budget: 2500000,
+  startDate: date('2024-06-01'),
+  expectedEnd: date('2025-03-31'),
+  priority: "Medium",
+  technologies: ['React Native', 'GraphQL', 'Firebase'],
+  team_size: 8,
+  completion_percentage: 12.3
 })
 ```
 
-### Step 5: Connect People to Projects with Roles
+### Step 6: Create Complex Relationships
 ```cypher
-// Create sophisticated work relationships
-MATCH (emma:Person {name: "Emma Wilson"}), 
-      (alice:Person {name: "Alice Johnson"}),
-      (bob:Person {name: "Bob Smith"}),
-      (aiProject:Project {name: "Customer Intelligence Platform"}),
-      (mobileApp:Project {name: "Mobile Analytics Dashboard"})
-
-CREATE (emma)-[:LEADS {
-  role: "Technical Lead",
-  responsibility: "Architecture and Team Management",
-  allocation: 0.6,
-  since: date('2024-01-15')
-}]->(aiProject),
-
-(alice)-[:WORKS_ON {
-  role: "Senior Developer",
-  responsibility: "ML Model Development",
-  allocation: 0.8,
-  since: date('2024-01-20'),
-  primaryTechnologies: ['Python', 'TensorFlow', 'Pandas']
-}]->(aiProject),
-
-(bob)-[:LEADS {
-  role: "Product Manager",
-  responsibility: "Requirements and Stakeholder Management",
-  allocation: 0.4,
-  since: date('2024-02-01')
-}]->(mobileApp)
+// Connect Alice to department and projects
+MATCH (alice:Person {name: "Alice Johnson"}), 
+      (eng:Department {name: "Engineering"}),
+      (platform:Project {name: "Next-Gen Platform"})
+CREATE (alice)-[:MEMBER_OF {since: date('2020-09-01'), role: "Senior Engineer"}]->(eng),
+       (alice)-[:ASSIGNED_TO {role: "Tech Lead", allocation: 0.8, since: date('2024-01-15')}]->(platform)
 ```
 
-## Part 2: Advanced WHERE Clause Operations (12 minutes)
-
-### Step 6: Complex Filtering with Multiple Conditions
 ```cypher
-// Find employees with specific criteria combinations
-MATCH (p:Person)-[works:WORKS_FOR]->(c:Company)
-WHERE p.age BETWEEN 25 AND 35 
-  AND works.salary > 100000 
-  AND c.industry CONTAINS "Software"
-  AND p.skills IS NOT NULL
-RETURN p.name AS employee, 
-       p.age AS age,
-       works.salary AS salary,
-       p.skills AS skills,
-       c.name AS company
-ORDER BY works.salary DESC
+// Create skill nodes and relationships
+CREATE (python:Skill {name: "Python", category: "Programming", level: "Advanced", demand: "High"}),
+       (react:Skill {name: "React", category: "Frontend", level: "Advanced", demand: "High"}),
+       (graphql:Skill {name: "GraphQL", category: "API", level: "Intermediate", demand: "Medium"})
+
+// Connect Alice to skills with proficiency levels
+MATCH (alice:Person {name: "Alice Johnson"}),
+      (python:Skill {name: "Python"}),
+      (react:Skill {name: "React"}),
+      (graphql:Skill {name: "GraphQL"})
+CREATE (alice)-[:HAS_SKILL {proficiency: 9, years_experience: 5, last_used: date('2024-12-01')}]->(python),
+       (alice)-[:HAS_SKILL {proficiency: 8, years_experience: 3, last_used: date('2024-12-01')}]->(react),
+       (alice)-[:HAS_SKILL {proficiency: 7, years_experience: 2, last_used: date('2024-11-15')}]->(graphql)
 ```
 
-### Step 7: String Operations and Pattern Matching
+## Part 3: Advanced WHERE Clause and Filtering (12 minutes)
+
+### Step 7: Complex Filtering Patterns
 ```cypher
-// Advanced string filtering and manipulation
+// Find employees with specific skill combinations
+MATCH (p:Person)-[hs:HAS_SKILL]->(s:Skill)
+WHERE s.name IN ['Python', 'React'] 
+  AND hs.proficiency >= 8
+  AND p.salary > 100000
+WITH p, COLLECT(s.name) AS skills, COUNT(s) AS skill_count
+WHERE skill_count >= 2
+RETURN p.name AS developer,
+       p.salary AS salary,
+       skills AS advanced_skills,
+       skill_count AS total_advanced_skills
+ORDER BY p.salary DESC
+```
+
+### Step 8: String Operations and Pattern Matching
+```cypher
+// Find all TechCorp email addresses with pattern matching
 MATCH (p:Person)
-WHERE p.email =~ '.*@techcorp\\.com$'  // Regex for TechCorp emails
-  AND p.name STARTS WITH 'A' OR p.name ENDS WITH 'son'
-  AND size(p.skills) >= 3
-RETURN p.name AS name,
+WHERE p.email =~ '.*@techcorp\\.com$'
+  AND p.name =~ 'A.*'  // Names starting with 'A'
+RETURN p.name AS employee,
        p.email AS email,
-       p.skills AS skills,
-       size(p.skills) AS skill_count
+       p.profession AS role
+ORDER BY p.name
 ```
 
-### Step 8: Date and Temporal Filtering
 ```cypher
-// Find people who joined in the last 3 years
-MATCH (p:Person)-[works:WORKS_FOR]->(c:Company)
-WHERE works.since > datetime() - duration('P3Y')  // Last 3 years
-  AND date(works.since) > date('2021-01-01')
-RETURN p.name AS employee,
-       works.since AS join_date,
-       duration.between(works.since, datetime()).years AS years_employed,
-       c.name AS company
-ORDER BY works.since DESC
-```
-
-### Step 9: Collection and Array Operations
-```cypher
-// Advanced collection filtering and operations
+// Advanced string operations
 MATCH (p:Person)
-WHERE ANY(skill IN p.skills WHERE skill CONTAINS 'Python')
-  AND size(p.skills) > 2
-  AND ALL(score IN p.performance_scores WHERE score >= 4.0)
+WHERE p.email IS NOT NULL
 RETURN p.name AS name,
-       [skill IN p.skills WHERE skill CONTAINS 'Data' | skill] AS data_skills,
-       reduce(total = 0.0, score IN p.performance_scores | total + score) / size(p.performance_scores) AS avg_performance
+       toUpper(left(p.name, 1)) + toLower(substring(p.name, 1)) AS formatted_name,
+       split(p.email, '@')[0] AS username,
+       split(p.email, '@')[1] AS domain,
+       size(p.name) AS name_length,
+       p.email CONTAINS 'techcorp' AS is_techcorp_employee
 ```
 
-### Step 10: Spatial and Geographic Queries
+### Step 9: Temporal Data Operations
 ```cypher
-// Find people within a certain distance of headquarters
-MATCH (p:Person), (c:Company {name: "TechCorp Advanced Division"})
-WHERE distance(p.location, c.headquarters) < 50000  // Within 50km
+// Advanced date calculations
+MATCH (p:Person)
+WHERE p.birthDate IS NOT NULL AND p.joinedCompany IS NOT NULL
+WITH p, 
+     duration.between(p.birthDate, date()).years AS age_calculated,
+     date().year - p.birthDate.year AS simple_age,
+     p.joinedCompany AS joined_company,
+     duration.between(date(p.joinedCompany), date()).years AS years_at_company
+WHERE years_at_company > 0
 RETURN p.name AS employee,
-       round(distance(p.location, c.headquarters) / 1000) AS distance_km,
-       p.isRemote AS remote_status
-ORDER BY distance_km
+       p.birthDate AS birth_date,
+       age_calculated AS exact_age,
+       simple_age AS approximate_age,
+       joined_company AS join_date,
+       years_at_company,
+       // Calculate years until retirement (assuming age 65)
+       65 - age_calculated AS years_to_retirement
+ORDER BY years_at_company DESC
 ```
 
-## Part 3: MERGE Operations and Data Consistency (10 minutes)
-
-### Step 11: Understanding MERGE for Upsert Operations
+### Step 10: Working with Collections and Arrays
 ```cypher
-// MERGE creates if not exists, matches if exists
-MERGE (dept:Department {name: "Data Science"})
-ON CREATE SET dept.created = datetime(),
-              dept.budget = 5000000,
-              dept.headCount = 0
-ON MATCH SET dept.lastUpdated = datetime()
-RETURN dept
-```
-
-### Step 12: Complex MERGE with Relationships
-```cypher
-// Ensure person belongs to department (create relationship if needed)
-MATCH (emma:Person {name: "Emma Wilson"})
-MERGE (dept:Department {name: "Data Science"})
-MERGE (emma)-[membership:MEMBER_OF]->(dept)
-ON CREATE SET membership.since = date('2021-03-01'),
-              membership.role = "Manager"
-ON MATCH SET membership.lastActive = date()
-RETURN emma, membership, dept
-```
-
-### Step 13: MERGE with Multiple Properties
-```cypher
-// Create or update skill nodes and relationships
+// Advanced collection operations
 MATCH (p:Person)
-WHERE p.skills IS NOT NULL
-UNWIND p.skills AS skillName
-MERGE (skill:Skill {name: skillName})
-ON CREATE SET skill.category = CASE 
-  WHEN skillName IN ['Python', 'Java', 'JavaScript'] THEN 'Programming'
-  WHEN skillName IN ['Machine Learning', 'Data Science'] THEN 'Analytics' 
-  WHEN skillName IN ['Team Leadership', 'Project Management'] THEN 'Management'
-  ELSE 'Other'
-END
-MERGE (p)-[has:HAS_SKILL]->(skill)
-ON CREATE SET has.proficiency = 'Intermediate',
-              has.since = date('2020-01-01')
-```
-
-## Part 4: NULL Handling and Optional Patterns (8 minutes)
-
-### Step 14: Working with NULL Values
-```cypher
-// Find people with incomplete profiles
-MATCH (p:Person)
-WHERE p.email IS NULL 
-   OR p.birthDate IS NULL 
-   OR p.skills IS NULL 
-   OR size(p.skills) = 0
-RETURN p.name AS person,
-       CASE WHEN p.email IS NULL THEN 'Missing Email' ELSE 'Has Email' END AS email_status,
-       CASE WHEN p.birthDate IS NULL THEN 'Missing Birth Date' ELSE 'Has Birth Date' END AS birthdate_status,
-       CASE WHEN p.skills IS NULL OR size(p.skills) = 0 THEN 'No Skills Listed' ELSE 'Has Skills' END AS skills_status
-```
-
-### Step 15: OPTIONAL MATCH for Flexible Queries
-```cypher
-// Find all people and their optional project assignments
-MATCH (p:Person)
-OPTIONAL MATCH (p)-[works_on:WORKS_ON|LEADS]->(project:Project)
-RETURN p.name AS person,
-       COLLECT(DISTINCT project.name) AS projects,
-       COLLECT(DISTINCT type(works_on)) AS relationship_types,
-       CASE WHEN project IS NULL THEN 'No Active Projects' ELSE 'Has Projects' END AS project_status
-```
-
-### Step 16: Handling Optional Relationships with COALESCE
-```cypher
-// Get employee info with safe defaults for missing data
-MATCH (p:Person)
-OPTIONAL MATCH (p)-[works:WORKS_FOR]->(c:Company)
-OPTIONAL MATCH (p)-[manages:MANAGES]->(subordinate:Person)
-RETURN p.name AS employee,
-       COALESCE(c.name, 'No Company') AS company,
-       COALESCE(works.position, 'No Position') AS position,
-       COALESCE(works.salary, 0) AS salary,
-       COUNT(DISTINCT subordinate) AS direct_reports
-```
-
-## Part 5: Parameterized Queries and Dynamic Operations (8 minutes)
-
-### Step 17: Using Parameters for Dynamic Queries
-```cypher
-// Set parameters for dynamic queries
-:param min_salary => 100000
-:param required_skills => ['Python', 'Machine Learning']
-:param company_name => 'TechCorp'
-```
-
-```cypher
-// Use parameters in queries
-MATCH (p:Person)-[works:WORKS_FOR]->(c:Company)
-WHERE works.salary >= $min_salary
-  AND c.name CONTAINS $company_name
-  AND ANY(skill IN $required_skills WHERE skill IN p.skills)
-RETURN p.name AS candidate,
-       works.salary AS salary,
+WHERE p.skills IS NOT NULL AND size(p.skills) > 0
+RETURN p.name AS developer,
        p.skills AS all_skills,
-       [skill IN p.skills WHERE skill IN $required_skills] AS matching_skills
-ORDER BY works.salary DESC
+       size(p.skills) AS skill_count,
+       head(p.skills) AS primary_skill,
+       tail(p.skills) AS other_skills,
+       p.skills[0..2] AS top_3_skills,
+       'Python' IN p.skills AS knows_python,
+       [skill IN p.skills WHERE skill CONTAINS 'Script'] AS script_skills,
+       [skill IN p.skills WHERE size(skill) > 6] AS long_skill_names
 ```
 
-### Step 18: Dynamic Property Access
+## Part 4: MERGE Operations and Data Consistency (10 minutes)
+
+### Step 11: Upsert Patterns with MERGE
 ```cypher
-// Dynamic property queries using bracket notation
-:param property_name => 'salary'
-:param min_value => 120000
+// Create or update person with complex logic
+MERGE (dev:Person {email: "new.developer@techcorp.com"})
+ON CREATE SET 
+  dev.name = "Alex Thompson",
+  dev.age = 28,
+  dev.created = datetime(),
+  dev.status = "New Hire"
+ON MATCH SET 
+  dev.updated = datetime(),
+  dev.status = "Existing Employee"
+RETURN dev, dev.status AS operation_result
 ```
 
 ```cypher
-MATCH (p:Person)-[r:WORKS_FOR]->(c:Company)
-WHERE r[$property_name] >= $min_value
-RETURN p.name AS employee, 
-       r[$property_name] AS property_value,
-       c.name AS company
+// MERGE relationships with properties
+MATCH (alex:Person {email: "new.developer@techcorp.com"}),
+      (eng:Department {name: "Engineering"})
+MERGE (alex)-[r:MEMBER_OF]->(eng)
+ON CREATE SET 
+  r.since = date(),
+  r.role = "Junior Developer",
+  r.probation_end = date() + duration({months: 6})
+ON MATCH SET 
+  r.updated = datetime()
+RETURN alex.name AS employee, r.role AS role, r.since AS member_since
 ```
 
-## Part 6: Performance Optimization with Indexes and Constraints (7 minutes)
-
-### Step 19: Create Indexes for Query Performance
+### Step 12: Conditional MERGE Operations
 ```cypher
-// Create indexes on frequently queried properties
+// Create skills if they don't exist and connect to person
+UNWIND ['TypeScript', 'Docker', 'Kubernetes'] AS skill_name
+MERGE (skill:Skill {name: skill_name})
+ON CREATE SET 
+  skill.category = CASE skill_name
+    WHEN 'TypeScript' THEN 'Programming'
+    WHEN 'Docker' THEN 'DevOps'
+    WHEN 'Kubernetes' THEN 'DevOps'
+  END,
+  skill.demand = 'High',
+  skill.created = datetime()
+
+WITH skill
+MATCH (alex:Person {email: "new.developer@techcorp.com"})
+MERGE (alex)-[hs:HAS_SKILL]->(skill)
+ON CREATE SET 
+  hs.proficiency = 6,
+  hs.years_experience = 2,
+  hs.acquired_date = date()
+RETURN alex.name AS person, skill.name AS skill, hs.proficiency AS level
+```
+
+## Part 5: NULL Handling and Optional Patterns (8 minutes)
+
+### Step 13: Safe NULL Handling
+```cypher
+// Handle missing data gracefully
+MATCH (p:Person)
+OPTIONAL MATCH (p)-[w:WORKS_FOR]->(c:Company)
+OPTIONAL MATCH (p)-[:HAS_SKILL]->(s:Skill)
+RETURN p.name AS employee,
+       COALESCE(p.age, 'Unknown') AS age,
+       COALESCE(c.name, 'Unemployed') AS company,
+       CASE 
+         WHEN p.salary IS NULL THEN 'Salary Not Disclosed'
+         WHEN p.salary < 50000 THEN 'Entry Level'
+         WHEN p.salary < 100000 THEN 'Mid Level'
+         ELSE 'Senior Level'
+       END AS salary_band,
+       COALESCE(size(COLLECT(DISTINCT s.name)), 0) AS skill_count
+```
+
+### Step 14: Optional Pattern Matching
+```cypher
+// Find people and their optional project assignments
+MATCH (p:Person)
+OPTIONAL MATCH (p)-[a:ASSIGNED_TO]->(proj:Project)
+OPTIONAL MATCH (p)-[:MEMBER_OF]->(dept:Department)
+RETURN p.name AS employee,
+       COALESCE(dept.name, 'No Department') AS department,
+       COLLECT(DISTINCT proj.name) AS projects,
+       size(COLLECT(DISTINCT proj.name)) AS project_count,
+       COALESCE(sum(a.allocation), 0) AS total_allocation
+ORDER BY total_allocation DESC
+```
+
+## Part 6: Performance Optimization (10 minutes)
+
+### Step 15: Create Indexes for Frequently Queried Properties
+```cypher
+// Create indexes for performance
 CREATE INDEX person_email_index FOR (p:Person) ON (p.email);
 CREATE INDEX person_skills_index FOR (p:Person) ON (p.skills);
 CREATE INDEX company_name_index FOR (c:Company) ON (c.name);
 CREATE INDEX project_status_index FOR (p:Project) ON (p.status);
+CREATE INDEX skill_name_index FOR (s:Skill) ON (s.name);
 ```
 
-### Step 20: Create Constraints for Data Integrity
+### Step 16: Create Constraints for Data Integrity
 ```cypher
-// Create uniqueness constraints
+// Drop existing indexes before creating constraints
+DROP INDEX person_email_index;
+DROP INDEX company_name_index;
+DROP INDEX skill_name_index;
+```
+
+```cypher
+// Create uniqueness constraints (these will automatically create indexes)
 CREATE CONSTRAINT person_email_unique FOR (p:Person) REQUIRE p.email IS UNIQUE;
 CREATE CONSTRAINT company_name_unique FOR (c:Company) REQUIRE c.name IS UNIQUE;
 CREATE CONSTRAINT project_id_unique FOR (p:Project) REQUIRE p.projectId IS UNIQUE;
+CREATE CONSTRAINT skill_name_unique FOR (s:Skill) REQUIRE s.name IS UNIQUE;
 ```
 
-### Step 21: Test Performance Impact
+### Step 17: Test Performance Impact
 ```cypher
 // Profile a query to see performance impact
 PROFILE 
@@ -381,28 +390,30 @@ WHERE c.name = 'TechCorp' AND w.salary > 100000
 RETURN p.name, w.salary
 ```
 
-## Part 7: Advanced Query Patterns and Validation (8 minutes)
+## Part 7: Advanced Query Patterns and Validation (10 minutes)
 
-### Step 22: Complex Aggregations and Statistical Analysis
+### Step 18: Complex Aggregations and Statistical Analysis
 ```cypher
-// Comprehensive department analytics
+// Company analytics based on actual data from Lab 1
 MATCH (p:Person)-[w:WORKS_FOR]->(c:Company)
-OPTIONAL MATCH (p)-[:MEMBER_OF]->(d:Department)
-WITH d.name AS department, 
-     COLLECT(w.salary) AS salaries,
+WITH c.name AS company, 
      COLLECT(p.age) AS ages,
+     COLLECT(p.city) AS cities,
      COUNT(p) AS employee_count
-RETURN department,
+WHERE employee_count > 0
+RETURN company,
        employee_count,
-       round(reduce(total = 0, salary IN salaries | total + salary) * 1.0 / size(salaries)) AS avg_salary,
-       min(salaries) AS min_salary,
-       max(salaries) AS max_salary,
-       round(reduce(total = 0, age IN ages | total + age) * 1.0 / size(ages)) AS avg_age,
-       round(stDev(salaries)) AS salary_std_dev
-ORDER BY avg_salary DESC
+       CASE WHEN size(ages) > 0 AND ALL(age IN ages WHERE age IS NOT NULL)
+            THEN round(reduce(total = 0, age IN ages | total + age) * 1.0 / size(ages))
+            ELSE NULL END AS avg_age,
+       apoc.coll.min(ages) AS min_age,
+       apoc.coll.max(ages) AS max_age,
+       size(apoc.coll.toSet(cities)) AS cities_represented,
+       apoc.coll.toSet(cities) AS employee_cities
+ORDER BY employee_count DESC
 ```
 
-### Step 23: Conditional Logic and Case Statements
+### Step 19: Conditional Logic and Case Statements
 ```cypher
 // Create employee performance categories
 MATCH (p:Person)
@@ -421,7 +432,7 @@ RETURN p.name AS employee,
 ORDER BY avg_score DESC
 ```
 
-### Step 24: Data Validation and Quality Checks
+### Step 20: Data Validation and Quality Checks
 ```cypher
 // Validate data quality across the graph
 MATCH (p:Person)
@@ -435,10 +446,50 @@ RETURN p.name AS person,
        COUNT(s) AS skill_count
 ```
 
+## Part 8: Parameterized Queries (5 minutes)
+
+### Step 21: Dynamic Query Parameters
+```cypher
+// Set parameters for reusable queries (correct Neo4j 2025.06.0 syntax)
+:param {skill_name: 'Python', min_proficiency: 8, min_salary: 100000}
+```
+
+```cypher
+// Use parameters in queries
+MATCH (p:Person)-[hs:HAS_SKILL]->(s:Skill {name: $skill_name})
+WHERE hs.proficiency >= $min_proficiency 
+  AND p.salary >= $min_salary
+RETURN p.name AS expert,
+       p.salary AS salary,
+       hs.proficiency AS skill_level,
+       hs.years_experience AS experience
+ORDER BY hs.proficiency DESC, p.salary DESC
+```
+
+**Alternative method if skill data doesn't exist yet:**
+```cypher
+// Simple parameter example with existing data
+:param {min_age: 25, city_filter: 'San Francisco'}
+```
+
+```cypher
+// Query using parameters with Lab 1 data
+MATCH (p:Person)
+WHERE p.age >= $min_age AND p.city = $city_filter
+RETURN p.name AS person, p.age AS age, p.city AS city, p.profession AS job
+```
+
+```cypher
+// Clear parameters
+:params clear
+```
+
 ## Lab Completion Checklist
 
-- [ ] Created complex nodes with multiple labels and rich data types
-- [ ] Built sophisticated relationships with detailed metadata
+- [ ] Successfully connected to "social" database from Lab 1
+- [ ] Extended existing social network with advanced data types
+- [ ] Created complex nodes with multiple labels and rich metadata
+- [ ] Built sophisticated relationships with detailed properties
 - [ ] Mastered advanced WHERE clause filtering and conditions
 - [ ] Implemented string operations and regular expressions
 - [ ] Used temporal data types and date operations effectively
@@ -465,42 +516,51 @@ RETURN p.name AS person,
 11. **Statistical Analysis:** Aggregations and mathematical operations
 12. **Data Validation:** Quality checks and integrity patterns
 
-## Troubleshooting Guide
+## Troubleshooting Common Issues
 
-### Common Issues and Solutions
+### If Docker Neo4j isn't running:
+```bash
+# Check container status
+docker ps -a | grep neo4j
 
-**Constraint violation errors:**
+# Start the neo4j container
+docker start neo4j
+```
+
+### If wrong database:
+```cypher
+// Switch to social database
+:use social
+```
+
+### If connection fails:
+- **Verify container:** `docker ps | grep neo4j`
+- **Check connection:** bolt://localhost:7687
+- **Confirm credentials:** neo4j/password
+
+### Constraint violation errors:
 ```cypher
 // Check existing constraints
 SHOW CONSTRAINTS
-// Drop constraint if needed
-DROP CONSTRAINT constraint_name
+// Drop constraint if needed (replace constraint_name with actual name)
+// DROP CONSTRAINT constraint_name
 ```
 
-**Index creation failures:**
+### Index creation failures:
 ```cypher
 // Check existing indexes
 SHOW INDEXES
-// Drop index if needed
-DROP INDEX index_name
+// Drop index if needed (replace index_name with actual name)
+// DROP INDEX index_name
 ```
 
-**Performance issues with large datasets:**
+### Performance issues:
 ```cypher
 // Use LIMIT to test queries
 MATCH (n) RETURN n LIMIT 100
 
 // Profile queries to identify bottlenecks
 PROFILE MATCH (p:Person) WHERE p.age > 30 RETURN p
-```
-
-**Parameter issues:**
-```cypher
-// Check current parameters
-:params
-
-// Clear all parameters
-:params clear
 ```
 
 ## Next Steps
@@ -553,4 +613,4 @@ MATCH (n) WHERE n.property = $name RETURN n
 
 **🎉 Lab 2 Complete!**
 
-You now have advanced Cypher skills for building sophisticated graph databases with complex data models, optimized performance, and robust data integrity. These skills will be essential for the complex social network analytics we'll tackle in Lab 3.
+You now have advanced Cypher skills for building sophisticated graph databases with complex data models, optimized performance, and robust data integrity. These skills will be essential for the complex social network analytics we'll tackle in Lab 3!

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neo4j Day 1 - Graph Database Fundamentals</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/white.css">
+    <style>
+        .reveal .slides section {
+            text-align: left;
+            font-size: 0.85em;
+            height: 82vh;
+            padding: 12px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .reveal h1, .reveal h2, .reveal h3 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .reveal h1 { font-size: 1.9em; }
+        .reveal h2 { font-size: 1.5em; }
+        .reveal h3 { font-size: 1.2em; }
+        .reveal h4 { font-size: 1.0em; color: #2c3e50; margin-bottom: 8px; }
+        .reveal .title-slide {
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            text-align: center;
+            padding: 20px;
+        }
+        .reveal .session-header {
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            text-align: center;
+            padding: 18px;
+        }
+        .reveal .lab-callout {
+            background-color: #e3f2fd;
+            border-left: 5px solid #2196f3;
+            padding: 12px;
+            margin: 8px 0;
+            text-align: center;
+        }
+        .reveal .lab-callout h3 {
+            color: #1976d2;
+            margin-bottom: 6px;
+            font-size: 1.1em;
+        }
+        .reveal ul {
+            display: block;
+            margin-left: 1em;
+            line-height: 1.3;
+        }
+        .reveal li {
+            margin-bottom: 4px;
+        }
+        .reveal .two-column {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .reveal .column {
+            flex: 1;
+        }
+        .reveal .highlight {
+            background-color: #fff3cd;
+            border-left: 3px solid #ffc107;
+            padding: 8px;
+            margin: 8px 0;
+            font-weight: bold;
+        }
+        .reveal .architecture-box {
+            background-color: #e8f4fd;
+            border: 2px solid #007bff;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 8px 0;
+            text-align: center;
+        }
+        .reveal .cypher-box {
+            background-color: #f8f9fa;
+            border-left: 3px solid #28a745;
+            padding: 10px;
+            margin: 8px 0;
+            font-family: monospace;
+            font-size: 0.8em;
+        }
+        .reveal .benefit-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 12px 0;
+        }
+        .reveal .benefit-item {
+            background-color: #e8f5e8;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
+            font-size: 0.85em;
+        }
+        .reveal .tool-feature {
+            background-color: #f0f4f8;
+            border-left: 3px solid #6c757d;
+            padding: 8px;
+            margin: 6px 0;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- Title Slide -->
+            <section class="title-slide">
+                <h1>Neo4j Graph Database</h1>
+                <h2>3-Day Intensive Course</h2>
+                <h3>Day 1: Graph Database Fundamentals</h3>
+            </section>
+
+            <!-- Course Overview -->
+            <section class="session-header">
+                <h2>Day 1 Learning Journey</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Sessions (Theory)</h3>
+                        <ul>
+                            <li><strong>Session 1:</strong> Graph Database Fundamentals</li>
+                            <li><strong>Session 2:</strong> Cypher Query Language</li>
+                            <li><strong>Session 3:</strong> Graph Data Modeling</li>
+                            <li><strong>Session 4:</strong> Data Visualization & Neo4j Tools</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Labs (Hands-On)</h3>
+                        <ul>
+                            <li><strong>Lab 1:</strong> Docker Setup & Remote Connection (45 min)</li>
+                            <li><strong>Lab 2:</strong> Advanced Cypher Foundations (60 min)</li>
+                            <li><strong>Lab 3:</strong> Complex Social Networks (90 min)</li>
+                            <li><strong>Lab 4:</strong> Multi-Tool Visualizations (75 min)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight">
+                    <strong>Day 1 Total:</strong> 6.75 hours (4.5 hours labs, 2.25 hours presentations)
+                </div>
+            </section>
+
+            <!-- Session 1: Graph Database Fundamentals -->
+            <section class="session-header">
+                <h2>Session 1: Graph Database Fundamentals</h2>
+            </section>
+
+            <section>
+                <h3>What Makes Graphs Different?</h3>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Traditional Databases</h4>
+                        <ul>
+                            <li>Tables with rows and columns</li>
+                            <li>Foreign keys for relationships</li>
+                            <li>Expensive JOIN operations</li>
+                            <li>Schema-first approach</li>
+                            <li>Performance degrades with depth</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h4>Graph Databases</h4>
+                        <ul>
+                            <li>Nodes and relationships</li>
+                            <li>Relationships are first-class citizens</li>
+                            <li>Index-free adjacency</li>
+                            <li>Schema-optional flexibility</li>
+                            <li>Constant-time traversals</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight">
+                    <strong>Key Insight:</strong> Graphs excel at connected data with complex relationships and deep traversals.
+                </div>
+            </section>
+
+            <section>
+                <h3>Graph Database Use Cases</h3>
+                <div class="benefit-grid">
+                    <div class="benefit-item">
+                        <strong>Social Networks</strong><br>
+                        Friends, followers, recommendations
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Fraud Detection</strong><br>
+                        Pattern analysis, risk networks
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Recommendation Engines</strong><br>
+                        Collaborative filtering, similarity
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Knowledge Graphs</strong><br>
+                        Entity relationships, semantics
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Network Operations</strong><br>
+                        Infrastructure, dependencies
+                    </div>
+                    <div class="benefit-item">
+                        <strong>Supply Chain</strong><br>
+                        Logistics, traceability
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h3>Neo4j Enterprise Architecture</h3>
+                <div class="architecture-box">
+                    <strong>Production-Grade Deployment Stack</strong>
+                </div>
+                <ul>
+                    <li><strong>Neo4j Enterprise 2025.06.0:</strong> Latest enterprise features and performance</li>
+                    <li><strong>Docker Containerization:</strong> Production-ready deployment platform</li>
+                    <li><strong>Desktop 2 Remote Connection:</strong> Professional client-server architecture</li>
+                    <li><strong>APOC Procedures:</strong> Advanced operations and data processing</li>
+                    <li><strong>Graph Data Science:</strong> Built-in machine learning algorithms</li>
+                    <li><strong>Multi-Database Support:</strong> Enterprise-scale data organization</li>
+                </ul>
+                <div class="highlight">
+                    This course uses enterprise-grade architecture that mirrors real production environments.
+                </div>
+            </section>
+
+            <!-- Lab 1 Callout -->
+            <section class="lab-callout">
+                <h3>🛠️ Lab 1: Docker Setup & Remote Connection</h3>
+                <p><strong>Duration:</strong> 45 minutes</p>
+                <ul>
+                    <li>Configure Neo4j Enterprise 2025.06.0 in Docker container</li>
+                    <li>Set up Desktop 2 remote connection to Docker instance</li>
+                    <li>Master Neo4j Browser interface and basic operations</li>
+                    <li>Create first social network with nodes and relationships</li>
+                    <li>Verify Python connectivity for application development</li>
+                </ul>
+            </section>
+
+            <!-- Session 2: Cypher Query Language -->
+            <section class="session-header">
+                <h2>Session 2: Cypher Query Language</h2>
+            </section>
+
+            <section>
+                <h3>Cypher: ASCII Art for Graphs</h3>
+                <ul>
+                    <li><strong>Visual Pattern Matching:</strong> Queries look like graph drawings</li>
+                    <li><strong>Declarative Language:</strong> Describe what you want, not how to get it</li>
+                    <li><strong>SQL-Inspired Syntax:</strong> Familiar keywords with graph concepts</li>
+                    <li><strong>Property Graph Model:</strong> Rich data on nodes and relationships</li>
+                </ul>
+                <div class="cypher-box">
+                    // Find friends of Alice<br>
+                    MATCH (alice:Person {name: 'Alice'})-[:KNOWS]->(friend)<br>
+                    RETURN friend.name
+                </div>
+                <div class="cypher-box">
+                    // Create a social connection<br>
+                    CREATE (alice:Person {name: 'Alice', age: 25})<br>
+                    CREATE (bob:Person {name: 'Bob', age: 30})<br>
+                    CREATE (alice)-[:KNOWS {since: '2020'}]->(bob)
+                </div>
+            </section>
+
+            <section>
+                <h3>Core Cypher Operations</h3>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Data Creation</h4>
+                        <ul>
+                            <li><strong>CREATE:</strong> New nodes and relationships</li>
+                            <li><strong>MERGE:</strong> Create or match existing</li>
+                            <li><strong>SET:</strong> Update properties</li>
+                            <li><strong>DELETE:</strong> Remove data</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h4>Data Querying</h4>
+                        <ul>
+                            <li><strong>MATCH:</strong> Find patterns</li>
+                            <li><strong>WHERE:</strong> Filter conditions</li>
+                            <li><strong>RETURN:</strong> Select output</li>
+                            <li><strong>ORDER BY:</strong> Sort results</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight">
+                    <strong>Course Focus:</strong> Master these fundamentals to build complex graph applications.
+                </div>
+            </section>
+
+            <section>
+                <h3>Advanced Cypher Features</h3>
+                <ul>
+                    <li><strong>Multiple Labels:</strong> <code>(person:User:Customer)</code> for rich classification</li>
+                    <li><strong>Complex Data Types:</strong> Temporal, spatial, and collection properties</li>
+                    <li><strong>String Operations:</strong> Regular expressions and pattern matching</li>
+                    <li><strong>Conditional Logic:</strong> CASE statements and NULL handling</li>
+                    <li><strong>Parameterized Queries:</strong> Dynamic and reusable patterns</li>
+                    <li><strong>Performance Optimization:</strong> Indexes, constraints, and query profiling</li>
+                </ul>
+                <div class="tool-feature">
+                    <strong>Lab 2 Focus:</strong> Master these advanced patterns for production-ready applications.
+                </div>
+            </section>
+
+            <!-- Lab 2 Callout -->
+            <section class="lab-callout">
+                <h3>🛠️ Lab 2: Advanced Cypher Foundations</h3>
+                <p><strong>Duration:</strong> 60 minutes</p>
+                <ul>
+                    <li>Build complex node structures with multiple labels and rich data types</li>
+                    <li>Master advanced WHERE clause filtering and string operations</li>
+                    <li>Work with temporal data, collections, and spatial coordinates</li>
+                    <li>Implement MERGE operations for data consistency and upserts</li>
+                    <li>Create parameterized queries and performance optimization patterns</li>
+                </ul>
+            </section>
+
+            <!-- Session 3: Graph Data Modeling -->
+            <section class="session-header">
+                <h2>Session 3: Graph Data Modeling</h2>
+            </section>
+
+            <section>
+                <h3>Property Graph Model Components</h3>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Nodes (Entities)</h4>
+                        <ul>
+                            <li>Represent entities or objects</li>
+                            <li>Can have multiple labels</li>
+                            <li>Store properties as key-value pairs</li>
+                            <li>Examples: Person, Product, Location</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h4>Relationships (Connections)</h4>
+                        <ul>
+                            <li>Connect nodes with meaning</li>
+                            <li>Always directional with type</li>
+                            <li>Can store properties for context</li>
+                            <li>Examples: KNOWS, PURCHASED, LOCATED_IN</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight">
+                    <strong>Key Principle:</strong> Model relationships as first-class citizens with their own properties and context.
+                </div>
+            </section>
+
+            <section>
+                <h3>Social Network Data Model Design</h3>
+                <ul>
+                    <li><strong>Users:</strong> Rich profiles with demographics, interests, and metadata</li>
+                    <li><strong>Content:</strong> Posts, comments, media with engagement tracking</li>
+                    <li><strong>Topics:</strong> Categorization and discovery through tagging</li>
+                    <li><strong>Locations:</strong> Geographic relationships and proximity analysis</li>
+                    <li><strong>Interactions:</strong> Follows, likes, shares with temporal context</li>
+                    <li><strong>Communities:</strong> Groups and clusters with membership patterns</li>
+                </ul>
+                <div class="architecture-box">
+                    <strong>Real-World Application:</strong> Multi-dimensional social platform with content and analytics
+                </div>
+            </section>
+
+            <section>
+                <h3>Data Modeling Best Practices</h3>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Design Principles</h4>
+                        <ul>
+                            <li>Model the questions you need to answer</li>
+                            <li>Prefer relationships over properties</li>
+                            <li>Use specific relationship types</li>
+                            <li>Design for query performance</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h4>Performance Considerations</h4>
+                        <ul>
+                            <li>Index frequently queried properties</li>
+                            <li>Use constraints for data integrity</li>
+                            <li>Consider cardinality in relationships</li>
+                            <li>Plan for scale and growth patterns</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lab 3 Callout -->
+            <section class="lab-callout">
+                <h3>🛠️ Lab 3: Building Complex Social Networks</h3>
+                <p><strong>Duration:</strong> 90 minutes</p>
+                <ul>
+                    <li>Design comprehensive social network with users, posts, and interactions</li>
+                    <li>Implement topic tagging and content categorization systems</li>
+                    <li>Build location-based relationships and geographic analysis</li>
+                    <li>Create multi-hop recommendation algorithms and discovery patterns</li>
+                    <li>Analyze network patterns, engagement metrics, and community detection</li>
+                </ul>
+            </section>
+
+            <!-- Session 4: Data Visualization & Neo4j Tools -->
+            <section class="session-header">
+                <h2>Session 4: Data Visualization & Neo4j Tools</h2>
+            </section>
+
+            <section>
+                <h3>Neo4j Visualization Ecosystem</h3>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Neo4j Browser</h4>
+                        <ul>
+                            <li>Interactive Cypher development</li>
+                            <li>Advanced graph visualizations</li>
+                            <li>Query performance profiling</li>
+                            <li>Custom styling and formatting</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h4>Neo4j Bloom</h4>
+                        <ul>
+                            <li>Business-friendly exploration</li>
+                            <li>Natural language search</li>
+                            <li>Point-and-click investigation</li>
+                            <li>Presentation-ready visuals</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="tool-feature">
+                    <strong>Complementary Tools:</strong> Browser for technical development, Bloom for business exploration.
+                </div>
+            </section>
+
+            <section>
+                <h3>Advanced Browser Visualization Features</h3>
+                <ul>
+                    <li><strong>Custom Node Styling:</strong> Size, color, and captions based on properties</li>
+                    <li><strong>Relationship Styling:</strong> Thickness, color, and labels for relationships</li>
+                    <li><strong>Conditional Formatting:</strong> Dynamic styling based on data values</li>
+                    <li><strong>Interactive Exploration:</strong> Click, drag, expand for investigation</li>
+                    <li><strong>Export Capabilities:</strong> Save visualizations and share insights</li>
+                </ul>
+                <div class="highlight">
+                    Use LIMIT for larger datasets to maintain performance and readability.
+                </div>
+            </section>
+
+            <section>
+                <h3>Neo4j Bloom for Business Users</h3>
+                <ul>
+                    <li><strong>Natural Language:</strong> Search with keywords and phrases</li>
+                    <li><strong>Point-and-Click:</strong> No query language required</li>
+                    <li><strong>Perspective Builder:</strong> Custom views for different roles</li>
+                    <li><strong>Interactive Exploration:</strong> Expand and investigate patterns</li>
+                    <li><strong>Presentation Ready:</strong> Share insights visually with stakeholders</li>
+                </ul>
+                <div class="tool-feature">
+                    <strong>Bloom Advantage:</strong> Democratizes graph exploration for business stakeholders.
+                </div>
+            </section>
+
+            <section>
+                <h3>Python Visualization Integration</h3>
+                <ul>
+                    <li><strong>NetworkX + Matplotlib:</strong> Statistical network analysis</li>
+                    <li><strong>Plotly:</strong> Interactive web visualizations and dashboards</li>
+                    <li><strong>Pandas:</strong> Data analysis and traditional charting</li>
+                    <li><strong>Jupyter Integration:</strong> Embedded visualizations in notebooks</li>
+                    <li><strong>Custom Applications:</strong> Build production dashboards</li>
+                </ul>
+                <div class="architecture-box">
+                    <strong>Course Focus:</strong> Plotly for interactive visualizations in Jupyter notebooks
+                </div>
+            </section>
+
+            <section>
+                <h3>Building Analytics Dashboards</h3>
+                <ul>
+                    <li><strong>Graph Metrics:</strong> Node degrees, clustering coefficients</li>
+                    <li><strong>Network Statistics:</strong> Density, connectivity, centrality</li>
+                    <li><strong>Temporal Analysis:</strong> Growth patterns and activity over time</li>
+                    <li><strong>Comparative Views:</strong> Before/after analysis and benchmarking</li>
+                    <li><strong>Business Intelligence:</strong> KPIs and actionable insights</li>
+                </ul>
+                <div class="highlight">
+                    <strong>Dashboard Strategy:</strong> Combine graph visualizations with traditional charts for complete insights.
+                </div>
+            </section>
+
+            <!-- Lab 4 Callout -->
+            <section class="lab-callout">
+                <h3>🛠️ Lab 4: Interactive Visualizations & Neo4j Tools</h3>
+                <p><strong>Duration:</strong> 75 minutes</p>
+                <ul>
+                    <li>Master Neo4j Browser styling and customization techniques</li>
+                    <li>Explore social network using Bloom's natural language interface</li>
+                    <li>Create business-friendly visualizations with custom perspectives</li>
+                    <li>Export graph data to Python DataFrames for advanced analysis</li>
+                    <li>Build interactive network diagrams and analytics dashboards with Plotly</li>
+                </ul>
+            </section>
+
+            <!-- Day 1 Summary -->
+            <section class="session-header">
+                <h2>Day 1 Knowledge Check</h2>
+                <ul>
+                    <li>What are the three core components of a property graph?</li>
+                    <li>How do graphs handle relationships differently than SQL databases?</li>
+                    <li>What's the Cypher syntax for creating relationships with properties?</li>
+                    <li>When would you use Neo4j Bloom vs Neo4j Browser?</li>
+                    <li>How do you implement Docker-based Neo4j with remote connections?</li>
+                </ul>
+            </section>
+
+            <section class="session-header">
+                <h2>Day 1 Summary: Skills Acquired</h2>
+                <ul>
+                    <li><strong>Enterprise Architecture:</strong> Docker Neo4j deployment with remote connectivity</li>
+                    <li><strong>Graph Database Concepts:</strong> Nodes, relationships, properties, and traversals</li>
+                    <li><strong>Cypher Mastery:</strong> Advanced query patterns, data types, and optimization</li>
+                    <li><strong>Data Modeling:</strong> Social networks with complex multi-dimensional relationships</li>
+                    <li><strong>Visualization Tools:</strong> Browser styling, Bloom exploration, Python integration</li>
+                    <li><strong>Analytics Foundation:</strong> Network metrics, recommendations, community detection</li>
+                </ul>
+            </section>
+
+            <section class="session-header">
+                <h2>Day 2 Preview: Advanced Analytics</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Complex Query Patterns</h3>
+                        <ul>
+                            <li>Variable-length path traversals</li>
+                            <li>Performance optimization techniques</li>
+                            <li>Subqueries and composition</li>
+                            <li>Memory management strategies</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Graph Algorithms</h3>
+                        <ul>
+                            <li>Centrality and influence measures</li>
+                            <li>Community detection methods</li>
+                            <li>Real-world recommendation systems</li>
+                            <li>Network science applications</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="title-slide">
+                <h2>🎉 Congratulations!</h2>
+                <h3>Day 1 Complete</h3>
+                <br>
+                <div style="background-color: #e8f5e8; padding: 15px; border-radius: 5px;">
+                    <p><strong>You now have:</strong></p>
+                    <ul style="text-align: left; display: inline-block; font-size: 0.9em;">
+                        <li>Enterprise Neo4j ecosystem proficiency (Docker, Desktop 2, Browser, Bloom)</li>
+                        <li>Advanced Cypher query language expertise with optimization</li>
+                        <li>Comprehensive graph database and social network modeling skills</li>
+                        <li>Professional visualization and analytics capabilities</li>
+                        <li>Multi-tool workflow mastery for development and business needs</li>
+                    </ul>
+                </div>
+                <br>
+                <p><strong>Ready for Day 2: Advanced Graph Analytics & Algorithms!</strong></p>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            controls: true,
+            progress: true,
+            center: false,
+            transition: 'slide'
+        });
+    </script>
+</body>
+</html>

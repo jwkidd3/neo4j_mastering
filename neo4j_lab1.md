@@ -1,109 +1,184 @@
-# Lab 1: Neo4j Setup and First Steps with Cypher
+# Lab 1: Neo4j Remote Connection Setup and First Cypher Steps
 
 **Duration:** 45 minutes  
-**Objective:** Master Neo4j ecosystem tools and create your first graph with Cypher fundamentals
+**Objective:** Connect to Neo4j Docker instance via Desktop 2 remote connection and create your first graph
 
 ## Prerequisites
 
-- Docker, Python, Jupyter Lab, and Neo4j Desktop are pre-installed
-- Web browser (Chrome or Firefox recommended)
-- Basic understanding of databases and query concepts
+✅ **Already Installed in Your Environment:**
+- **Neo4j Desktop 2** (connection client)
+- **Docker Desktop** with Neo4j instance running
+- **Python 3.8+** with pip
+- **Jupyter Lab**
+- **Neo4j Python Driver** and required packages
+- **Web browser** (Chrome or Firefox)
 
 ## Learning Outcomes
 
 By the end of this lab, you will:
-- Navigate Neo4j Desktop for project management
-- Launch and configure Neo4j databases
+- Set up remote connection to Neo4j Docker instance via Desktop 2
+- Connect to Neo4j Browser through remote connection
 - Master Neo4j Browser interface for Cypher development
-- Explore Neo4j Bloom for visual graph discovery
+- Create and switch to a dedicated database
 - Understand Cypher's ASCII art syntax
 - Create nodes and relationships with properties
 - Write pattern-matching queries
 - Build your first social network graph
-- Visualize graph data across multiple Neo4j tools
+- Connect to Neo4j from Python/Jupyter
 
-## Part 1: Neo4j Desktop Project Setup (8 minutes)
+## Part 1: Docker and Desktop 2 Connection Setup (10 minutes)
 
-### Step 1: Launch Neo4j Desktop
-1. **Open Neo4j Desktop** from your applications/dock
-2. **Wait for startup** - Desktop should show the main interface
-3. **Check status** - Ensure all services show green indicators
+### Step 1: Verify Neo4j Docker Instance
+Open terminal/command prompt and verify Neo4j is running:
+```bash
+docker ps | grep neo4j
+```
+**Expected Result:** Should show a running Neo4j container
 
-**Expected Result:** Neo4j Desktop main interface with project management panel
+If no container is running, start it (using Neo4j Enterprise for this course):
+```bash
+# Stop any existing Neo4j container
+docker stop neo4j 2>/dev/null
+docker rm neo4j 2>/dev/null
 
-### Step 2: Create Your First Project
-1. **Click "New Project"** button (or use existing project if available)
-2. **Name your project:** "Neo4j Course - Social Network"
-3. **Add description:** "Learning graph databases with social network modeling"
-4. **Create project** - You should see a new project tile
-
-### Step 3: Create and Configure Database
-1. **Within your project, click "Add Database"**
-2. **Choose "Local DBMS"**
-3. **Configure database:**
-   - **Name:** social-network-db
-   - **Password:** coursepassword
-   - **Version:** Latest available (likely 5.x)
-4. **Click "Create"**
-5. **Wait for database creation** (30-60 seconds)
-
-### Step 4: Install Essential Plugins
-1. **Select your database** in the project
-2. **Click "Plugins" tab**
-3. **Install APOC:** Click "Install" next to APOC Core
-4. **Install GDS:** Click "Install" next to Graph Data Science Library
-5. **Wait for installation** to complete
-
-**Verification:** Database shows "Stopped" status with green indicators for plugins
-
-## Part 2: Neo4j Browser Exploration (10 minutes)
-
-### Step 5: Start Database and Launch Browser
-1. **Click "Start" button** on your database
-2. **Wait for startup** (shows "Running" status)
-3. **Click "Open" button** to launch Neo4j Browser
-4. **Alternative:** Navigate directly to http://localhost:7474
-
-### Step 6: Connect to Database
-1. **Connection URL:** bolt://localhost:7687 (should be pre-filled)
-2. **Username:** neo4j
-3. **Password:** coursepassword (what you set in Step 3)
-4. **Click "Connect"**
-
-**Expected Result:** Neo4j Browser interface with query editor at top
-
-### Step 7: Browser Interface Tour
-Explore the main interface components:
-
-```cypher
-// Run this command to get help
-:help
+# Start Neo4j Enterprise 2025.06.0 with APOC and GDS
+docker run --name neo4j \
+  -p 7474:7474 -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/password \
+  -e NEO4J_PLUGINS='["apoc","graph-data-science"]' \
+  -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
+  -d \
+  neo4j:enterprise
 ```
 
+**Note:** This course uses Neo4j Enterprise Edition 2025.06.0 which provides advanced features. Bloom requires a separate license file not included in educational environments.
+
+### Step 2: Launch Neo4j Desktop 2
+1. **Find Neo4j Desktop** on your system:
+   - **Windows**: Start Menu → Neo4j Desktop
+   - **Mac**: Applications folder → Neo4j Desktop
+   - **Linux**: Applications menu → Neo4j Desktop
+2. **Launch the application**
+3. **Wait for startup** - You should see the Neo4j Desktop 2 interface
+
+**Expected Result:** Neo4j Desktop 2 connection interface (no local databases)
+
+### Step 3: Create Remote Connection in Desktop 2
+1. **Look for "Connect" or "Add Connection" option** in Desktop 2
+2. **Choose "Remote Connection" or "Connect to Server"**
+3. **Configure connection details:**
+   - **Connection URL:** bolt://localhost:7687
+   - **Username:** neo4j  
+   - **Password:** password
+   - **Name:** Docker Neo4j (optional, referring to the "neo4j" container)
+4. **Test Connection** - should show successful connection
+5. **Save the connection**
+
+**Expected Result:** Successful remote connection to Docker Neo4j container
+
+### Step 4: Access Neo4j Browser via Desktop 2
+1. **Select your remote connection** in Desktop 2
+2. **Click "Open Browser" or similar option**
+3. **Neo4j Browser should launch** in your web browser
+
+**Alternative - Direct Browser Access:**
+1. **Open web browser** manually  
+2. **Navigate to:** http://localhost:7474
+3. **Connection should work** since Docker instance is running
+
+### Step 5: Connect in Neo4j Browser
+1. **Connection URL:** bolt://localhost:7687 (should be pre-filled)
+2. **Username:** neo4j
+3. **Password:** password
+4. **Click "Connect"**
+
+**Expected Result:** Neo4j Browser interface with empty database
+
+## Part 2: Environment Verification and First Setup (7 minutes)
+
+### Step 6: Verify Connection and Empty Database
+Run these verification queries in Neo4j Browser:
+
 ```cypher
-// Check your database status
+// Check connection and system info
 :sysinfo
 ```
 
 ```cypher
-// See available procedures (should include APOC)
-CALL dbms.procedures() YIELD name 
-WHERE name STARTS WITH "apoc" 
-RETURN count(name) AS apoc_procedures
+// Verify we have an empty database
+MATCH (n) RETURN count(n) AS total_nodes
 ```
 
-**Expected Output:** Should show multiple APOC procedures available
+```cypher
+// Check available procedures (APOC should be available)
+SHOW PROCEDURES 
+WHERE name STARTS WITH "apoc"
+```
 
-### Step 8: Understanding the Browser Layout
+**Expected Output:** 
+- System information showing Neo4j Enterprise 2025.06.0 connected
+- 0 total nodes (empty database)
+- Multiple APOC procedures listed
+
+### Step 7: Explore Browser Interface Components
 - **Query Editor:** Top section where you type Cypher
-- **Result Panel:** Shows query results, graphs, and tables
-- **Left Sidebar:** Database information and guides
+- **Result Panel:** Shows query results, graphs, and tables  
+- **Left Sidebar:** Database information (should show empty database)
 - **Right Sidebar:** Query history and favorites
 
-## Part 3: Cypher ASCII Art and First Nodes (12 minutes)
+Try these browser commands:
+```cypher
+:clear    // Clear results
+:sysinfo  // System information
+```
 
-### Step 9: Learn Cypher Visual Syntax
-Cypher uses ASCII art to represent graph patterns. Practice reading these patterns:
+**To explore database schema (using standard Cypher):**
+```cypher
+// Check what's in the database (should be empty initially)
+MATCH (n) RETURN n LIMIT 10
+
+// This will show nothing since database is empty
+// We'll use this command later after creating nodes
+```
+
+**Browser Help:** Look for help icons (?) in the Browser interface or explore the sidebar panels for guides and documentation.
+
+### Step 8: Verify Enterprise Features
+Let's confirm we have access to Enterprise capabilities:
+
+```cypher
+// Check Neo4j version and edition (should show Enterprise 2025.06.0)
+CALL dbms.components() YIELD name, versions, edition
+RETURN name, versions, edition
+```
+
+```cypher
+// Check Enterprise-specific features available
+SHOW PROCEDURES 
+WHERE name CONTAINS "gds" OR name CONTAINS "apoc"
+```
+
+**Expected Result:** Should show Enterprise edition and many procedures available
+
+## Part 3: Building Your First Graph from Scratch (18 minutes)
+
+### Step 9: Create and Switch to Social Database
+Before building our social network, let's create a dedicated database:
+
+```cypher
+// Create a new database called 'social'
+CREATE DATABASE social
+```
+
+```cypher
+// Switch to the social database
+:use social
+```
+
+**Expected Result:** You should see confirmation that you're now using the "social" database.
+
+### Step 10: Learn Cypher Visual Syntax
+Now that we're in our dedicated social database, let's learn Cypher's ASCII art patterns:
 
 ```cypher
 // Node patterns (read these out loud)
@@ -120,8 +195,8 @@ Cypher uses ASCII art to represent graph patterns. Practice reading these patter
 -[r:KNOWS {since: 2020}]->  // "knows relationship with property"
 ```
 
-### Step 10: Create Your First People
-Let's build a social network step by step:
+### Step 11: Create Your First Social Network
+Starting with our dedicated social database, let's build a complete social network:
 
 ```cypher
 // Create your first person
@@ -129,20 +204,22 @@ CREATE (alice:Person {
   name: "Alice Johnson", 
   age: 25, 
   city: "San Francisco",
-  profession: "Software Engineer"
+  profession: "Software Engineer",
+  email: "alice@techcorp.com"
 })
 RETURN alice
 ```
 
-**Click the node** in the visualization to see its properties.
+**Explore:** Click the node in the visualization to see its properties.
 
 ```cypher
-// Create more people with different properties
+// Create more people with diverse backgrounds
 CREATE (bob:Person {
   name: "Bob Smith", 
   age: 30, 
   city: "New York",
-  profession: "Product Manager"
+  profession: "Product Manager",
+  email: "bob@techcorp.com"
 })
 ```
 
@@ -151,7 +228,8 @@ CREATE (carol:Person {
   name: "Carol Davis", 
   age: 28, 
   city: "London",
-  profession: "Data Scientist"
+  profession: "Data Scientist",
+  email: "carol@research.co.uk"
 })
 ```
 
@@ -160,400 +238,435 @@ CREATE (david:Person {
   name: "David Lee", 
   age: 32, 
   city: "Tokyo",
-  profession: "UX Designer"
+  profession: "UX Designer",
+  email: "david@design.jp"
 })
 ```
 
-### Step 11: View Your Created Nodes
 ```cypher
-// See all people you've created
-MATCH (p:Person) 
-RETURN p
+CREATE (emma:Person {
+  name: "Emma Wilson", 
+  age: 27, 
+  city: "Berlin",
+  profession: "DevOps Engineer",
+  email: "emma@cloudtech.de"
+})
 ```
 
-**Exploration:** 
-- Drag the nodes around to rearrange
-- Click on different nodes to see their properties
-- Notice how Neo4j automatically colors nodes by label
-
-### Step 12: Customize Visualization
-1. **Click on "Person" label** in the result panel (bottom left)
-2. **Choose a color** for Person nodes
-3. **Set caption** to show "name" property instead of ID
-4. **Set size** based on "age" property (optional)
-
-## Part 4: Creating Relationships and Patterns (10 minutes)
-
-### Step 13: Connect People with Relationships
+### Step 12: Create Companies and Organizations
 ```cypher
-// Alice knows Bob (they're college friends)
+// Create tech companies
+CREATE (techcorp:Company {
+  name: "TechCorp", 
+  industry: "Technology", 
+  founded: 2010, 
+  employees: 500,
+  headquarters: "San Francisco",
+  website: "www.techcorp.com"
+})
+```
+
+```cypher
+CREATE (startupx:Company {
+  name: "StartupX", 
+  industry: "AI/ML", 
+  founded: 2018, 
+  employees: 25,
+  headquarters: "London",
+  website: "www.startupx.ai"
+})
+```
+
+### Step 13: Check Your Progress
+```cypher
+// See all nodes you've created so far
+MATCH (n) RETURN n
+```
+
+**Expected Result:** 5 Person nodes and 2 Company nodes displayed in a graph visualization
+
+### Step 14: Create Professional Relationships
+```cypher
+// Alice and Bob work at TechCorp
+MATCH (alice:Person {name: "Alice Johnson"}), (techcorp:Company {name: "TechCorp"})
+CREATE (alice)-[:WORKS_FOR {
+  since: 2020, 
+  role: "Senior Software Engineer", 
+  department: "Platform Engineering",
+  salary_range: "120k-150k"
+}]->(techcorp)
+```
+
+```cypher
+MATCH (bob:Person {name: "Bob Smith"}), (techcorp:Company {name: "TechCorp"})
+CREATE (bob)-[:WORKS_FOR {
+  since: 2019, 
+  role: "Product Manager", 
+  department: "Core Products",
+  salary_range: "130k-160k"
+}]->(techcorp)
+```
+
+```cypher
+// Carol works at StartupX
+MATCH (carol:Person {name: "Carol Davis"}), (startupx:Company {name: "StartupX"})
+CREATE (carol)-[:WORKS_FOR {
+  since: 2021, 
+  role: "Lead Data Scientist", 
+  department: "Research",
+  salary_range: "100k-140k"
+}]->(startupx)
+```
+
+### Step 15: Create Personal Relationships
+```cypher
+// Alice knows Bob (colleagues at TechCorp)
 MATCH (alice:Person {name: "Alice Johnson"}), (bob:Person {name: "Bob Smith"})
 CREATE (alice)-[:KNOWS {
-  since: 2018, 
-  relationship: "college friends",
-  strength: "close"
+  since: 2020, 
+  relationship: "colleague", 
+  context: "work",
+  strength: 8
 }]->(bob)
 ```
 
 ```cypher
-// Bob knows Carol (work colleagues, mutual)
+// Bob knows Carol (university friends)
 MATCH (bob:Person {name: "Bob Smith"}), (carol:Person {name: "Carol Davis"})
-CREATE (bob)-[:KNOWS {since: 2021, relationship: "work colleagues"}]->(carol),
-       (carol)-[:KNOWS {since: 2021, relationship: "work colleagues"}]->(bob)
+CREATE (bob)-[:KNOWS {
+  since: 2015, 
+  relationship: "friend", 
+  context: "university",
+  strength: 9
+}]->(carol)
 ```
 
 ```cypher
-// Carol knows David (university friends)
-MATCH (carol:Person {name: "Carol Davis"}), (david:Person {name: "David Lee"})
-CREATE (carol)-[:KNOWS {since: 2019, relationship: "university friends"}]->(david)
-```
-
-### Step 14: Add Companies and Work Relationships
-```cypher
-// Create companies
-CREATE (techCorp:Company {
-  name: "TechCorp", 
-  industry: "Software", 
-  employees: 500,
-  founded: 2010
-})
+// Alice knows David (met at tech conference)
+MATCH (alice:Person {name: "Alice Johnson"}), (david:Person {name: "David Lee"})
+CREATE (alice)-[:KNOWS {
+  since: 2022, 
+  relationship: "professional contact", 
+  context: "tech conference",
+  strength: 6
+}]->(david)
 ```
 
 ```cypher
-CREATE (designStudio:Company {
-  name: "Design Studio", 
-  industry: "Creative", 
-  employees: 50,
-  founded: 2015
-})
-```
-
-### Step 15: Connect People to Companies
-```cypher
-// Alice works for TechCorp
-MATCH (alice:Person {name: "Alice Johnson"}), (techCorp:Company {name: "TechCorp"})
-CREATE (alice)-[:WORKS_FOR {
-  position: "Software Engineer",
-  since: 2022,
-  salary: 120000
-}]->(techCorp)
-```
-
-```cypher
-// Bob also works for TechCorp
-MATCH (bob:Person {name: "Bob Smith"}), (techCorp:Company {name: "TechCorp"})
-CREATE (bob)-[:WORKS_FOR {
-  position: "Product Manager",
-  since: 2021,
-  salary: 130000
-}]->(techCorp)
-```
-
-```cypher
-// David works for Design Studio
-MATCH (david:Person {name: "David Lee"}), (designStudio:Company {name: "Design Studio"})
-CREATE (david)-[:WORKS_FOR {
-  position: "UX Designer",
-  since: 2020,
-  salary: 95000
-}]->(designStudio)
+// Emma knows Carol (online tech community)
+MATCH (emma:Person {name: "Emma Wilson"}), (carol:Person {name: "Carol Davis"})
+CREATE (emma)-[:KNOWS {
+  since: 2021, 
+  relationship: "online friend", 
+  context: "tech community",
+  strength: 7
+}]->(carol)
 ```
 
 ### Step 16: View Your Complete Network
 ```cypher
-// See everything you've created
-MATCH (n) 
-RETURN n
+// See the complete social network with relationships
+MATCH (n)-[r]-(m) RETURN n, r, m
 ```
 
-**Network Exploration:**
-- Can you identify the clusters in your network?
-- Which people work for the same company?
-- How are people connected through relationships?
+**Expected Result:** Complete graph showing people, companies, and all relationships
 
-## Part 5: Pattern Matching and Queries (12 minutes)
+## Part 4: Querying Your Social Network (7 minutes)
 
 ### Step 17: Basic Pattern Matching
 ```cypher
-// Find all friendships
-MATCH (p1:Person)-[knows:KNOWS]->(p2:Person) 
-RETURN p1.name AS person1, 
-       p2.name AS person2, 
-       knows.relationship AS relationship_type,
-       knows.since AS friends_since
-ORDER BY knows.since
+// Find all people who work for TechCorp
+MATCH (p:Person)-[:WORKS_FOR]->(c:Company {name: "TechCorp"})
+RETURN p.name AS employee, p.profession AS role, p.city AS location
 ```
 
 ```cypher
-// Find people who work for the same company
-MATCH (p1:Person)-[:WORKS_FOR]->(company:Company)<-[:WORKS_FOR]-(p2:Person)
-WHERE p1 <> p2  // Exclude self-matches
-RETURN p1.name AS employee1, 
-       p2.name AS employee2, 
-       company.name AS company
+// Find all of Alice's connections
+MATCH (alice:Person {name: "Alice Johnson"})-[:KNOWS]-(friend)
+RETURN alice.name AS person, friend.name AS connection, friend.city AS friend_city
 ```
 
 ```cypher
-// Find colleagues who are also friends
-MATCH (p1:Person)-[:KNOWS]->(p2:Person),
-      (p1)-[:WORKS_FOR]->(company:Company)<-[:WORKS_FOR]-(p2)
-RETURN p1.name AS person1, 
-       p2.name AS person2, 
-       company.name AS workplace
+// Find people in engineering roles
+MATCH (p:Person)
+WHERE p.profession CONTAINS "Engineer" 
+RETURN p.name AS name, p.profession AS job, p.city AS location
 ```
 
-### Step 18: Filtering with WHERE Clauses
+### Step 18: Advanced Relationship Queries
 ```cypher
-// Find people older than 27
-MATCH (p:Person) 
-WHERE p.age > 27 
-RETURN p.name AS name, p.age AS age, p.city AS city
-ORDER BY p.age DESC
+// Find colleagues (people who work at the same company)
+MATCH (p1:Person)-[:WORKS_FOR]->(c:Company)<-[:WORKS_FOR]-(p2:Person)
+WHERE p1 <> p2
+RETURN p1.name AS person1, p2.name AS person2, c.name AS company
 ```
 
 ```cypher
-// Find people in tech companies
-MATCH (p:Person)-[:WORKS_FOR]->(c:Company) 
-WHERE c.industry = "Software" 
-RETURN p.name AS employee, 
-       p.profession AS role, 
-       c.name AS company
+// Find friends of friends (potential new connections)
+MATCH (start:Person {name: "Alice Johnson"})-[:KNOWS*2]-(friend_of_friend)
+WHERE start <> friend_of_friend
+RETURN DISTINCT friend_of_friend.name AS potential_connection, 
+       friend_of_friend.profession AS their_job
 ```
 
 ```cypher
-// Find long-term friendships (before 2020)
-MATCH (p1:Person)-[k:KNOWS]->(p2:Person) 
-WHERE k.since < 2020 
-RETURN p1.name AS person1, 
-       p2.name AS person2, 
-       k.since AS friendship_started
+// Find strongest relationships
+MATCH (p1:Person)-[k:KNOWS]-(p2:Person)
+WHERE k.strength >= 8
+RETURN p1.name AS person1, p2.name AS person2, k.strength AS strength, k.context AS context
+ORDER BY k.strength DESC
 ```
 
-### Step 19: Aggregation and Counting
+### Step 19: Business Intelligence Queries
 ```cypher
-// Count people by city
-MATCH (p:Person) 
+// Count people by city (geographic distribution)
+MATCH (p:Person)
 RETURN p.city AS city, count(p) AS people_count
 ORDER BY people_count DESC
 ```
 
 ```cypher
-// Count connections per person
-MATCH (p:Person) 
-OPTIONAL MATCH (p)-[r:KNOWS]-() 
-RETURN p.name AS person, 
-       count(r) AS total_connections
-ORDER BY total_connections DESC
-```
-
-```cypher
 // Average age by profession
-MATCH (p:Person) 
-RETURN p.profession AS profession, 
-       avg(p.age) AS average_age,
-       count(p) AS count
+MATCH (p:Person)
+RETURN p.profession AS job, avg(p.age) AS average_age, count(p) AS count
 ORDER BY average_age DESC
 ```
 
-### Step 20: Advanced Pattern Discovery
 ```cypher
-// Find friends of friends (2-hop relationships)
-MATCH (alice:Person {name: "Alice Johnson"})-[:KNOWS]->()-[:KNOWS]->(fof:Person)
-WHERE fof <> alice  // Exclude Alice herself
-RETURN DISTINCT fof.name AS friend_of_friend, fof.profession
+// Company analysis - employees and locations
+MATCH (c:Company)<-[:WORKS_FOR]-(p:Person)
+RETURN c.name AS company, 
+       count(p) AS employee_count,
+       collect(DISTINCT p.city) AS employee_cities,
+       collect(p.profession) AS roles
+```
+
+## Part 5: Neo4j Browser Advanced Visualization (3 minutes)
+
+### Step 20: Neo4j Enterprise Features Available
+**Important Note:** This course uses Neo4j Enterprise Edition 2025.06.0, which provides advanced features beyond Community Edition.
+
+**Enterprise Features Available:**
+- **Advanced Security:** Role-based access control
+- **Performance Monitoring:** Enhanced metrics and monitoring
+- **Graph Data Science:** Advanced algorithms and machine learning
+- **APOC Procedures:** Extended library of graph operations
+- **High Availability:** Clustering capabilities (not used in this course)
+
+**Bloom Status:** While Enterprise edition includes Bloom capabilities, it requires a separate license file for full activation.
+
+### Step 21: Enterprise-Enhanced Browser Visualization
+Let's explore Neo4j Browser with Enterprise edition features:
+
+```cypher
+// Create a comprehensive view of your social network
+MATCH (n)-[r]-(m) 
+RETURN n, r, m
+```
+
+**Enterprise Browser Features:**
+1. **Enhanced Performance:** Faster query execution with Enterprise optimizations
+2. **Advanced Monitoring:** Query performance metrics available
+3. **Extended Procedures:** Access to full APOC and GDS libraries
+4. **Professional Styling:** All standard visualization capabilities
+5. **Security Features:** User management and access controls
+
+**Browser Visualization Features:**
+1. **Interactive Layout:** Click and drag nodes to rearrange
+2. **Zoom Controls:** Use mouse wheel to zoom in/out
+3. **Node Styling:** Customize colors and appearance
+4. **Relationship Inspection:** Click on edges to see properties
+5. **Multi-selection:** Hold Ctrl/Cmd to select multiple nodes
+
+### Step 22: Enterprise Graph Analytics Preview
+**Bonus Enterprise Features:** Let's preview some advanced capabilities available in later labs:
+
+```cypher
+// Example: Advanced APOC procedure (Enterprise enhanced)
+CALL apoc.meta.graph() YIELD nodes, relationships
+RETURN nodes, relationships
 ```
 
 ```cypher
-// Find the shortest path between any two people
-MATCH path = shortestPath((alice:Person {name: "Alice Johnson"})-[:KNOWS*]-(david:Person {name: "David Lee"}))
-RETURN path
+// Example: Check Graph Data Science availability
+CALL gds.version() YIELD gdsVersion
+RETURN gdsVersion
 ```
 
-## Part 6: Neo4j Bloom Visual Exploration (8 minutes)
+**Professional Graph Styling:**
+**Customize Person Nodes:**
+1. **Click "Person" label** in the result panel (bottom left)
+2. **Choose node color** (e.g., blue for people)
+3. **Set node caption** to display name: `{name}`
+4. **Adjust node size** based on importance
 
-### Step 21: Launch Neo4j Bloom
-1. **Return to Neo4j Desktop**
-2. **In your project, click "Open" dropdown** next to your database
-3. **Select "Neo4j Bloom"**
-4. **Wait for Bloom to load** (may take 30-60 seconds)
+**Customize Company Nodes:**
+1. **Click "Company" label** in the result panel
+2. **Choose different color** (e.g., orange for companies)
+3. **Set caption** to show company name: `{name}`
+4. **Use larger size** to represent organizations
 
-### Step 22: Bloom Natural Language Search
-1. **In the search bar, try these searches:**
-   - Type: `Person` (shows all people)
-   - Type: `Alice` (finds Alice Johnson)
-   - Type: `TechCorp` (finds the company)
-   - Type: `Software Engineer` (finds people by profession)
+**Relationship Styling:**
+1. **Click on KNOWS relationships** to see strength and context
+2. **Click on WORKS_FOR relationships** to view role details
+3. **Observe relationship directions** and property details
 
-### Step 23: Interactive Exploration
-1. **Click on Alice's node** in Bloom
-2. **Click "Expand"** to see her connections
-3. **Try expanding other nodes** to explore the network
-4. **Double-click nodes** to see detailed properties
+## Part 6: Python Integration Verification (5 minutes)
 
-### Step 24: Create a Bloom Perspective
-1. **Click "Create Perspective"** in Bloom
-2. **Name it:** "Social Network View"
-3. **Configure node appearance:**
-   - Person nodes: Color by city
-   - Company nodes: Different color/shape
-4. **Save the perspective**
-
-**Bloom Benefits:** Notice how non-technical users can explore the graph without writing Cypher!
-
-## Part 7: Connecting to Python/Jupyter (5 minutes)
-
-### Step 25: Launch Jupyter Lab
+### Step 23: Launch Jupyter Lab
 Open a terminal and run:
 ```bash
 jupyter lab
 ```
 
-### Step 26: Create Test Notebook
+### Step 24: Test Neo4j Python Connection
 1. **Create new Python notebook**
-2. **Name it:** "neo4j_connection_test.ipynb"
-
-### Step 27: Test Neo4j Python Connection
-In your notebook, run:
+2. **Name it:** "neo4j_social_network_analysis.ipynb"
+3. **Run this code:**
 
 ```python
-# Test Neo4j connection from Python
+# Connect to Neo4j Docker instance from Python
 from neo4j import GraphDatabase
 import pandas as pd
 
-# Connect to your database
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "coursepassword"))
+# Connect using same credentials as Browser (to social database)
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"), database="social")
 
-# Test query
+# Query the social network we just created
 with driver.session() as session:
-    result = session.run("MATCH (p:Person) RETURN p.name AS name, p.age AS age")
-    df = pd.DataFrame([record.data() for record in result])
-    print("People in our graph:")
-    print(df)
+    # Get all people and their details
+    result = session.run("""
+        MATCH (p:Person) 
+        RETURN p.name AS name, p.age AS age, p.city AS city, 
+               p.profession AS job, p.email AS email
+        ORDER BY p.name
+    """)
+    people_df = pd.DataFrame([record.data() for record in result])
+    print("People in our social network:")
+    print(people_df)
+    
+    # Get relationship analysis
+    result2 = session.run("""
+        MATCH (p1:Person)-[k:KNOWS]-(p2:Person)
+        RETURN p1.name AS person1, p2.name AS person2, 
+               k.relationship AS type, k.strength AS strength
+        ORDER BY k.strength DESC
+    """)
+    relationships_df = pd.DataFrame([record.data() for record in result2])
+    print("\nRelationships in our network:")
+    print(relationships_df)
 
 driver.close()
+print("✅ Python connection and analysis successful!")
 ```
 
-**Expected Output:** DataFrame showing the people you created
+**Expected Output:** DataFrames showing the social network data you created
 
 ## Lab Completion Checklist
 
-- [ ] Successfully created Neo4j Desktop project
-- [ ] Configured and started database with APOC/GDS plugins
-- [ ] Connected to Neo4j Browser and explored interface
-- [ ] Created Person and Company nodes with properties
-- [ ] Built KNOWS and WORKS_FOR relationships
-- [ ] Wrote pattern-matching queries with WHERE filtering
-- [ ] Performed aggregations and statistical queries
-- [ ] Explored 2-hop relationships (friends of friends)
-- [ ] Used Neo4j Bloom for visual exploration
-- [ ] Connected to Neo4j from Python/Jupyter
-- [ ] Customized visualizations in both Browser and Bloom
+- [ ] Verified Neo4j Docker instance is running
+- [ ] Successfully connected to Docker Neo4j via Desktop 2 remote connection
+- [ ] Connected to Neo4j Browser through remote connection
+- [ ] Created dedicated "social" database and switched to it
+- [ ] Started with empty database and built complete social network
+- [ ] Created 5 Person nodes and 2 Company nodes with detailed properties
+- [ ] Built WORKS_FOR and KNOWS relationships with metadata
+- [ ] Wrote pattern-matching queries for network analysis
+- [ ] Performed business intelligence and social network analysis
+- [ ] Explored friends-of-friends and colleague discovery
+- [ ] Used Neo4j Browser advanced visualization features (professional graph styling)
+- [ ] Connected to Docker Neo4j from Python/Jupyter successfully
+- [ ] Verified complete remote workflow with Docker backend
 
 ## Key Concepts Mastered
 
-1. **Neo4j Ecosystem Navigation:** Desktop, Browser, Bloom workflow
-2. **Cypher ASCII Art:** Reading and writing visual graph patterns
-3. **Node Creation:** Labels, properties, and data types
-4. **Relationship Modeling:** Directed connections with metadata
-5. **Pattern Matching:** MATCH clauses for finding graph structures
-6. **Data Filtering:** WHERE conditions and property comparisons
-7. **Aggregation:** Counting, averaging, and statistical analysis
-8. **Multi-Tool Proficiency:** Technical (Browser) and business (Bloom) interfaces
-9. **Python Integration:** Connecting external applications to Neo4j
+1. **Remote Connection Setup:** Connecting Desktop 2 to Docker Neo4j Enterprise instance
+2. **Database Management:** Creating and switching to dedicated databases
+3. **Neo4j Browser Mastery:** Query interface with Enterprise backend
+4. **Cypher ASCII Art:** Reading and writing visual graph patterns
+5. **Node Creation:** Labels, properties, and comprehensive data modeling
+6. **Relationship Modeling:** Professional and personal connections with metadata
+7. **Pattern Matching:** Complex relationship traversal and analysis
+8. **Social Network Analysis:** Friend discovery and business intelligence
+9. **Enterprise Features:** Advanced procedures and capabilities preview
+10. **Production Workflow:** Enterprise Docker deployment with remote client access
 
-## Troubleshooting Guide
+## Troubleshooting Common Issues
 
-### Common Issues and Solutions
-
-**Neo4j Desktop won't start:**
+### If Docker Neo4j isn't running:
 ```bash
-# Check if any Neo4j processes are running
-ps aux | grep neo4j
-# Kill if necessary and restart Desktop
+# Check if container exists
+docker ps -a | grep neo4j
+
+# Start existing container
+docker start neo4j
+
+# Or create new container (Neo4j Enterprise for course)
+docker run --name neo4j \
+  -p 7474:7474 -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/password \
+  -e NEO4J_PLUGINS='["apoc","graph-data-science"]' \
+  -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
+  -d \
+  neo4j:enterprise
 ```
 
-**Database won't start:**
-- Check the logs in Neo4j Desktop
-- Ensure no port conflicts (7474, 7687)
-- Try stopping and starting again
+### If Desktop 2 remote connection fails:
+- **Check Docker ports:** Ensure 7474 and 7687 are accessible
+- **Verify credentials:** neo4j/password (as set in Docker)
+- **Test direct connection:** Try browser at http://localhost:7474 first
 
-**Browser connection fails:**
-- Verify database is running (green status in Desktop)
-- Check connection URL: bolt://localhost:7687
-- Confirm username/password: neo4j/coursepassword
+### If Browser connection fails:
+- **Verify Docker instance:** `docker ps | grep neo4j`
+- **Check connection URL:** bolt://localhost:7687
+- **Confirm credentials:** neo4j/password
 
-**Bloom won't load:**
-- Ensure database is running
-- Try refreshing the browser
-- Check if Bloom plugin is properly installed
+### About Neo4j Enterprise Edition:
+- **Enterprise features** - Advanced security, monitoring, and performance capabilities
+- **Educational licensing** - Enterprise features available for learning environments
+- **APOC and GDS** - Full access to advanced graph algorithms and procedures
+- **Bloom licensing** - Requires separate license file for full activation
+- **Production note** - Organizations use Enterprise for scalable, secure deployments
 
-**Python connection issues:**
+### If Python connection fails:
 ```python
-# Test basic connectivity
+# Detailed connection test
 from neo4j import GraphDatabase
 try:
-    driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "coursepassword"))
+    driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"), database="social")
     driver.verify_connectivity()
     print("✅ Connection successful!")
+    
+    # Test query
+    with driver.session() as session:
+        result = session.run("RETURN 'Docker Neo4j connection works!' AS message")
+        print(result.single()["message"])
+        
 except Exception as e:
     print(f"❌ Connection failed: {e}")
+    print("Check Docker Neo4j container is running")
 finally:
-    driver.close()
+    if 'driver' in locals():
+        driver.close()
 ```
+
+## Understanding the Remote Architecture
+
+This lab demonstrates a **production-grade architecture:**
+- **Neo4j Enterprise:** Running in Docker container (enterprise-grade features)
+- **Client Tools:** Desktop 2 for management, Browser for development
+- **Remote Connections:** Industry-standard connection pattern
+- **Enterprise Workflow:** Mirrors real enterprise Neo4j environments
+
+This setup teaches both graph database skills and enterprise deployment patterns used in professional Neo4j implementations.
 
 ## Next Steps
 
-Congratulations! You've successfully:
-- Set up a complete Neo4j development environment
-- Created your first graph database with real relationships
-- Learned Cypher fundamentals for querying graph data
-- Explored multiple tools in the Neo4j ecosystem
-- Connected Python to your graph database
+You're now ready for **Lab 2: Advanced Cypher Patterns**, where you'll learn:
+- Complex pattern matching with your social network
+- Advanced aggregation and analytical queries
+- Data import and CSV processing
+- Performance optimization techniques
+- Graph algorithm applications
 
-**In Lab 2**, we'll dive deeper into:
-- Advanced Cypher patterns and operations
-- Complex data types and constraints
-- Query optimization techniques
-- More sophisticated graph modeling
-
-## Practice Exercises (Optional)
-
-If you finish early, try these challenges:
-
-1. **Add Hobbies:** Create Hobby nodes and connect people to their interests
-2. **Add Cities:** Create Location nodes and connect people with LIVES_IN relationships
-3. **Friend Recommendations:** Write a query to suggest new friends based on mutual connections
-4. **Company Analysis:** Find the most connected person in each company
-5. **Social Influence:** Identify who has the most connections in the network
-
-## Quick Reference
-
-**Essential Cypher Patterns:**
-```cypher
-// Create nodes
-CREATE (n:Label {property: value})
-
-// Find nodes
-MATCH (n:Label) WHERE n.property = value RETURN n
-
-// Create relationships
-MATCH (a), (b) WHERE ... CREATE (a)-[:TYPE]->(b)
-
-// Find patterns
-MATCH (a)-[:TYPE]->(b) RETURN a, b
-
-// Count and aggregate
-MATCH (n) RETURN count(n), avg(n.property)
-```
-
-**Neo4j Desktop Workflow:**
-1. Create Project → Create Database → Install Plugins → Start Database
-2. Open Browser for Cypher development
-3. Open Bloom for visual exploration
-4. Connect Python for application development
-
----
-
-**🎉 Lab 1 Complete!**
-
-You now have hands-on experience with the complete Neo4j ecosystem and understand how to create, query, and visualize graph data using multiple tools. This foundation will serve you well as we explore advanced graph analytics in the upcoming labs.
+**Congratulations!** You've successfully built a complete social network from scratch using a Docker-based Neo4j Enterprise instance with remote client connections. This workflow mirrors professional Neo4j development environments and gives you real-world experience with both graph database concepts and modern deployment architectures.

@@ -5,10 +5,21 @@
 
 ## Prerequisites
 
-- Completed Labs 1-6 successfully with comprehensive social network analytics experience
-- Understanding of variable-length paths and complex query patterns from Lab 5
-- Familiarity with business intelligence concepts from Lab 6
-- Knowledge of network analysis and statistical aggregations
+✅ **Already Installed in Your Environment:**
+- **Neo4j Desktop** (connection client)
+- **Docker Desktop** with Neo4j Enterprise 2025.06.0 running (container name: neo4j)
+- **Python 3.8+** with pip
+- **Jupyter Lab**
+- **Neo4j Python Driver** and required packages
+- **Web browser** (Chrome or Firefox)
+
+✅ **From Previous Labs:**
+- **Completed Labs 1-6** successfully with comprehensive social network analytics experience
+- **"Social" database** created and populated from Lab 3
+- **Understanding of variable-length paths** and complex query patterns from Lab 5
+- **Business intelligence concepts** from Lab 6
+- **Remote connection** set up to Docker Neo4j Enterprise instance
+- **Familiarity with Neo4j Browser** interface and optimization techniques
 
 ## Learning Outcomes
 
@@ -24,15 +35,42 @@ By the end of this lab, you will:
 
 ## Part 1: Advanced Pathfinding Algorithms (25 minutes)
 
-### Step 1: Verify Social Network Data and Add Algorithm Infrastructure
+### Step 1: Connect to Social Database and Verify Advanced Data
 ```cypher
-// Check network completeness and add algorithm-friendly properties
+// Switch to social database from Lab 3
+:use social
+```
+
+```cypher
+// Verify comprehensive data from all previous labs
 MATCH (u:User) 
-RETURN count(u) AS total_users
+RETURN count(u) AS total_users,
+       count(DISTINCT u.location) AS unique_locations,
+       count(DISTINCT u.profession) AS unique_professions
+```
 
+```cypher
 MATCH ()-[r:FOLLOWS]->() 
-RETURN count(r) AS follow_relationships
+RETURN count(r) AS follow_relationships,
+       avg(COUNT { (startNode(r))<-[:FOLLOWS]-() }) AS avg_followers
+```
 
+```cypher
+MATCH ()-[r:LIKES]->() 
+RETURN count(r) AS like_interactions
+```
+
+```cypher
+MATCH (p:Post)
+OPTIONAL MATCH (p)-[:TAGGED_WITH]->(t:Topic)
+RETURN count(p) AS total_posts,
+       count(DISTINCT t) AS unique_post_topics
+```
+
+**Expected Results:** 6 users, 8+ follows, 6+ likes, 8+ topics, 6+ posts
+
+### Step 2: Add Algorithm Infrastructure and Relationship Weights
+```cypher
 // Add algorithm-friendly properties to relationships for weighted pathfinding
 MATCH ()-[r:FOLLOWS]->()
 SET r.weight = CASE 
@@ -52,101 +90,96 @@ END
 RETURN "Algorithm properties added to relationships" AS status
 ```
 
-### Step 2: Implement Breadth-First Search (BFS) Algorithm
+### Step 3: Implement Breadth-First Search (BFS) Algorithm
 ```cypher
 // BFS implementation for unweighted shortest paths
 WITH ['alice_codes', 'carol_creates'] AS target_users
 UNWIND target_users AS start_username
 
-MATCH (start:User {username: start_username})
+MATCH (source:User {username: start_username})
 
 // BFS traversal to find shortest paths to all reachable nodes
-CALL {
-  WITH start
-  MATCH path = (start)-[:FOLLOWS*1..5]->(destination:User)
-  WITH destination, min(length(path)) AS shortest_distance, start
+CALL (source) {
+  MATCH path = (source)-[:FOLLOWS*1..5]->(destination:User)
+  WITH destination, min(length(path)) AS shortest_distance
   WHERE shortest_distance <= 4  // Limit to reasonable distances
-  RETURN destination, shortest_distance, start
+  RETURN destination, shortest_distance
 }
 
-RETURN start.username AS source_user,
+RETURN source.username AS source_user,
        destination.username AS destination_user,
        destination.fullName AS destination_name,
        shortest_distance,
-       // Calculate reachability metrics
-       CASE 
-         WHEN shortest_distance = 1 THEN 'Direct Connection'
-         WHEN shortest_distance = 2 THEN 'Friend of Friend'
-         WHEN shortest_distance = 3 THEN 'Extended Network'
-         ELSE 'Distant Connection'
-       END AS connection_strength,
-       // Estimate information flow time (hops as proxy for time)
-       shortest_distance * 6 AS estimated_hours_to_reach
-ORDER BY start.username, shortest_distance, destination_user
+       // Path efficiency classification
+       CASE shortest_distance
+         WHEN 1 THEN 'Direct Connection'
+         WHEN 2 THEN 'Friend of Friend'
+         WHEN 3 THEN 'Extended Network'
+         ELSE 'Distant Network'
+       END AS connection_type,
+       // Reachability score (inverse of distance)
+       round(100.0 / shortest_distance) AS reachability_score
+ORDER BY source_user, shortest_distance, destination_user
 ```
 
-### Step 3: Implement Weighted Dijkstra Algorithm
+### Step 4: Implement Dijkstra's Algorithm for Weighted Paths
 ```cypher
-// Dijkstra's algorithm implementation for weighted shortest paths
+// Dijkstra's algorithm implementation using trust scores and relationship weights
 MATCH (alice:User {username: 'alice_codes'})
 
-// Find weighted shortest paths considering relationship quality
-CALL {
-  WITH alice
-  MATCH path = (alice)-[:FOLLOWS*1..4]->(destination:User)
-  WHERE destination <> alice
+// Find weighted shortest paths considering trust scores and relationship strength
+CALL (alice) {
+  MATCH path = (alice)-[rels:FOLLOWS*1..4]->(destination:User)
+  WITH destination, path, rels,
+       reduce(total_weight = 0, rel IN rels | total_weight + rel.weight) AS path_weight,
+       reduce(trust_product = 1.0, rel IN rels | trust_product * rel.trust_score) AS path_trust
   
-  // Calculate total path weight (lower is better)
-  WITH path, destination,
-       reduce(total_weight = 0, rel IN relationships(path) | total_weight + rel.weight) AS path_weight,
-       reduce(trust_product = 1.0, rel IN relationships(path) | trust_product * rel.trust_score) AS path_trust
+  // Calculate composite pathfinding score (lower is better for weight, higher for trust)
+  WITH destination, path, path_weight, path_trust,
+       path_weight - (path_trust * 2) AS composite_score  // Trust reduces effective weight
   
-  // Find minimum weight path to each destination
-  WITH destination, min(path_weight) AS min_weight, path_trust
-  WHERE min_weight <= 12  // Reasonable weight threshold
+  // Find best path to each destination
+  ORDER BY destination, composite_score
+  WITH destination, collect({path: path, weight: path_weight, trust: path_trust, score: composite_score})[0] AS best_path
   
-  RETURN destination, min_weight, path_trust
+  RETURN destination, best_path.path AS optimal_path, best_path.weight AS total_weight, 
+         best_path.trust AS trust_score, best_path.score AS optimization_score
 }
 
-RETURN alice.username AS source,
-       destination.username AS target,
-       destination.fullName AS target_name,
-       min_weight AS optimal_path_cost,
-       round(path_trust * 1000) / 1000 AS path_trust_score,
-       // Quality assessment
+RETURN destination.username AS destination_user,
+       destination.fullName AS destination_name,
+       length(optimal_path) AS path_length,
+       total_weight AS cumulative_weight,
+       round(trust_score * 1000) / 1000 AS path_trust_score,
+       round(optimization_score * 100) / 100 AS dijkstra_score,
+       // Path quality assessment
        CASE 
-         WHEN min_weight <= 4 THEN 'High Quality Path'
-         WHEN min_weight <= 7 THEN 'Medium Quality Path'
-         WHEN min_weight <= 10 THEN 'Low Quality Path'
-         ELSE 'Poor Quality Path'
+         WHEN trust_score > 0.7 AND total_weight <= 6 THEN 'High Quality Path'
+         WHEN trust_score > 0.5 AND total_weight <= 10 THEN 'Good Quality Path'
+         WHEN trust_score > 0.3 THEN 'Fair Quality Path'
+         ELSE 'Low Quality Path'
        END AS path_quality,
-       // Trust level assessment
-       CASE 
-         WHEN path_trust > 0.7 THEN 'High Trust'
-         WHEN path_trust > 0.5 THEN 'Medium Trust'
-         WHEN path_trust > 0.3 THEN 'Low Trust'
-         ELSE 'Very Low Trust'
-       END AS trust_level
-ORDER BY min_weight, path_trust DESC
-LIMIT 15
+       [node IN nodes(optimal_path) | node.username] AS path_nodes
+ORDER BY dijkstra_score ASC, trust_score DESC
+LIMIT 8
 ```
 
-### Step 4: All-Pairs Shortest Path Analysis
+### Step 5: All-Pairs Shortest Path Analysis
 ```cypher
 // Calculate shortest paths between all user pairs for network analysis
-MATCH (u1:User), (u2:User)
-WHERE u1 <> u2 AND id(u1) < id(u2)  // Avoid duplicates
+MATCH (source:User), (target:User)
+WHERE source <> target AND id(source) < id(target)  // Avoid duplicates and self-loops
 
-OPTIONAL MATCH path = shortestPath((u1)-[:FOLLOWS*1..6]-(u2))
+OPTIONAL MATCH path = shortestPath((source)-[:FOLLOWS*1..6]-(target))
 
-WITH u1, u2, 
+WITH source, target, 
      CASE WHEN path IS NOT NULL THEN length(path) ELSE null END AS distance,
-     path
+     path IS NOT NULL AS is_connected
 
-// Aggregate distance statistics
+// Collect all distance measurements
 WITH collect({
-  user1: u1.username,
-  user2: u2.username,
+  source: source.username,
+  target: target.username,
   distance: distance,
   is_connected: distance IS NOT NULL
 }) AS all_pairs
@@ -164,9 +197,9 @@ RETURN dist AS distance,
 ORDER BY distance
 ```
 
-### Step 5: Path Redundancy and Alternative Routes
+### Step 6: Path Redundancy and Alternative Routes Analysis
 ```cypher
-// Find alternative paths and analyze path redundancy
+// Find alternative paths and analyze path redundancy for network resilience
 MATCH (alice:User {username: 'alice_codes'}), (target:User)
 WHERE alice <> target
 
@@ -201,9 +234,9 @@ LIMIT 12
 
 ## Part 2: Centrality Measures Implementation (25 minutes)
 
-### Step 6: Degree Centrality Analysis
+### Step 7: Degree Centrality Analysis
 ```cypher
-// Calculate degree centrality (in-degree, out-degree, total)
+// Calculate comprehensive degree centrality (in-degree, out-degree, total)
 MATCH (u:User)
 OPTIONAL MATCH (u)<-[:FOLLOWS]-(in_follower:User)
 OPTIONAL MATCH (u)-[:FOLLOWS]->(out_following:User)
@@ -237,7 +270,7 @@ RETURN u.username AS username,
 ORDER BY total_degree_centrality DESC, in_degree DESC
 ```
 
-### Step 7: Betweenness Centrality Approximation
+### Step 8: Betweenness Centrality Approximation
 ```cypher
 // Approximate betweenness centrality by counting shortest path appearances
 MATCH (source:User), (target:User)
@@ -248,8 +281,8 @@ MATCH path = shortestPath((source)-[:FOLLOWS*]-(target))
 WHERE length(path) <= 5  // Limit for performance
 
 // Extract intermediate nodes (excluding source and target)
-UNWIND nodes(path)[1..-1] AS intermediate_node
-WHERE intermediate_node:User
+WITH path, [node IN nodes(path)[1..-1] WHERE node:User] AS intermediate_nodes
+UNWIND intermediate_nodes AS intermediate_node
 
 WITH intermediate_node, count(*) AS times_on_shortest_paths
 WHERE times_on_shortest_paths > 0
@@ -281,80 +314,69 @@ ORDER BY betweenness_centrality DESC
 LIMIT 10
 ```
 
-### Step 8: Closeness Centrality Calculation
+### Step 9: Closeness Centrality Calculation
 ```cypher
-// Calculate closeness centrality (average distance to all reachable nodes)
-MATCH (u:User)
+// Calculate closeness centrality based on average shortest path distances
+MATCH (center:User)
 
-// Calculate distances to all reachable users
+// Find shortest paths from this user to all other reachable users
 CALL {
-  WITH u
-  MATCH path = shortestPath((u)-[:FOLLOWS*1..6]-(other:User))
-  WHERE other <> u
-  RETURN other, length(path) AS distance
+  WITH center
+  MATCH path = shortestPath((center)-[:FOLLOWS*1..6]-(other:User))
+  WHERE other <> center
+  RETURN length(path) AS distance
 }
 
-WITH u, collect({user: other, distance: distance}) AS distances
-WHERE size(distances) > 0
+WITH center, collect(distance) AS all_distances
+WHERE size(all_distances) > 0
 
-// Calculate closeness metrics
-WITH u, distances,
-     size(distances) AS reachable_users,
-     reduce(total_distance = 0, d IN distances | total_distance + d.distance) AS sum_distances
+WITH center, all_distances,
+     reduce(sum = 0, d IN all_distances | sum + d) AS total_distance,
+     size(all_distances) AS reachable_nodes
 
-MATCH (all_users:User)
-WITH u, reachable_users, sum_distances, count(all_users) - 1 AS total_other_users
+// Calculate closeness centrality (inverse of average distance)
+WITH center, all_distances, total_distance, reachable_nodes,
+     total_distance * 1.0 / reachable_nodes AS average_distance,
+     reachable_nodes * 1.0 / total_distance AS closeness_centrality
 
-RETURN u.username AS username,
-       u.fullName AS full_name,
-       reachable_users,
-       total_other_users,
-       round(reachable_users * 100.0 / total_other_users) AS reachability_percent,
-       round(sum_distances * 1.0 / reachable_users * 100) / 100 AS avg_distance,
-       // Closeness centrality (inverse of average distance, normalized)
-       CASE WHEN sum_distances > 0 
-            THEN round(reachable_users * 1000.0 / sum_distances) / 1000
-            ELSE 0 END AS closeness_centrality,
-       // Efficiency score (reachability weighted by closeness)
-       CASE WHEN sum_distances > 0 
-            THEN round((reachable_users * 1.0 / total_other_users) * (reachable_users * 1.0 / sum_distances) * 1000) / 1000
-            ELSE 0 END AS efficiency_score,
+RETURN center.username AS username,
+       center.fullName AS full_name,
+       reachable_nodes AS nodes_reachable,
+       round(average_distance * 100) / 100 AS avg_distance_to_others,
+       round(closeness_centrality * 1000) / 1000 AS closeness_centrality,
        // Centrality classification
        CASE 
-         WHEN reachable_users = total_other_users AND sum_distances <= total_other_users * 2 THEN 'Central Hub'
-         WHEN reachable_users > total_other_users * 0.8 THEN 'Well Connected'
-         WHEN reachable_users > total_other_users * 0.5 THEN 'Moderately Connected'
-         ELSE 'Peripherally Connected'
-       END AS connection_profile
-ORDER BY closeness_centrality DESC, reachability_percent DESC
+         WHEN closeness_centrality > 0.4 THEN 'Highly Central'
+         WHEN closeness_centrality > 0.25 THEN 'Moderately Central'
+         WHEN closeness_centrality > 0.15 THEN 'Somewhat Central'
+         ELSE 'Peripheral'
+       END AS centrality_classification,
+       // Efficiency score for reaching network
+       round(reachable_nodes * 100.0 / total_distance) AS network_efficiency_score
+ORDER BY closeness_centrality DESC
 ```
 
-### Step 9: PageRank Algorithm Implementation
+### Step 10: PageRank Algorithm Implementation
 ```cypher
-// Simplified PageRank calculation using iterative approach
-MATCH (u:User)
-WITH collect(u) AS all_users
-
 // Initialize PageRank values
-UNWIND all_users AS user
-SET user.pagerank = 1.0 / size(all_users)
+MATCH (user:User)
+SET user.pagerank = 1.0
 
-// Perform PageRank iterations (simplified version)
-WITH all_users, 0.85 AS damping_factor
+WITH count(user) AS total_users, 0.85 AS damping_factor
+MATCH (user:User)
 
-// Single iteration for demonstration (in practice, would need multiple iterations)
-UNWIND all_users AS user
-MATCH (user)<-[:FOLLOWS]-(follower:User)
-OPTIONAL MATCH (follower)-[:FOLLOWS]->(following:User)
+// Calculate PageRank using power iteration method
+OPTIONAL MATCH (user)<-[incoming:FOLLOWS]-(follower:User)
+OPTIONAL MATCH (follower)-[:FOLLOWS]->(following_target:User)
 
-WITH user, damping_factor, size(all_users) AS total_users,
+WITH user, total_users, damping_factor,
      collect({
        follower: follower,
        follower_pagerank: follower.pagerank,
-       follower_out_degree: count(following)
+       follower_out_degree: COUNT { (follower)-[:FOLLOWS]->() }
      }) AS incoming_links
 
-WITH user, damping_factor, total_users, incoming_links,
+WITH user, total_users, damping_factor, incoming_links,
      // Calculate PageRank contribution from incoming links
      reduce(pr_sum = 0.0, link IN incoming_links | 
        pr_sum + (link.follower_pagerank / CASE WHEN link.follower_out_degree > 0 THEN link.follower_out_degree ELSE 1 END)
@@ -381,9 +403,9 @@ RETURN user.username AS username,
 ORDER BY pagerank_score DESC
 ```
 
-### Step 10: Eigenvector Centrality Approximation
+### Step 11: Eigenvector Centrality Approximation
 ```cypher
-// Simplified eigenvector centrality calculation
+// Simplified eigenvector centrality calculation based on follower influence
 MATCH (u:User)
 OPTIONAL MATCH (u)<-[:FOLLOWS]-(follower:User)
 OPTIONAL MATCH (follower)<-[:FOLLOWS]-(fof:User)
@@ -421,292 +443,247 @@ ORDER BY eigenvector_centrality DESC, total_follower_influence DESC
 
 ## Part 3: Community Detection and Clustering (20 minutes)
 
-### Step 11: Triangle Counting and Clustering Coefficient
+### Step 12: Triangle Counting and Clustering Coefficient
 ```cypher
-// Count triangles and calculate clustering coefficient for each user
+// Count triangles and calculate clustering coefficient for community detection
 MATCH (u:User)
-OPTIONAL MATCH (u)-[:FOLLOWS]->(friend1:User)-[:FOLLOWS]->(friend2:User)-[:FOLLOWS]->(u)
 
-WITH u, count(DISTINCT friend1) AS triangles
+// Find triangles: user follows two people who follow each other
+OPTIONAL MATCH (u)-[:FOLLOWS]->(friend1:User)-[:FOLLOWS]->(friend2:User)
+WHERE (u)-[:FOLLOWS]->(friend2)
 
-// Count total possible triangles (based on user's degree)
-MATCH (u)-[:FOLLOWS]->(neighbor:User)
-WITH u, triangles, count(neighbor) AS degree
+WITH u, count(DISTINCT friend1) AS triangles,
+     COUNT { (u)-[:FOLLOWS]->() } AS out_degree
 
-// Calculate clustering coefficient
-WITH u, triangles, degree,
-     CASE WHEN degree >= 2 
-          THEN degree * (degree - 1) / 2 
+// Calculate possible triangles and clustering coefficient
+WITH u, triangles, out_degree,
+     CASE WHEN out_degree >= 2 
+          THEN (out_degree * (out_degree - 1)) / 2 
           ELSE 0 END AS possible_triangles
+
+WITH u, triangles, out_degree, possible_triangles,
+     // Clustering coefficient (0-1)
+     CASE WHEN possible_triangles > 0 
+          THEN round(triangles * 1000.0 / possible_triangles) / 1000
+          ELSE 0.0 END AS clustering_coefficient
 
 RETURN u.username AS username,
        u.fullName AS full_name,
-       triangles,
-       degree AS out_degree,
+       triangles AS triangle_count,
+       out_degree AS connections,
        possible_triangles,
-       // Clustering coefficient
-       CASE WHEN possible_triangles > 0 
-            THEN round(triangles * 1000.0 / possible_triangles) / 1000
-            ELSE 0 END AS clustering_coefficient,
-       // Network density around user
+       clustering_coefficient,
+       // Community structure indicator
        CASE 
-         WHEN possible_triangles > 0 AND triangles * 1.0 / possible_triangles > 0.7 THEN 'Tight Cluster'
-         WHEN possible_triangles > 0 AND triangles * 1.0 / possible_triangles > 0.4 THEN 'Moderate Cluster'
-         WHEN possible_triangles > 0 AND triangles * 1.0 / possible_triangles > 0.1 THEN 'Loose Cluster'
-         ELSE 'No Local Clustering'
-       END AS local_clustering_level
-ORDER BY clustering_coefficient DESC, triangles DESC
+         WHEN triangles > 2 AND clustering_coefficient > 0.5 THEN 'Dense Community Core'
+         WHEN triangles > 1 AND clustering_coefficient > 0.3 THEN 'Community Member'
+         WHEN triangles > 0 THEN 'Loosely Connected'
+         ELSE 'Isolated or Star Node'
+       END AS community_role
+ORDER BY clustering_coefficient DESC, triangle_count DESC
 ```
 
-### Step 12: Label Propagation Community Detection
+### Step 13: Label Propagation Community Detection
 ```cypher
-// Initialize each user with their own community label
+// Initialize community labels with user IDs
 MATCH (u:User)
-SET u.community_label = id(u)
+SET u.community_label = u.username
 
-// Perform label propagation iterations
-WITH 1 AS iteration_count
-
-// Single iteration of label propagation
+// Simulate one iteration of label propagation
+WITH 1 AS iteration
 MATCH (u:User)-[:FOLLOWS]->(neighbor:User)
-WITH u, neighbor.community_label AS neighbor_label, count(*) AS label_frequency
-ORDER BY u, label_frequency DESC
 
-// Update to most common neighbor label
-WITH u, collect(neighbor_label)[0] AS most_common_label
-SET u.community_label = most_common_label
+// For each user, collect neighbor labels and find most common
+WITH u, collect(neighbor.community_label) AS neighbor_labels
+WHERE size(neighbor_labels) > 0
+
+// Find most frequent label using APOC
+WITH u, neighbor_labels,
+     apoc.coll.frequencies(neighbor_labels) AS label_frequencies
+
+// Sort frequencies and get the top one
+WITH u, label_frequencies
+ORDER BY u.username
+WITH u, 
+     reduce(top = null, freq IN label_frequencies | 
+       CASE WHEN top IS NULL OR freq.count > top.count 
+            THEN freq 
+            ELSE top END
+     ) AS most_frequent_label
+
+// Update community label if neighbors suggest change
+SET u.community_label = COALESCE(most_frequent_label.item, u.community_label)
+
+// Required WITH clause after SET operation
+WITH count(*) AS updated_users
 
 // Analyze detected communities
 MATCH (u:User)
-WITH u.community_label AS community_id, collect(u) AS community_members
+WITH u.community_label AS community, collect(u) AS members
+WHERE size(members) > 1
 
-RETURN community_id,
-       size(community_members) AS community_size,
-       [member IN community_members | member.username] AS member_usernames,
-       [member IN community_members | member.location] AS member_locations,
-       // Calculate location diversity
-       size(apoc.coll.toSet([member IN community_members | member.location])) AS unique_locations,
-       // Community characteristics
+// Calculate internal connectivity first
+WITH community, members,
+     reduce(internal_edges = 0, member IN members |
+       internal_edges + COUNT { (member)-[:FOLLOWS]->(:User {community_label: community}) }
+     ) AS internal_connections
+
+RETURN community AS community_id,
+       size(members) AS community_size,
+       [member IN members | member.username] AS community_members,
+       [member IN members | member.fullName] AS member_names,
+       internal_connections,
+       // Community cohesion metrics
        CASE 
-         WHEN size(community_members) >= 3 THEN 'Significant Community'
-         WHEN size(community_members) = 2 THEN 'Pair Community'
-         ELSE 'Isolated User'
-       END AS community_type
-ORDER BY community_size DESC
+         WHEN size(members) > 2 AND internal_connections > size(members) THEN 'Cohesive Community'
+         WHEN internal_connections > 0 THEN 'Loose Community'
+         ELSE 'Disconnected Group'
+       END AS community_cohesion
+ORDER BY community_size DESC, internal_connections DESC
 ```
 
-### Step 13: Interest-Based Community Analysis
+### Step 14: Interest-Based Community Analysis
 ```cypher
-// Detect communities based on shared interests and interactions
+// Analyze communities based on shared interests and topic preferences
 MATCH (u:User)-[:INTERESTED_IN]->(topic:Topic)
-WITH topic, collect(u) AS users_interested
+WITH topic, collect(u) AS interested_users
+WHERE size(interested_users) >= 2
 
-WHERE size(users_interested) >= 2
+// Analyze cross-topic user overlaps
+WITH topic, interested_users,
+     // Calculate internal social connections
+     reduce(social_connections = 0, user IN interested_users |
+       social_connections + COUNT { (user)-[:FOLLOWS]->(:User) }
+     ) AS total_social_connections
 
-// Analyze interaction patterns within interest communities
-UNWIND users_interested AS user1
-UNWIND users_interested AS user2
-WHERE user1 <> user2
-
-OPTIONAL MATCH (user1)-[interaction:FOLLOWS|LIKES|COMMENTED_ON]-(user2)
-WITH topic, user1, user2, count(interaction) AS interaction_strength
-
-// Aggregate community metrics
-WITH topic.name AS topic_name,
-     count(DISTINCT user1) AS community_size,
-     avg(interaction_strength) AS avg_interaction_strength,
-     count(CASE WHEN interaction_strength > 0 THEN 1 END) AS connected_pairs,
-     count(*) AS total_possible_pairs
-
-RETURN topic_name,
-       community_size,
-       round(avg_interaction_strength * 100) / 100 AS avg_interactions,
-       connected_pairs,
-       total_possible_pairs,
-       round(connected_pairs * 100.0 / total_possible_pairs) AS connectivity_percentage,
-       // Community cohesion classification
+RETURN topic.name AS interest_topic,
+       topic.description AS topic_description,
+       size(interested_users) AS community_size,
+       [user IN interested_users | user.username] AS community_members,
+       total_social_connections AS social_connectivity,
+       round(total_social_connections * 1.0 / size(interested_users)) AS avg_connections_per_member,
+       // Interest community strength
        CASE 
-         WHEN connected_pairs * 100.0 / total_possible_pairs > 50 THEN 'Highly Cohesive'
-         WHEN connected_pairs * 100.0 / total_possible_pairs > 25 THEN 'Moderately Cohesive'
-         WHEN connected_pairs * 100.0 / total_possible_pairs > 10 THEN 'Loosely Cohesive'
-         ELSE 'Interest Group Only'
-       END AS cohesion_level
-ORDER BY connectivity_percentage DESC, community_size DESC
+         WHEN size(interested_users) > 3 AND total_social_connections > size(interested_users) * 2 THEN 'Strong Interest Community'
+         WHEN total_social_connections > size(interested_users) THEN 'Moderate Interest Community'
+         WHEN total_social_connections > 0 THEN 'Weak Interest Community'
+         ELSE 'Isolated Interest Group'
+       END AS community_strength
+ORDER BY community_size DESC, social_connectivity DESC
 ```
 
-### Step 14: Modularity Calculation for Community Quality
-```cypher
-// Calculate modularity to assess community detection quality
-MATCH (u1:User)-[:FOLLOWS]->(u2:User)
-WITH count(*) AS total_edges
-
-// For each detected community, calculate internal vs external edges
-MATCH (u:User)
-WITH u.community_label AS community, collect(u) AS members, total_edges
-
-UNWIND members AS member1
-UNWIND members AS member2
-WHERE member1 <> member2
-
-OPTIONAL MATCH (member1)-[:FOLLOWS]->(member2)
-WITH community, count(*) AS internal_edges, total_edges, size(members) AS community_size
-
-// Calculate expected edges under random model
-MATCH (u:User)
-OPTIONAL MATCH (u)-[:FOLLOWS]->(neighbor:User)
-WITH community, internal_edges, total_edges, community_size,
-     avg(count(neighbor)) AS avg_degree
-
-WITH community, internal_edges, total_edges, community_size, avg_degree,
-     // Expected internal edges under random distribution
-     (community_size * (community_size - 1) * avg_degree) / (total_edges * 2) AS expected_internal_edges
-
-RETURN community,
-       community_size,
-       internal_edges,
-       round(expected_internal_edges * 100) / 100 AS expected_internal_edges,
-       round((internal_edges - expected_internal_edges) * 1000.0 / total_edges) / 1000 AS modularity_contribution,
-       // Quality assessment
-       CASE 
-         WHEN internal_edges > expected_internal_edges * 2 THEN 'Strong Community'
-         WHEN internal_edges > expected_internal_edges * 1.5 THEN 'Good Community'
-         WHEN internal_edges > expected_internal_edges THEN 'Weak Community'
-         ELSE 'Poor Community'
-       END AS community_quality
-ORDER BY modularity_contribution DESC
-```
-
-## Part 4: Network Robustness and Critical Node Analysis (20 minutes)
+## Part 4: Network Topology and Resilience Analysis (20 minutes)
 
 ### Step 15: Critical Node Identification
 ```cypher
-// Identify nodes whose removal would most impact network connectivity
-MATCH (u:User)
+// Identify critical nodes whose removal would fragment the network
+MATCH (critical_candidate:User)
 
-// Calculate impact of removing each user
+// Calculate the impact of removing this user
 CALL {
-  WITH u
+  WITH critical_candidate
   
-  // Count connections that would be lost
-  MATCH (u)-[r:FOLLOWS]-()
-  WITH count(r) AS direct_connections_lost
+  // Find all users except the critical candidate
+  MATCH (remaining:User)
+  WHERE remaining <> critical_candidate
   
-  // Count shortest paths that go through this user
+  // Check connectivity without the critical candidate
   MATCH (source:User), (target:User)
-  WHERE source <> target AND source <> u AND target <> u
+  WHERE source <> target AND source <> critical_candidate AND target <> critical_candidate
+    AND id(source) < id(target)
   
-  OPTIONAL MATCH path1 = shortestPath((source)-[:FOLLOWS*]-(target))
-  OPTIONAL MATCH path2 = shortestPath((source)-[:FOLLOWS*]-(u)-[:FOLLOWS*]-(target))
+  // Find paths that don't go through the critical candidate
+  OPTIONAL MATCH path = shortestPath((source)-[:FOLLOWS*1..6]-(target))
+  WHERE NONE(node IN nodes(path) WHERE node = critical_candidate)
   
-  WITH direct_connections_lost,
-       count(CASE WHEN path1 IS NOT NULL THEN 1 END) AS total_paths_before,
-       count(CASE WHEN path2 IS NOT NULL AND u IN nodes(path1) THEN 1 END) AS paths_through_user
+  WITH source, target, path IS NOT NULL AS can_connect_without_critical
   
-  RETURN direct_connections_lost, paths_through_user
+  RETURN sum(CASE WHEN can_connect_without_critical THEN 1 ELSE 0 END) AS connected_pairs_without,
+         count(*) AS total_pairs_without
 }
 
-RETURN u.username AS username,
-       u.fullName AS full_name,
-       direct_connections_lost,
-       paths_through_user,
-       direct_connections_lost + paths_through_user AS total_impact_score,
-       // Criticality classification
-       CASE 
-         WHEN direct_connections_lost + paths_through_user > 20 THEN 'Critical Node'
-         WHEN direct_connections_lost + paths_through_user > 10 THEN 'Important Node'
-         WHEN direct_connections_lost + paths_through_user > 5 THEN 'Significant Node'
-         ELSE 'Regular Node'
-       END AS criticality_level,
-       // Network vulnerability assessment
-       CASE 
-         WHEN paths_through_user > direct_connections_lost THEN 'Bridge Vulnerability'
-         WHEN direct_connections_lost > paths_through_user THEN 'Hub Vulnerability'
-         ELSE 'Balanced Vulnerability'
-       END AS vulnerability_type
-ORDER BY total_impact_score DESC
-LIMIT 10
-```
-
-### Step 16: Network Fragmentation Analysis
-```cypher
-// Analyze how network fragments when high-degree nodes are removed
-MATCH (u:User)
-OPTIONAL MATCH (u)-[:FOLLOWS]-()
-WITH u, count(*) AS total_degree
-ORDER BY total_degree DESC
-
-// Simulate removal of top connected users
-WITH collect(u)[0..3] AS top_connected_users
-
-UNWIND top_connected_users AS removed_user
-
-// Calculate remaining network connectivity
-MATCH (remaining:User)
-WHERE NOT remaining IN top_connected_users
-
-OPTIONAL MATCH path = shortestPath((remaining)-[:FOLLOWS*1..4]-(other:User))
-WHERE other <> remaining AND NOT other IN top_connected_users
-
-WITH removed_user, count(DISTINCT remaining) AS remaining_users,
-     count(DISTINCT other) AS reachable_users
-
-RETURN removed_user.username AS removed_user,
-       removed_user.followerCount AS removed_user_followers,
-       remaining_users,
-       reachable_users,
-       round(reachable_users * 100.0 / remaining_users) AS connectivity_after_removal,
-       // Network resilience assessment
-       CASE 
-         WHEN reachable_users * 100.0 / remaining_users > 80 THEN 'Network Remains Well Connected'
-         WHEN reachable_users * 100.0 / remaining_users > 60 THEN 'Network Moderately Fragmented'
-         WHEN reachable_users * 100.0 / remaining_users > 40 THEN 'Network Significantly Fragmented'
-         ELSE 'Network Severely Fragmented'
-       END AS fragmentation_impact
-ORDER BY connectivity_after_removal
-```
-
-### Step 17: Bridge Edge Detection
-```cypher
-// Find critical edges (bridges) whose removal would disconnect components
-MATCH (u1:User)-[r:FOLLOWS]->(u2:User)
-
-// For each edge, check if its removal disconnects previously connected nodes
+// Calculate baseline connectivity with all nodes
 CALL {
-  WITH u1, u2, r
+  MATCH (source:User), (target:User)
+  WHERE source <> target AND id(source) < id(target)
   
-  // Check if there's an alternative path not using this edge
-  OPTIONAL MATCH alt_path = shortestPath((u1)-[:FOLLOWS*2..5]-(u2))
-  WHERE NOT r IN relationships(alt_path)
+  OPTIONAL MATCH path = shortestPath((source)-[:FOLLOWS*1..6]-(target))
   
-  RETURN CASE WHEN alt_path IS NULL THEN 1 ELSE 0 END AS is_bridge
+  RETURN sum(CASE WHEN path IS NOT NULL THEN 1 ELSE 0 END) AS connected_pairs_baseline,
+         count(*) AS total_pairs_baseline
 }
 
-WHERE is_bridge = 1
+WITH critical_candidate, connected_pairs_without, total_pairs_without,
+     connected_pairs_baseline, total_pairs_baseline,
+     connected_pairs_baseline - connected_pairs_without AS connectivity_lost
 
-RETURN u1.username AS source_user,
-       u2.username AS target_user,
-       r.relationship AS relationship_type,
-       r.since AS relationship_since,
-       r.weight AS relationship_weight,
-       // Bridge importance assessment
+RETURN critical_candidate.username AS username,
+       critical_candidate.fullName AS full_name,
+       connected_pairs_baseline AS baseline_connectivity,
+       connected_pairs_without AS connectivity_without_user,
+       connectivity_lost AS pairs_disconnected,
+       round(connectivity_lost * 100.0 / connected_pairs_baseline) AS connectivity_impact_percent,
+       // Critical node classification
        CASE 
-         WHEN r.relationship IN ['close', 'friend'] THEN 'Critical Social Bridge'
-         WHEN r.relationship = 'colleague' THEN 'Professional Bridge'
-         WHEN r.relationship = 'professional' THEN 'Business Bridge'
-         ELSE 'Casual Bridge'
-       END AS bridge_type,
-       // Removal impact
-       'Network Disconnection' AS removal_impact
-ORDER BY r.weight, relationship_since
+         WHEN connectivity_lost > connected_pairs_baseline * 0.2 THEN 'Extremely Critical'
+         WHEN connectivity_lost > connected_pairs_baseline * 0.1 THEN 'Highly Critical'
+         WHEN connectivity_lost > connected_pairs_baseline * 0.05 THEN 'Moderately Critical'
+         WHEN connectivity_lost > 0 THEN 'Somewhat Critical'
+         ELSE 'Non-Critical'
+       END AS criticality_level
+ORDER BY connectivity_impact_percent DESC, connectivity_lost DESC
+LIMIT 8
 ```
 
-### Step 18: Network Diameter and Small-World Properties
+### Step 16: Bridge Detection and Network Fragmentation Analysis
 ```cypher
-// Calculate network diameter and analyze small-world characteristics
-MATCH (u1:User), (u2:User)
-WHERE u1 <> u2 AND id(u1) < id(u2)
+// Identify bridge edges critical for network connectivity
+MATCH (source:User)-[bridge:FOLLOWS]->(target:User)
 
-OPTIONAL MATCH path = shortestPath((u1)-[:FOLLOWS*1..6]-(u2))
+// Test network connectivity without this specific edge
+CALL (source, target, bridge) {
+  // Look for alternative paths that don't use this bridge edge
+  OPTIONAL MATCH alt_path = (source)-[:FOLLOWS*1..4]-(target)
+  WHERE length(alt_path) > 1  // Must be longer than direct connection
+    AND NOT bridge IN relationships(alt_path)
+  
+  RETURN alt_path IS NOT NULL AS has_alternative_path
+}
+
+WITH source, target, bridge, has_alternative_path
+
+RETURN source.username AS source_user,
+       target.username AS target_user,
+       source.fullName AS source_name,
+       target.fullName AS target_name,
+       COALESCE(bridge.relationship, 'standard') AS relationship_type,
+       COALESCE(bridge.trust_score, 0.5) AS trust_score,
+       has_alternative_path AS has_alternatives,
+       // Bridge importance based on alternative paths
+       CASE 
+         WHEN NOT has_alternative_path THEN 'Critical Bridge - No Alternatives'
+         WHEN COALESCE(bridge.trust_score, 0.5) > 0.8 THEN 'High-Trust Bridge'
+         WHEN COALESCE(bridge.relationship, 'standard') IN ['close', 'friend'] THEN 'Strong Social Bridge'
+         ELSE 'Standard Bridge'
+       END AS bridge_importance,
+       // Impact of removal
+       CASE 
+         WHEN NOT has_alternative_path THEN 'Network Fragmentation Risk'
+         WHEN COALESCE(bridge.trust_score, 0.5) > 0.7 THEN 'Reduced Network Quality'
+         ELSE 'Minimal Impact'
+       END AS removal_impact,
+       // Additional bridge metrics
+       CASE WHEN NOT has_alternative_path THEN 1 ELSE 0 END AS is_critical_bridge
+ORDER BY is_critical_bridge DESC, trust_score DESC
+```
+
+### Step 17: Network Diameter and Small-World Analysis
+```cypher
+// Calculate network diameter and analyze small-world properties
+MATCH (source:User), (target:User)
+WHERE source <> target AND id(source) < id(target)
+
+OPTIONAL MATCH path = shortestPath((source)-[:FOLLOWS*1..8]-(target))
 
 WITH collect(CASE WHEN path IS NOT NULL THEN length(path) ELSE null END) AS all_distances
 
@@ -714,15 +691,19 @@ WITH [d IN all_distances WHERE d IS NOT NULL] AS connected_distances,
      size([d IN all_distances WHERE d IS NOT NULL]) AS connected_pairs,
      size(all_distances) AS total_pairs
 
-// Calculate network metrics
+// Calculate network metrics first
 WITH connected_distances, connected_pairs, total_pairs,
      reduce(sum = 0, d IN connected_distances | sum + d) AS total_distance,
      max(connected_distances) AS network_diameter,
      min(connected_distances) AS minimum_distance
 
+// Calculate average path length
+WITH connected_distances, connected_pairs, total_pairs, total_distance, network_diameter, minimum_distance,
+     round(total_distance * 1.0 / size(connected_distances) * 100) / 100 AS average_path_length
+
 RETURN network_diameter,
        minimum_distance,
-       round(total_distance * 1.0 / size(connected_distances) * 100) / 100 AS average_path_length,
+       average_path_length,
        round(connected_pairs * 100.0 / total_pairs) AS network_connectivity_percent,
        size(connected_distances) AS reachable_pairs,
        total_pairs AS total_possible_pairs,
@@ -744,6 +725,8 @@ RETURN network_diameter,
 
 ## Lab Completion Checklist
 
+- [ ] Connected to social database and verified comprehensive data from previous labs
+- [ ] Added algorithm infrastructure with relationship weights and trust scores
 - [ ] Implemented breadth-first search (BFS) for unweighted shortest paths
 - [ ] Built Dijkstra's algorithm for weighted pathfinding with trust scores
 - [ ] Calculated all-pairs shortest paths for comprehensive network analysis
@@ -756,9 +739,7 @@ RETURN network_diameter,
 - [ ] Performed triangle counting and clustering coefficient analysis
 - [ ] Implemented label propagation for community detection
 - [ ] Analyzed interest-based communities with cohesion metrics
-- [ ] Calculated modularity for community quality assessment
 - [ ] Identified critical nodes and network vulnerability points
-- [ ] Analyzed network fragmentation under node removal scenarios
 - [ ] Detected bridge edges critical for network connectivity
 - [ ] Measured network diameter and small-world properties
 
@@ -852,6 +833,38 @@ RETURN node, degree, normalize(degree) AS centrality
 MATCH (node)-[:REL]-(neighbor)
 WITH node, collect(neighbor.label) AS neighbor_labels
 SET node.label = most_frequent(neighbor_labels)
+```
+
+## Troubleshooting Common Issues
+
+### If Docker Neo4j isn't running:
+```bash
+# Check container status
+docker ps -a | grep neo4j
+
+# Start the neo4j container
+docker start neo4j
+```
+
+### If wrong database:
+```cypher
+// Switch to social database
+:use social
+```
+
+### If connection fails:
+- **Verify container:** `docker ps | grep neo4j`
+- **Check connection:** bolt://localhost:7687
+- **Confirm credentials:** neo4j/password
+
+### Performance issues with large algorithms:
+```cypher
+// Use LIMIT to test queries with smaller datasets
+MATCH (n:User) RETURN n LIMIT 100
+
+// Profile algorithms to identify bottlenecks
+PROFILE MATCH path = shortestPath((a:User)-[:FOLLOWS*]-(b:User))
+RETURN length(path)
 ```
 
 ---
