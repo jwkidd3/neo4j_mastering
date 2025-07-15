@@ -35,7 +35,7 @@ deactivate
 ## Mac  
 docker run --name neo4j -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH=neo4j/password -e NEO4J_PLUGINS='["apoc","graph-data-science"]' -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d neo4j:enterprise
 
-## Windows(poweshell)  
+## Windows(powershell)  
 docker run --name neo4j -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH=neo4j/password -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d neo4j:5.15-enterprise  
 
 docker exec neo4j sh -c "wget -O /var/lib/neo4j/plugins/apoc.jar https://github.com/neo4j/apoc/releases/download/5.15.0/apoc-5.15.0-core.jar"  
