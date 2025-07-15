@@ -17,7 +17,7 @@ source .venv/bin/activate
  .venv\Scripts\Activate.ps1
 
 ## 4. Install Jupyter and ipykernel (and your project libraries)
-pip install notebook ipykernel
+pip install notebook ipykernel  
 pip install neo4j pandas numpy matplotlib # Example libraries, add what you need
 
 ## 5. Register the virtual environment as a Jupyter Kernel
