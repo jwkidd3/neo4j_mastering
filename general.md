@@ -47,3 +47,15 @@ docker run --name neo4j `
     -d `
     neo4j:enterprise
 
+$neo4jPlugins = @"
+["apoc","graph-data-science"]
+"@
+
+docker run --name neo4j `
+    -p 7474:7474 -p 7687:7687 `
+    -e NEO4J_AUTH=neo4j/your_secure_password `
+    -e NEO4J_PLUGINS=$neo4jPlugins `
+    -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes `
+    -d `
+    neo4j:enterprise
+
