@@ -57,5 +57,8 @@ docker run --name neo4j `
     -e NEO4J_PLUGINS=$neo4jPlugins `
     -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes `
     -d `
-    neo4j:enterprise
+    neo4j:enterprise  
+
+docker exec neo4j sh -c "wget -O /var/lib/neo4j/plugins/apoc.jar https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/5.15.0/apoc-5.15.0-extended.jar"
+docker restart neo4j
 
