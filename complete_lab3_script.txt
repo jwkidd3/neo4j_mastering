@@ -1,0 +1,1253 @@
+// ======================================================================
+// COMPLETE LAB 3 DATA CREATION SCRIPT
+// Building Complex Social Networks - Ready for Lab 4
+// Duration: Creates comprehensive social network for visualization labs
+// ======================================================================
+
+// ======================================================================
+// PHASE 1: COMPLETE DATABASE CLEANUP
+// ======================================================================
+
+// Drop existing constraints manually
+DROP CONSTRAINT person_email_unique IF EXISTS;
+DROP CONSTRAINT company_name_unique IF EXISTS;
+DROP CONSTRAINT skill_name_unique IF EXISTS;
+DROP CONSTRAINT project_id_unique IF EXISTS;
+DROP CONSTRAINT department_name_unique IF EXISTS;
+DROP CONSTRAINT user_username_unique IF EXISTS;
+DROP CONSTRAINT user_email_unique IF EXISTS;
+DROP CONSTRAINT user_id_unique IF EXISTS;
+DROP CONSTRAINT post_id_unique IF EXISTS;
+DROP CONSTRAINT topic_name_unique IF EXISTS;
+
+// Drop existing indexes manually
+DROP INDEX person_email_index IF EXISTS;
+DROP INDEX company_name_index IF EXISTS;
+DROP INDEX skill_name_index IF EXISTS;
+DROP INDEX person_skills_index IF EXISTS;
+DROP INDEX project_status_index IF EXISTS;
+DROP INDEX person_department_index IF EXISTS;
+DROP INDEX company_industry_index IF EXISTS;
+DROP INDEX user_username_index IF EXISTS;
+DROP INDEX user_location_index IF EXISTS;
+DROP INDEX post_created_at_index IF EXISTS;
+
+// Delete all nodes and relationships
+MATCH (n) DETACH DELETE n;
+
+// Verify database is completely empty
+MATCH (n) RETURN count(n) AS remaining_nodes;
+
+// ======================================================================
+// PHASE 2: SOCIAL NETWORK SCHEMA CREATION
+// ======================================================================
+
+// Create uniqueness constraints for social network
+CREATE CONSTRAINT user_username_unique FOR (u:User) REQUIRE u.username IS UNIQUE;
+CREATE CONSTRAINT user_email_unique FOR (u:User) REQUIRE u.email IS UNIQUE;
+CREATE CONSTRAINT user_id_unique FOR (u:User) REQUIRE u.userId IS UNIQUE;
+CREATE CONSTRAINT post_id_unique FOR (p:Post) REQUIRE p.postId IS UNIQUE;
+CREATE CONSTRAINT topic_name_unique FOR (t:Topic) REQUIRE t.name IS UNIQUE;
+
+// Create performance indexes for social network queries
+CREATE INDEX user_location_index FOR (u:User) ON (u.location);
+CREATE INDEX post_created_at_index FOR (p:Post) ON (p.createdAt);
+CREATE INDEX user_join_date_index FOR (u:User) ON (u.joinDate);
+CREATE INDEX post_likes_index FOR (p:Post) ON (p.likeCount);
+
+// ======================================================================
+// PHASE 3: COMPREHENSIVE USER PROFILES
+// ======================================================================
+
+// Create diverse user profiles with rich social media data
+CREATE (alice:User:Person {
+  userId: 'alice_smith',
+  username: 'alice_codes',
+  email: 'alice.smith@email.com',
+  fullName: 'Alice Smith',
+  bio: 'Full-stack developer passionate about graph databases and data visualization. Coffee enthusiast ☕',
+  age: 28,
+  location: 'San Francisco, CA',
+  coordinates: point({latitude: 37.7749, longitude: -122.4194}),
+  joinDate: date('2022-03-15'),
+  profilePicture: 'https://example.com/profiles/alice.jpg',
+  website: 'https://alicecodes.dev',
+  isVerified: true,
+  followerCount: 1250,
+  followingCount: 340,
+  postCount: 89,
+  preferredLanguage: 'English',
+  timezone: 'America/Los_Angeles',
+  privacyLevel: 'Public',
+  lastActive: datetime('2024-07-15T10:30:00'),
+  accountCreated: datetime('2022-03-15T14:22:00'),
+  interests: ['Technology', 'Data Science', 'Photography', 'Coffee'],
+  profession: 'Software Engineer'
+});
+
+CREATE (bob:User:Person {
+  userId: 'bob_data',
+  username: 'bob_analyst',
+  email: 'bob.wilson@email.com',
+  fullName: 'Bob Wilson',
+  bio: 'Data scientist exploring the intersection of AI and social networks. Always learning 📊',
+  age: 32,
+  location: 'New York, NY',
+  coordinates: point({latitude: 40.7128, longitude: -74.0060}),
+  joinDate: date('2021-11-20'),
+  profilePicture: 'https://example.com/profiles/bob.jpg',
+  website: 'https://datawithbob.com',
+  isVerified: false,
+  followerCount: 890,
+  followingCount: 450,
+  postCount: 156,
+  preferredLanguage: 'English',
+  timezone: 'America/New_York',
+  privacyLevel: 'Public',
+  lastActive: datetime('2024-07-15T09:15:00'),
+  accountCreated: datetime('2021-11-20T16:45:00'),
+  interests: ['Data Science', 'Machine Learning', 'Statistics', 'Basketball'],
+  profession: 'Data Scientist'
+});
+
+CREATE (carol:User:Person {
+  userId: 'carol_design',
+  username: 'carol_creates',
+  email: 'carol.davis@email.com',
+  fullName: 'Carol Davis',
+  bio: 'UX Designer crafting digital experiences that delight users. Design is my superpower 🎨',
+  age: 26,
+  location: 'Austin, TX',
+  coordinates: point({latitude: 30.2672, longitude: -97.7431}),
+  joinDate: date('2023-01-10'),
+  profilePicture: 'https://example.com/profiles/carol.jpg',
+  website: 'https://carolcreates.design',
+  isVerified: true,
+  followerCount: 2100,
+  followingCount: 280,
+  postCount: 203,
+  preferredLanguage: 'English',
+  timezone: 'America/Chicago',
+  privacyLevel: 'Public',
+  lastActive: datetime('2024-07-15T11:45:00'),
+  accountCreated: datetime('2023-01-10T10:30:00'),
+  interests: ['Design', 'User Experience', 'Art', 'Travel'],
+  profession: 'UX Designer'
+});
+
+CREATE (david:User:Person {
+  userId: 'david_devops',
+  username: 'david_cloud',
+  email: 'david.kim@email.com',
+  fullName: 'David Kim',
+  bio: 'DevOps engineer building scalable infrastructure. Cloud native everything ☁️',
+  age: 30,
+  location: 'Seattle, WA',
+  coordinates: point({latitude: 47.6062, longitude: -122.3321}),
+  joinDate: date('2022-07-08'),
+  profilePicture: 'https://example.com/profiles/david.jpg',
+  website: 'https://cloudwithkid.dev',
+  isVerified: false,
+  followerCount: 680,
+  followingCount: 320,
+  postCount: 92,
+  preferredLanguage: 'English',
+  timezone: 'America/Los_Angeles',
+  privacyLevel: 'Public',
+  lastActive: datetime('2024-07-15T08:20:00'),
+  accountCreated: datetime('2022-07-08T13:15:00'),
+  interests: ['Cloud Computing', 'DevOps', 'Automation', 'Gaming'],
+  profession: 'DevOps Engineer'
+});
+
+CREATE (eva:User:Person {
+  userId: 'eva_frontend',
+  username: 'eva_builds',
+  email: 'eva.martinez@email.com',
+  fullName: 'Eva Martinez',
+  bio: 'Frontend developer passionate about React and modern web technologies. Building the future! 🚀',
+  age: 25,
+  location: 'Los Angeles, CA',
+  coordinates: point({latitude: 34.0522, longitude: -118.2437}),
+  joinDate: date('2023-04-22'),
+  profilePicture: 'https://example.com/profiles/eva.jpg',
+  website: 'https://evabuilds.dev',
+  isVerified: false,
+  followerCount: 420,
+  followingCount: 180,
+  postCount: 67,
+  preferredLanguage: 'English',
+  timezone: 'America/Los_Angeles',
+  privacyLevel: 'Public',
+  lastActive: datetime('2024-07-15T12:10:00'),
+  accountCreated: datetime('2023-04-22T09:30:00'),
+  interests: ['Frontend Development', 'React', 'Web Design', 'Music'],
+  profession: 'Frontend Developer'
+});
+
+CREATE (frank:User:Person {
+  userId: 'frank_mobile',
+  username: 'frank_apps',
+  email: 'frank.chen@email.com',
+  fullName: 'Frank Chen',
+  bio: 'Mobile app developer creating apps that change lives. iOS & Android specialist 📱',
+  age: 29,
+  location: 'San Francisco, CA',
+  coordinates: point({latitude: 37.7749, longitude: -122.4194}),
+  joinDate: date('2022-09-12'),
+  profilePicture: 'https://example.com/profiles/frank.jpg',
+  website: 'https://frankapps.dev',
+  isVerified: false,
+  followerCount: 760,
+  followingCount: 290,
+  postCount: 134,
+  preferredLanguage: 'English',
+  timezone: 'America/Los_Angeles',
+  privacyLevel: 'Public',
+  lastActive: datetime('2024-07-15T07:45:00'),
+  accountCreated: datetime('2022-09-12T11:20:00'),
+  interests: ['Mobile Development', 'iOS', 'Android', 'Fitness'],
+  profession: 'Mobile Developer'
+});
+
+CREATE (grace:User:Person {
+  userId: 'grace_pm',
+  username: 'grace_manages',
+  email: 'grace.lee@email.com',
+  fullName: 'Grace Lee',
+  bio: 'Product manager turning ideas into reality. Bridging tech and business goals 💼',
+  age: 33,
+  location: 'Boston, MA',
+  coordinates: point({latitude: 42.3601, longitude: -71.0589}),
+  joinDate: date('2021-05-18'),
+  profilePicture: 'https://example.com/profiles/grace.jpg',
+  website: 'https://gracemanages.com',
+  isVerified: true,
+  followerCount: 1580,
+  followingCount: 420,
+  postCount: 234,
+  preferredLanguage: 'English',
+  timezone: 'America/New_York',
+  privacyLevel: 'Public',
+  lastActive: datetime('2024-07-15T13:25:00'),
+  accountCreated: datetime('2021-05-18T15:10:00'),
+  interests: ['Product Management', 'Strategy', 'Leadership', 'Yoga'],
+  profession: 'Product Manager'
+});
+
+CREATE (henry:User:Person {
+  userId: 'henry_security',
+  username: 'henry_secure',
+  email: 'henry.brown@email.com',
+  fullName: 'Henry Brown',
+  bio: 'Cybersecurity expert protecting digital assets. Security is everyone\'s responsibility 🔐',
+  age: 35,
+  location: 'Washington, DC',
+  coordinates: point({latitude: 38.9072, longitude: -77.0369}),
+  joinDate: date('2020-12-03'),
+  profilePicture: 'https://example.com/profiles/henry.jpg',
+  website: 'https://henrysecure.com',
+  isVerified: true,
+  followerCount: 950,
+  followingCount: 210,
+  postCount: 178,
+  preferredLanguage: 'English',
+  timezone: 'America/New_York',
+  privacyLevel: 'Public',
+  lastActive: datetime('2024-07-15T14:40:00'),
+  accountCreated: datetime('2020-12-03T12:30:00'),
+  interests: ['Cybersecurity', 'Privacy', 'Technology Policy', 'Chess'],
+  profession: 'Security Engineer'
+});
+
+// ======================================================================
+// PHASE 4: TOPIC CATEGORIZATION SYSTEM
+// ======================================================================
+
+// Create comprehensive topic taxonomy for content organization
+CREATE (tech:Topic {
+  name: 'Technology',
+  description: 'Latest trends and developments in technology',
+  category: 'Professional',
+  color: '#3b82f6',
+  followerCount: 15420,
+  postCount: 2890,
+  trending: true,
+  createdAt: datetime('2020-01-01T00:00:00')
+});
+
+CREATE (data_science:Topic {
+  name: 'Data Science',
+  description: 'Analytics, machine learning, and data insights',
+  category: 'Professional',
+  color: '#10b981',
+  followerCount: 8930,
+  postCount: 1560,
+  trending: true,
+  createdAt: datetime('2020-01-01T00:00:00')
+});
+
+CREATE (design:Topic {
+  name: 'Design',
+  description: 'UI/UX design, visual design, and creative processes',
+  category: 'Creative',
+  color: '#f59e0b',
+  followerCount: 12100,
+  postCount: 3240,
+  trending: false,
+  createdAt: datetime('2020-01-01T00:00:00')
+});
+
+CREATE (cloud:Topic {
+  name: 'Cloud Computing',
+  description: 'AWS, Azure, GCP, and cloud-native technologies',
+  category: 'Professional',
+  color: '#8b5cf6',
+  followerCount: 6750,
+  postCount: 980,
+  trending: true,
+  createdAt: datetime('2020-01-01T00:00:00')
+});
+
+CREATE (mobile:Topic {
+  name: 'Mobile Development',
+  description: 'iOS, Android, and cross-platform mobile development',
+  category: 'Professional',
+  color: '#ef4444',
+  followerCount: 5420,
+  postCount: 720,
+  trending: false,
+  createdAt: datetime('2020-01-01T00:00:00')
+});
+
+CREATE (frontend:Topic {
+  name: 'Frontend Development',
+  description: 'React, Vue, Angular, and modern web development',
+  category: 'Professional',
+  color: '#06b6d4',
+  followerCount: 9870,
+  postCount: 1890,
+  trending: true,
+  createdAt: datetime('2020-01-01T00:00:00')
+});
+
+CREATE (product:Topic {
+  name: 'Product Management',
+  description: 'Product strategy, roadmaps, and user insights',
+  category: 'Business',
+  color: '#84cc16',
+  followerCount: 4560,
+  postCount: 890,
+  trending: false,
+  createdAt: datetime('2020-01-01T00:00:00')
+});
+
+CREATE (security:Topic {
+  name: 'Cybersecurity',
+  description: 'Security best practices, threat analysis, and privacy',
+  category: 'Professional',
+  color: '#dc2626',
+  followerCount: 3890,
+  postCount: 560,
+  trending: true,
+  createdAt: datetime('2020-01-01T00:00:00')
+});
+
+CREATE (career:Topic {
+  name: 'Career Development',
+  description: 'Professional growth, networking, and career advice',
+  category: 'Professional',
+  color: '#7c3aed',
+  followerCount: 11200,
+  postCount: 2100,
+  trending: false,
+  createdAt: datetime('2020-01-01T00:00:00')
+});
+
+CREATE (lifestyle:Topic {
+  name: 'Lifestyle',
+  description: 'Work-life balance, hobbies, and personal interests',
+  category: 'Personal',
+  color: '#f97316',
+  followerCount: 18900,
+  postCount: 4560,
+  trending: false,
+  createdAt: datetime('2020-01-01T00:00:00')
+});
+
+// ======================================================================
+// PHASE 5: SOCIAL RELATIONSHIPS NETWORK
+// ======================================================================
+
+// Create complex follow relationships with engagement metrics
+MATCH (alice:User {username: 'alice_codes'}), (bob:User {username: 'bob_analyst'})
+CREATE (alice)-[:FOLLOWS {
+  since: date('2022-05-20'),
+  interactionCount: 45,
+  lastInteraction: datetime('2024-07-14T15:30:00'),
+  relationshipStrength: 8.5,
+  notificationsEnabled: true,
+  isMutual: true
+}]->(bob);
+
+MATCH (bob:User {username: 'bob_analyst'}), (alice:User {username: 'alice_codes'})
+CREATE (bob)-[:FOLLOWS {
+  since: date('2022-05-22'),
+  interactionCount: 38,
+  lastInteraction: datetime('2024-07-15T09:15:00'),
+  relationshipStrength: 8.2,
+  notificationsEnabled: true,
+  isMutual: true
+}]->(alice);
+
+MATCH (alice:User {username: 'alice_codes'}), (carol:User {username: 'carol_creates'})
+CREATE (alice)-[:FOLLOWS {
+  since: date('2023-02-10'),
+  interactionCount: 23,
+  lastInteraction: datetime('2024-07-12T16:45:00'),
+  relationshipStrength: 6.8,
+  notificationsEnabled: false,
+  isMutual: false
+}]->(carol);
+
+MATCH (alice:User {username: 'alice_codes'}), (david:User {username: 'david_cloud'})
+CREATE (alice)-[:FOLLOWS {
+  since: date('2022-08-15'),
+  interactionCount: 67,
+  lastInteraction: datetime('2024-07-15T11:20:00'),
+  relationshipStrength: 9.1,
+  notificationsEnabled: true,
+  isMutual: true
+}]->(david);
+
+MATCH (david:User {username: 'david_cloud'}), (alice:User {username: 'alice_codes'})
+CREATE (david)-[:FOLLOWS {
+  since: date('2022-08-18'),
+  interactionCount: 72,
+  lastInteraction: datetime('2024-07-15T10:30:00'),
+  relationshipStrength: 9.3,
+  notificationsEnabled: true,
+  isMutual: true
+}]->(alice);
+
+MATCH (bob:User {username: 'bob_analyst'}), (grace:User {username: 'grace_manages'})
+CREATE (bob)-[:FOLLOWS {
+  since: date('2021-09-12'),
+  interactionCount: 134,
+  lastInteraction: datetime('2024-07-15T13:25:00'),
+  relationshipStrength: 7.9,
+  notificationsEnabled: true,
+  isMutual: true
+}]->(grace);
+
+MATCH (grace:User {username: 'grace_manages'}), (bob:User {username: 'bob_analyst'})
+CREATE (grace)-[:FOLLOWS {
+  since: date('2021-09-15'),
+  interactionCount: 156,
+  lastInteraction: datetime('2024-07-14T18:45:00'),
+  relationshipStrength: 8.4,
+  notificationsEnabled: true,
+  isMutual: true
+}]->(bob);
+
+MATCH (carol:User {username: 'carol_creates'}), (eva:User {username: 'eva_builds'})
+CREATE (carol)-[:FOLLOWS {
+  since: date('2023-05-08'),
+  interactionCount: 29,
+  lastInteraction: datetime('2024-07-13T14:20:00'),
+  relationshipStrength: 7.2,
+  notificationsEnabled: false,
+  isMutual: true
+}]->(eva);
+
+MATCH (eva:User {username: 'eva_builds'}), (carol:User {username: 'carol_creates'})
+CREATE (eva)-[:FOLLOWS {
+  since: date('2023-05-10'),
+  interactionCount: 34,
+  lastInteraction: datetime('2024-07-15T12:10:00'),
+  relationshipStrength: 7.6,
+  notificationsEnabled: true,
+  isMutual: true
+}]->(carol);
+
+MATCH (frank:User {username: 'frank_apps'}), (eva:User {username: 'eva_builds'})
+CREATE (frank)-[:FOLLOWS {
+  since: date('2023-06-20'),
+  interactionCount: 18,
+  lastInteraction: datetime('2024-07-11T16:30:00'),
+  relationshipStrength: 6.1,
+  notificationsEnabled: false,
+  isMutual: false
+}]->(eva);
+
+MATCH (henry:User {username: 'henry_secure'}), (david:User {username: 'david_cloud'})
+CREATE (henry)-[:FOLLOWS {
+  since: date('2022-10-05'),
+  interactionCount: 89,
+  lastInteraction: datetime('2024-07-15T08:20:00'),
+  relationshipStrength: 8.7,
+  notificationsEnabled: true,
+  isMutual: true
+}]->(david);
+
+MATCH (david:User {username: 'david_cloud'}), (henry:User {username: 'henry_secure'})
+CREATE (david)-[:FOLLOWS {
+  since: date('2022-10-08'),
+  interactionCount: 95,
+  lastInteraction: datetime('2024-07-15T14:40:00'),
+  relationshipStrength: 8.9,
+  notificationsEnabled: true,
+  isMutual: true
+}]->(henry);
+
+MATCH (grace:User {username: 'grace_manages'}), (alice:User {username: 'alice_codes'})
+CREATE (grace)-[:FOLLOWS {
+  since: date('2022-04-30'),
+  interactionCount: 203,
+  lastInteraction: datetime('2024-07-15T10:30:00'),
+  relationshipStrength: 9.2,
+  notificationsEnabled: true,
+  isMutual: false
+}]->(alice);
+
+// ======================================================================
+// PHASE 6: USER INTEREST RELATIONSHIPS
+// ======================================================================
+
+// Connect users to their professional and personal interests
+MATCH (alice:User {username: 'alice_codes'}), (tech:Topic {name: 'Technology'})
+CREATE (alice)-[:INTERESTED_IN {
+  since: date('2022-03-15'),
+  interactionLevel: 'High',
+  lastEngagement: datetime('2024-07-15T10:30:00'),
+  isPrimary: true
+}]->(tech);
+
+MATCH (alice:User {username: 'alice_codes'}), (data_science:Topic {name: 'Data Science'})
+CREATE (alice)-[:INTERESTED_IN {
+  since: date('2022-06-20'),
+  interactionLevel: 'High',
+  lastEngagement: datetime('2024-07-14T16:45:00'),
+  isPrimary: true
+}]->(data_science);
+
+MATCH (alice:User {username: 'alice_codes'}), (frontend:Topic {name: 'Frontend Development'})
+CREATE (alice)-[:INTERESTED_IN {
+  since: date('2022-03-20'),
+  interactionLevel: 'Medium',
+  lastEngagement: datetime('2024-07-13T11:20:00'),
+  isPrimary: false
+}]->(frontend);
+
+MATCH (bob:User {username: 'bob_analyst'}), (data_science:Topic {name: 'Data Science'})
+CREATE (bob)-[:INTERESTED_IN {
+  since: date('2021-11-20'),
+  interactionLevel: 'High',
+  lastEngagement: datetime('2024-07-15T09:15:00'),
+  isPrimary: true
+}]->(data_science);
+
+MATCH (bob:User {username: 'bob_analyst'}), (tech:Topic {name: 'Technology'})
+CREATE (bob)-[:INTERESTED_IN {
+  since: date('2021-12-05'),
+  interactionLevel: 'Medium',
+  lastEngagement: datetime('2024-07-12T14:30:00'),
+  isPrimary: false
+}]->(tech);
+
+MATCH (carol:User {username: 'carol_creates'}), (design:Topic {name: 'Design'})
+CREATE (carol)-[:INTERESTED_IN {
+  since: date('2023-01-10'),
+  interactionLevel: 'High',
+  lastEngagement: datetime('2024-07-15T11:45:00'),
+  isPrimary: true
+}]->(design);
+
+MATCH (carol:User {username: 'carol_creates'}), (frontend:Topic {name: 'Frontend Development'})
+CREATE (carol)-[:INTERESTED_IN {
+  since: date('2023-02-15'),
+  interactionLevel: 'Medium',
+  lastEngagement: datetime('2024-07-14T09:30:00'),
+  isPrimary: false
+}]->(frontend);
+
+MATCH (david:User {username: 'david_cloud'}), (cloud:Topic {name: 'Cloud Computing'})
+CREATE (david)-[:INTERESTED_IN {
+  since: date('2022-07-08'),
+  interactionLevel: 'High',
+  lastEngagement: datetime('2024-07-15T08:20:00'),
+  isPrimary: true
+}]->(cloud);
+
+MATCH (david:User {username: 'david_cloud'}), (tech:Topic {name: 'Technology'})
+CREATE (david)-[:INTERESTED_IN {
+  since: date('2022-07-15'),
+  interactionLevel: 'High',
+  lastEngagement: datetime('2024-07-15T07:45:00'),
+  isPrimary: true
+}]->(tech);
+
+MATCH (eva:User {username: 'eva_builds'}), (frontend:Topic {name: 'Frontend Development'})
+CREATE (eva)-[:INTERESTED_IN {
+  since: date('2023-04-22'),
+  interactionLevel: 'High',
+  lastEngagement: datetime('2024-07-15T12:10:00'),
+  isPrimary: true
+}]->(frontend);
+
+MATCH (frank:User {username: 'frank_apps'}), (mobile:Topic {name: 'Mobile Development'})
+CREATE (frank)-[:INTERESTED_IN {
+  since: date('2022-09-12'),
+  interactionLevel: 'High',
+  lastEngagement: datetime('2024-07-15T07:45:00'),
+  isPrimary: true
+}]->(mobile);
+
+MATCH (grace:User {username: 'grace_manages'}), (product:Topic {name: 'Product Management'})
+CREATE (grace)-[:INTERESTED_IN {
+  since: date('2021-05-18'),
+  interactionLevel: 'High',
+  lastEngagement: datetime('2024-07-15T13:25:00'),
+  isPrimary: true
+}]->(product);
+
+MATCH (grace:User {username: 'grace_manages'}), (career:Topic {name: 'Career Development'})
+CREATE (grace)-[:INTERESTED_IN {
+  since: date('2021-06-01'),
+  interactionLevel: 'Medium',
+  lastEngagement: datetime('2024-07-14T15:20:00'),
+  isPrimary: false
+}]->(career);
+
+MATCH (henry:User {username: 'henry_secure'}), (security:Topic {name: 'Cybersecurity'})
+CREATE (henry)-[:INTERESTED_IN {
+  since: date('2020-12-03'),
+  interactionLevel: 'High',
+  lastEngagement: datetime('2024-07-15T14:40:00'),
+  isPrimary: true
+}]->(security);
+
+MATCH (henry:User {username: 'henry_secure'}), (tech:Topic {name: 'Technology'})
+CREATE (henry)-[:INTERESTED_IN {
+  since: date('2020-12-10'),
+  interactionLevel: 'Medium',
+  lastEngagement: datetime('2024-07-13T16:15:00'),
+  isPrimary: false
+}]->(tech);
+
+// ======================================================================
+// PHASE 7: CONTENT CREATION - POSTS AND INTERACTIONS
+// ======================================================================
+
+// Create diverse posts with rich content and engagement data
+CREATE (post1:Post {
+  postId: 'post_001',
+  content: 'Just finished building an amazing graph visualization dashboard with Neo4j and D3.js! The insights from connected data never cease to amaze me. #GraphDatabase #DataViz',
+  author: 'alice_codes',
+  createdAt: datetime('2024-07-10T09:30:00'),
+  updatedAt: datetime('2024-07-10T09:30:00'),
+  likeCount: 47,
+  commentCount: 8,
+  shareCount: 12,
+  viewCount: 234,
+  isPublic: true,
+  isPinned: false,
+  hashtags: ['GraphDatabase', 'DataViz', 'Neo4j', 'D3js'],
+  mentions: [],
+  mediaType: 'text',
+  language: 'en'
+});
+
+CREATE (post2:Post {
+  postId: 'post_002',
+  content: 'Machine learning model deployment in production requires careful monitoring and validation. Here are 5 key metrics every data scientist should track...',
+  author: 'bob_analyst',
+  createdAt: datetime('2024-07-12T14:20:00'),
+  updatedAt: datetime('2024-07-12T14:20:00'),
+  likeCount: 89,
+  commentCount: 15,
+  shareCount: 23,
+  viewCount: 456,
+  isPublic: true,
+  isPinned: true,
+  hashtags: ['MachineLearning', 'DataScience', 'MLOps'],
+  mentions: [],
+  mediaType: 'text',
+  language: 'en'
+});
+
+CREATE (post3:Post {
+  postId: 'post_003',
+  content: 'User research is the foundation of great design. Spent today interviewing users about their pain points. The insights are golden! 🎯',
+  author: 'carol_creates',
+  createdAt: datetime('2024-07-13T16:45:00'),
+  updatedAt: datetime('2024-07-13T16:45:00'),
+  likeCount: 72,
+  commentCount: 12,
+  shareCount: 18,
+  viewCount: 298,
+  isPublic: true,
+  isPinned: false,
+  hashtags: ['UXDesign', 'UserResearch', 'Design'],
+  mentions: [],
+  mediaType: 'text',
+  language: 'en'
+});
+
+CREATE (post4:Post {
+  postId: 'post_004',
+  content: 'Kubernetes cluster autoscaling just saved our infrastructure costs by 40%! Here\'s how we implemented it with minimal disruption...',
+  author: 'david_cloud',
+  createdAt: datetime('2024-07-14T11:15:00'),
+  updatedAt: datetime('2024-07-14T11:15:00'),
+  likeCount: 156,
+  commentCount: 24,
+  shareCount: 45,
+  viewCount: 789,
+  isPublic: true,
+  isPinned: false,
+  hashtags: ['Kubernetes', 'CloudComputing', 'DevOps', 'CostOptimization'],
+  mentions: [],
+  mediaType: 'text',
+  language: 'en'
+});
+
+CREATE (post5:Post {
+  postId: 'post_005',
+  content: 'React 18 concurrent features are game-changing for user experience. The new Suspense boundaries make loading states so much cleaner! ⚛️',
+  author: 'eva_builds',
+  createdAt: datetime('2024-07-15T08:30:00'),
+  updatedAt: datetime('2024-07-15T08:30:00'),
+  likeCount: 34,
+  commentCount: 6,
+  shareCount: 9,
+  viewCount: 178,
+  isPublic: true,
+  isPinned: false,
+  hashtags: ['React', 'Frontend', 'JavaScript', 'WebDev'],
+  mentions: [],
+  mediaType: 'text',
+  language: 'en'
+});
+
+CREATE (post6:Post {
+  postId: 'post_006',
+  content: 'Mobile app performance optimization tip: Lazy load your images and cache aggressively. Users notice the difference! 📱',
+  author: 'frank_apps',
+  createdAt: datetime('2024-07-15T12:45:00'),
+  updatedAt: datetime('2024-07-15T12:45:00'),
+  likeCount: 28,
+  commentCount: 4,
+  shareCount: 7,
+  viewCount: 145,
+  isPublic: true,
+  isPinned: false,
+  hashtags: ['MobileDev', 'Performance', 'iOS', 'Android'],
+  mentions: [],
+  mediaType: 'text',
+  language: 'en'
+});
+
+CREATE (post7:Post {
+  postId: 'post_007',
+  content: 'Product roadmap planning is an art. Balance user needs, technical debt, and business goals. Here\'s my framework for prioritization...',
+  author: 'grace_manages',
+  createdAt: datetime('2024-07-11T15:20:00'),
+  updatedAt: datetime('2024-07-11T15:20:00'),
+  likeCount: 203,
+  commentCount: 31,
+  shareCount: 67,
+  viewCount: 892,
+  isPublic: true,
+  isPinned: true,
+  hashtags: ['ProductManagement', 'Strategy', 'Roadmap'],
+  mentions: [],
+  mediaType: 'text',
+  language: 'en'
+});
+
+CREATE (post8:Post {
+  postId: 'post_008',
+  content: 'Zero-trust security architecture isn\'t just a buzzword. It\'s essential for modern distributed systems. Here\'s how to implement it...',
+  author: 'henry_secure',
+  createdAt: datetime('2024-07-09T10:30:00'),
+  updatedAt: datetime('2024-07-09T10:30:00'),
+  likeCount: 134,
+  commentCount: 19,
+  shareCount: 38,
+  viewCount: 567,
+  isPublic: true,
+  isPinned: false,
+  hashtags: ['Cybersecurity', 'ZeroTrust', 'Security'],
+  mentions: [],
+  mediaType: 'text',
+  language: 'en'
+});
+
+// ======================================================================
+// PHASE 8: POST AUTHORSHIP AND TOPIC RELATIONSHIPS
+// ======================================================================
+
+// Connect posts to their authors
+MATCH (alice:User {username: 'alice_codes'}), (post1:Post {postId: 'post_001'})
+CREATE (alice)-[:POSTED {timestamp: datetime('2024-07-10T09:30:00')}]->(post1);
+
+MATCH (bob:User {username: 'bob_analyst'}), (post2:Post {postId: 'post_002'})
+CREATE (bob)-[:POSTED {timestamp: datetime('2024-07-12T14:20:00')}]->(post2);
+
+MATCH (carol:User {username: 'carol_creates'}), (post3:Post {postId: 'post_003'})
+CREATE (carol)-[:POSTED {timestamp: datetime('2024-07-13T16:45:00')}]->(post3);
+
+MATCH (david:User {username: 'david_cloud'}), (post4:Post {postId: 'post_004'})
+CREATE (david)-[:POSTED {timestamp: datetime('2024-07-14T11:15:00')}]->(post4);
+
+MATCH (eva:User {username: 'eva_builds'}), (post5:Post {postId: 'post_005'})
+CREATE (eva)-[:POSTED {timestamp: datetime('2024-07-15T08:30:00')}]->(post5);
+
+MATCH (frank:User {username: 'frank_apps'}), (post6:Post {postId: 'post_006'})
+CREATE (frank)-[:POSTED {timestamp: datetime('2024-07-15T12:45:00')}]->(post6);
+
+MATCH (grace:User {username: 'grace_manages'}), (post7:Post {postId: 'post_007'})
+CREATE (grace)-[:POSTED {timestamp: datetime('2024-07-11T15:20:00')}]->(post7);
+
+MATCH (henry:User {username: 'henry_secure'}), (post8:Post {postId: 'post_008'})
+CREATE (henry)-[:POSTED {timestamp: datetime('2024-07-09T10:30:00')}]->(post8);
+
+// Tag posts with relevant topics
+MATCH (post1:Post {postId: 'post_001'}), (tech:Topic {name: 'Technology'})
+CREATE (post1)-[:TAGGED_WITH {relevance: 0.9, confidence: 0.85}]->(tech);
+
+MATCH (post1:Post {postId: 'post_001'}), (data_science:Topic {name: 'Data Science'})
+CREATE (post1)-[:TAGGED_WITH {relevance: 0.7, confidence: 0.8}]->(data_science);
+
+MATCH (post2:Post {postId: 'post_002'}), (data_science:Topic {name: 'Data Science'})
+CREATE (post2)-[:TAGGED_WITH {relevance: 0.95, confidence: 0.9}]->(data_science);
+
+MATCH (post3:Post {postId: 'post_003'}), (design:Topic {name: 'Design'})
+CREATE (post3)-[:TAGGED_WITH {relevance: 0.9, confidence: 0.88}]->(design);
+
+MATCH (post4:Post {postId: 'post_004'}), (cloud:Topic {name: 'Cloud Computing'})
+CREATE (post4)-[:TAGGED_WITH {relevance: 0.92, confidence: 0.9}]->(cloud);
+
+MATCH (post5:Post {postId: 'post_005'}), (frontend:Topic {name: 'Frontend Development'})
+CREATE (post5)-[:TAGGED_WITH {relevance: 0.88, confidence: 0.85}]->(frontend);
+
+MATCH (post6:Post {postId: 'post_006'}), (mobile:Topic {name: 'Mobile Development'})
+CREATE (post6)-[:TAGGED_WITH {relevance: 0.9, confidence: 0.87}]->(mobile);
+
+MATCH (post7:Post {postId: 'post_007'}), (product:Topic {name: 'Product Management'})
+CREATE (post7)-[:TAGGED_WITH {relevance: 0.93, confidence: 0.9}]->(product);
+
+MATCH (post8:Post {postId: 'post_008'}), (security:Topic {name: 'Cybersecurity'})
+CREATE (post8)-[:TAGGED_WITH {relevance: 0.91, confidence: 0.89}]->(security);
+
+// ======================================================================
+// PHASE 9: SOCIAL ENGAGEMENT - LIKES AND INTERACTIONS
+// ======================================================================
+
+// Create comprehensive like relationships with engagement data
+MATCH (bob:User {username: 'bob_analyst'}), (post1:Post {postId: 'post_001'})
+CREATE (bob)-[:LIKES {
+  timestamp: datetime('2024-07-10T10:15:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post1);
+
+MATCH (carol:User {username: 'carol_creates'}), (post1:Post {postId: 'post_001'})
+CREATE (carol)-[:LIKES {
+  timestamp: datetime('2024-07-10T11:30:00'),
+  reactionType: 'love',
+  notificationSent: true
+}]->(post1);
+
+MATCH (david:User {username: 'david_cloud'}), (post1:Post {postId: 'post_001'})
+CREATE (david)-[:LIKES {
+  timestamp: datetime('2024-07-10T14:45:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post1);
+
+MATCH (grace:User {username: 'grace_manages'}), (post1:Post {postId: 'post_001'})
+CREATE (grace)-[:LIKES {
+  timestamp: datetime('2024-07-10T16:20:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post1);
+
+MATCH (alice:User {username: 'alice_codes'}), (post2:Post {postId: 'post_002'})
+CREATE (alice)-[:LIKES {
+  timestamp: datetime('2024-07-12T15:10:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post2);
+
+MATCH (david:User {username: 'david_cloud'}), (post2:Post {postId: 'post_002'})
+CREATE (david)-[:LIKES {
+  timestamp: datetime('2024-07-12T16:30:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post2);
+
+MATCH (grace:User {username: 'grace_manages'}), (post2:Post {postId: 'post_002'})
+CREATE (grace)-[:LIKES {
+  timestamp: datetime('2024-07-12T18:45:00'),
+  reactionType: 'love',
+  notificationSent: true
+}]->(post2);
+
+MATCH (henry:User {username: 'henry_secure'}), (post2:Post {postId: 'post_002'})
+CREATE (henry)-[:LIKES {
+  timestamp: datetime('2024-07-13T09:20:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post2);
+
+MATCH (alice:User {username: 'alice_codes'}), (post3:Post {postId: 'post_003'})
+CREATE (alice)-[:LIKES {
+  timestamp: datetime('2024-07-13T17:15:00'),
+  reactionType: 'love',
+  notificationSent: true
+}]->(post3);
+
+MATCH (eva:User {username: 'eva_builds'}), (post3:Post {postId: 'post_003'})
+CREATE (eva)-[:LIKES {
+  timestamp: datetime('2024-07-13T18:30:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post3);
+
+MATCH (grace:User {username: 'grace_manages'}), (post3:Post {postId: 'post_003'})
+CREATE (grace)-[:LIKES {
+  timestamp: datetime('2024-07-14T08:45:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post3);
+
+MATCH (alice:User {username: 'alice_codes'}), (post4:Post {postId: 'post_004'})
+CREATE (alice)-[:LIKES {
+  timestamp: datetime('2024-07-14T12:30:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post4);
+
+MATCH (bob:User {username: 'bob_analyst'}), (post4:Post {postId: 'post_004'})
+CREATE (bob)-[:LIKES {
+  timestamp: datetime('2024-07-14T13:45:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post4);
+
+MATCH (henry:User {username: 'henry_secure'}), (post4:Post {postId: 'post_004'})
+CREATE (henry)-[:LIKES {
+  timestamp: datetime('2024-07-14T15:20:00'),
+  reactionType: 'love',
+  notificationSent: true
+}]->(post4);
+
+MATCH (frank:User {username: 'frank_apps'}), (post4:Post {postId: 'post_004'})
+CREATE (frank)-[:LIKES {
+  timestamp: datetime('2024-07-14T16:10:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post4);
+
+MATCH (alice:User {username: 'alice_codes'}), (post5:Post {postId: 'post_005'})
+CREATE (alice)-[:LIKES {
+  timestamp: datetime('2024-07-15T09:15:00'),
+  reactionType: 'love',
+  notificationSent: true
+}]->(post5);
+
+MATCH (carol:User {username: 'carol_creates'}), (post5:Post {postId: 'post_005'})
+CREATE (carol)-[:LIKES {
+  timestamp: datetime('2024-07-15T10:30:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post5);
+
+MATCH (frank:User {username: 'frank_apps'}), (post5:Post {postId: 'post_005'})
+CREATE (frank)-[:LIKES {
+  timestamp: datetime('2024-07-15T11:45:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post5);
+
+MATCH (eva:User {username: 'eva_builds'}), (post6:Post {postId: 'post_006'})
+CREATE (eva)-[:LIKES {
+  timestamp: datetime('2024-07-15T13:20:00'),
+  reactionType: 'like',
+  notificationSent: false
+}]->(post6);
+
+MATCH (david:User {username: 'david_cloud'}), (post6:Post {postId: 'post_006'})
+CREATE (david)-[:LIKES {
+  timestamp: datetime('2024-07-15T14:10:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post6);
+
+MATCH (alice:User {username: 'alice_codes'}), (post7:Post {postId: 'post_007'})
+CREATE (alice)-[:LIKES {
+  timestamp: datetime('2024-07-11T16:45:00'),
+  reactionType: 'love',
+  notificationSent: true
+}]->(post7);
+
+MATCH (bob:User {username: 'bob_analyst'}), (post7:Post {postId: 'post_007'})
+CREATE (bob)-[:LIKES {
+  timestamp: datetime('2024-07-11T17:30:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post7);
+
+MATCH (carol:User {username: 'carol_creates'}), (post7:Post {postId: 'post_007'})
+CREATE (carol)-[:LIKES {
+  timestamp: datetime('2024-07-12T09:15:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post7);
+
+MATCH (david:User {username: 'david_cloud'}), (post8:Post {postId: 'post_008'})
+CREATE (david)-[:LIKES {
+  timestamp: datetime('2024-07-09T11:45:00'),
+  reactionType: 'love',
+  notificationSent: true
+}]->(post8);
+
+MATCH (alice:User {username: 'alice_codes'}), (post8:Post {postId: 'post_008'})
+CREATE (alice)-[:LIKES {
+  timestamp: datetime('2024-07-09T14:20:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post8);
+
+MATCH (grace:User {username: 'grace_manages'}), (post8:Post {postId: 'post_008'})
+CREATE (grace)-[:LIKES {
+  timestamp: datetime('2024-07-09T15:30:00'),
+  reactionType: 'like',
+  notificationSent: true
+}]->(post8);
+
+// ======================================================================
+// PHASE 10: COMMENTS AND THREADED DISCUSSIONS
+// ======================================================================
+
+// Create comment nodes for rich discussions
+CREATE (comment1:Comment {
+  commentId: 'comment_001',
+  content: 'Great visualization! What tools did you use for the interactive elements?',
+  author: 'bob_analyst',
+  createdAt: datetime('2024-07-10T10:45:00'),
+  likeCount: 3,
+  isEdited: false,
+  parentCommentId: null
+});
+
+CREATE (comment2:Comment {
+  commentId: 'comment_002',
+  content: 'D3.js for the custom interactions and some custom CSS for animations. Happy to share the code!',
+  author: 'alice_codes',
+  createdAt: datetime('2024-07-10T11:15:00'),
+  likeCount: 5,
+  isEdited: false,
+  parentCommentId: 'comment_001'
+});
+
+CREATE (comment3:Comment {
+  commentId: 'comment_003',
+  content: 'Model validation is so crucial! What metrics do you prioritize for classification tasks?',
+  author: 'grace_manages',
+  createdAt: datetime('2024-07-12T15:30:00'),
+  likeCount: 8,
+  isEdited: false,
+  parentCommentId: null
+});
+
+CREATE (comment4:Comment {
+  commentId: 'comment_004',
+  content: 'I focus on precision/recall balance and always validate on out-of-time data for real-world performance.',
+  author: 'bob_analyst',
+  createdAt: datetime('2024-07-12T16:00:00'),
+  likeCount: 12,
+  isEdited: false,
+  parentCommentId: 'comment_003'
+});
+
+CREATE (comment5:Comment {
+  commentId: 'comment_005',
+  content: 'User interviews are gold! How do you handle participant recruitment for specialized domains?',
+  author: 'alice_codes',
+  createdAt: datetime('2024-07-13T17:30:00'),
+  likeCount: 4,
+  isEdited: false,
+  parentCommentId: null
+});
+
+// Connect comments to posts and users
+MATCH (post1:Post {postId: 'post_001'}), (comment1:Comment {commentId: 'comment_001'})
+CREATE (comment1)-[:REPLIES_TO {timestamp: datetime('2024-07-10T10:45:00')}]->(post1);
+
+MATCH (bob:User {username: 'bob_analyst'}), (comment1:Comment {commentId: 'comment_001'})
+CREATE (bob)-[:POSTED {timestamp: datetime('2024-07-10T10:45:00')}]->(comment1);
+
+MATCH (post1:Post {postId: 'post_001'}), (comment2:Comment {commentId: 'comment_002'})
+CREATE (comment2)-[:REPLIES_TO {timestamp: datetime('2024-07-10T11:15:00')}]->(post1);
+
+MATCH (alice:User {username: 'alice_codes'}), (comment2:Comment {commentId: 'comment_002'})
+CREATE (alice)-[:POSTED {timestamp: datetime('2024-07-10T11:15:00')}]->(comment2);
+
+MATCH (post2:Post {postId: 'post_002'}), (comment3:Comment {commentId: 'comment_003'})
+CREATE (comment3)-[:REPLIES_TO {timestamp: datetime('2024-07-12T15:30:00')}]->(post2);
+
+MATCH (grace:User {username: 'grace_manages'}), (comment3:Comment {commentId: 'comment_003'})
+CREATE (grace)-[:POSTED {timestamp: datetime('2024-07-12T15:30:00')}]->(comment3);
+
+MATCH (post2:Post {postId: 'post_002'}), (comment4:Comment {commentId: 'comment_004'})
+CREATE (comment4)-[:REPLIES_TO {timestamp: datetime('2024-07-12T16:00:00')}]->(post2);
+
+MATCH (bob:User {username: 'bob_analyst'}), (comment4:Comment {commentId: 'comment_004'})
+CREATE (bob)-[:POSTED {timestamp: datetime('2024-07-12T16:00:00')}]->(comment4);
+
+MATCH (post3:Post {postId: 'post_003'}), (comment5:Comment {commentId: 'comment_005'})
+CREATE (comment5)-[:REPLIES_TO {timestamp: datetime('2024-07-13T17:30:00')}]->(post3);
+
+MATCH (alice:User {username: 'alice_codes'}), (comment5:Comment {commentId: 'comment_005'})
+CREATE (alice)-[:POSTED {timestamp: datetime('2024-07-13T17:30:00')}]->(comment5);
+
+// ======================================================================
+// PHASE 11: LOCATION-BASED CHECK-INS AND GEOGRAPHIC DATA
+// ======================================================================
+
+// Create location nodes for check-ins
+CREATE (loc1:Location {
+  locationId: 'loc_001',
+  name: 'TechCorp Headquarters',
+  address: '123 Innovation Drive, San Francisco, CA',
+  coordinates: point({latitude: 37.7749, longitude: -122.4194}),
+  locationType: 'Office',
+  city: 'San Francisco',
+  state: 'California',
+  country: 'USA',
+  checkInCount: 1250,
+  isVerified: true
+});
+
+CREATE (loc2:Location {
+  locationId: 'loc_002',
+  name: 'Data Science Conference 2024',
+  address: '456 Convention Center, Austin, TX',
+  coordinates: point({latitude: 30.2672, longitude: -97.7431}),
+  locationType: 'Event',
+  city: 'Austin',
+  state: 'Texas',
+  country: 'USA',
+  checkInCount: 890,
+  isVerified: true
+});
+
+CREATE (loc3:Location {
+  locationId: 'loc_003',
+  name: 'Blue Bottle Coffee',
+  address: '789 Mission St, San Francisco, CA',
+  coordinates: point({latitude: 37.7849, longitude: -122.4094}),
+  locationType: 'Cafe',
+  city: 'San Francisco',
+  state: 'California',
+  country: 'USA',
+  checkInCount: 2340,
+  isVerified: true
+});
+
+// Create check-in relationships
+MATCH (alice:User {username: 'alice_codes'}), (loc1:Location {locationId: 'loc_001'})
+CREATE (alice)-[:CHECKED_IN {
+  timestamp: datetime('2024-07-15T09:00:00'),
+  duration: duration('PT8H'),
+  activity: 'Working',
+  isPublic: false
+}]->(loc1);
+
+MATCH (bob:User {username: 'bob_analyst'}), (loc2:Location {locationId: 'loc_002'})
+CREATE (bob)-[:CHECKED_IN {
+  timestamp: datetime('2024-07-12T10:30:00'),
+  duration: duration('PT6H'),
+  activity: 'Conference',
+  isPublic: true
+}]->(loc2);
+
+MATCH (carol:User {username: 'carol_creates'}), (loc2:Location {locationId: 'loc_002'})
+CREATE (carol)-[:CHECKED_IN {
+  timestamp: datetime('2024-07-12T10:45:00'),
+  duration: duration('PT6H'),
+  activity: 'Conference',
+  isPublic: true
+}]->(loc2);
+
+MATCH (alice:User {username: 'alice_codes'}), (loc3:Location {locationId: 'loc_003'})
+CREATE (alice)-[:CHECKED_IN {
+  timestamp: datetime('2024-07-13T15:30:00'),
+  duration: duration('PT1H30M'),
+  activity: 'Coffee Meeting',
+  isPublic: true
+}]->(loc3);
+
+MATCH (frank:User {username: 'frank_apps'}), (loc3:Location {locationId: 'loc_003'})
+CREATE (frank)-[:CHECKED_IN {
+  timestamp: datetime('2024-07-13T15:45:00'),
+  duration: duration('PT1H15M'),
+  activity: 'Coffee Meeting',
+  isPublic: true
+}]->(loc3);
+
+// ======================================================================
+// PHASE 12: VERIFICATION AND ANALYTICS SETUP
+// ======================================================================
+
+// Final comprehensive verification
+MATCH (n) 
+RETURN labels(n) AS node_types, 
+       count(n) AS count 
+ORDER BY count DESC;
+
+// Summary of relationships
+MATCH ()-[r]->() 
+RETURN type(r) AS relationship_type, 
+       count(r) AS count 
+ORDER BY count DESC;
+
+// Verify social network structure
+MATCH (u:User)
+OPTIONAL MATCH (u)-[:FOLLOWS]->(following)
+OPTIONAL MATCH (u)<-[:FOLLOWS]-(followers)
+OPTIONAL MATCH (u)-[:POSTED]->(posts)
+OPTIONAL MATCH (posts)<-[:LIKES]-(likers)
+RETURN u.username AS user,
+       count(DISTINCT following) AS following_count,
+       count(DISTINCT followers) AS follower_count,
+       count(DISTINCT posts) AS post_count,
+       count(DISTINCT likers) AS total_likes
+ORDER BY total_likes DESC;
+
+// Verify topic engagement
+MATCH (t:Topic)<-[:INTERESTED_IN]-(u:User)
+RETURN t.name AS topic,
+       count(u) AS interested_users,
+       t.followerCount AS total_followers
+ORDER BY interested_users DESC;
+
+// Verify content engagement
+MATCH (p:Post)
+OPTIONAL MATCH (p)<-[:LIKES]-(likers)
+OPTIONAL MATCH (p)<-[:REPLIES_TO]-(comments)
+RETURN p.postId AS post,
+       p.author AS author,
+       count(DISTINCT likers) AS actual_likes,
+       count(DISTINCT comments) AS actual_comments,
+       p.likeCount AS reported_likes
+ORDER BY actual_likes DESC;
+
+// Success confirmation
+RETURN "✅ Complete Lab 3 Social Network Created Successfully!" AS status,
+       "🎨 Ready for Lab 4 Visualization and Multi-Tool Workflows" AS ready_for,
+       "📊 Comprehensive dataset with users, posts, topics, and rich interactions" AS description,
+       "🌐 Geographic data, engagement metrics, and realistic social patterns included" AS features;
