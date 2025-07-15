@@ -13,6 +13,7 @@ source .venv/bin/activate
 ### On Windows (Command Prompt):  
  .venv\Scripts\activate.bat
 ### On Windows (PowerShell):  
+ Set-ExecutionPolicy Unrestricted -Force
  .venv\Scripts\Activate.ps1
 
 ## 4. Install Jupyter and ipykernel (and your project libraries)
