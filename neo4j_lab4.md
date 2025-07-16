@@ -497,15 +497,14 @@ for key, value in network_metrics.items():
 content_query = """
 MATCH (p:Post)
 OPTIONAL MATCH (p)<-[:LIKES]-(liker:User)
-OPTIONAL MATCH (p)<-[:POSTED]-(author:User)
+OPTIONAL MATCH (author:User)-[:POSTED]->(p)
 OPTIONAL MATCH (p)-[:TAGGED_WITH]->(topic:Topic)
 RETURN p.content AS content,
        author.username AS author,
-       p.likes AS like_count,
-       count(DISTINCT liker) AS actual_likes,
+       count(DISTINCT liker) AS like_count,
        count(DISTINCT topic) AS topic_count,
        p.timestamp AS post_time
-ORDER BY p.likes DESC
+ORDER BY like_count DESC
 """
 
 content_df = run_query(content_query)
