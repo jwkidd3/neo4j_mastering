@@ -1,160 +1,79 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neo4j Day 2 - Advanced Analytics & Graph Algorithms</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/white.css">
     <style>
-        .reveal .slides section {
-            text-align: left;
-            font-size: 0.85em;
-            height: 82vh;
-            padding: 12px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
         .reveal h1, .reveal h2, .reveal h3 {
             color: #2c3e50;
-            text-align: center;
-            margin-bottom: 15px;
         }
-        .reveal h1 { font-size: 1.9em; }
-        .reveal h2 { font-size: 1.5em; }
-        .reveal h3 { font-size: 1.2em; }
-        .reveal h4 { font-size: 1.0em; color: #2c3e50; margin-bottom: 8px; }
         .reveal .title-slide {
-            background-color: #f8f9fa;
-            color: #2c3e50;
-            text-align: center;
-            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+        }
+        .reveal .title-slide h1, .reveal .title-slide h2, .reveal .title-slide h3 {
+            color: white;
         }
         .reveal .session-header {
             background-color: #f8f9fa;
             color: #2c3e50;
-            text-align: center;
-            padding: 18px;
+            padding: 20px;
+            border-left: 5px solid #3498db;
         }
         .reveal .lab-callout {
-            background-color: #e3f2fd;
-            border-left: 5px solid #2196f3;
-            padding: 12px;
-            margin: 8px 0;
+            background-color: #e8f4fd;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
             text-align: center;
         }
         .reveal .lab-callout h3 {
-            color: #1976d2;
-            margin-bottom: 6px;
-            font-size: 1.1em;
-        }
-        .reveal ul {
-            display: block;
-            margin-left: 1em;
-            line-height: 1.3;
-        }
-        .reveal li {
-            margin-bottom: 4px;
+            color: #2980b9;
+            margin-top: 0;
         }
         .reveal .two-column {
             display: flex;
-            justify-content: space-between;
-            gap: 12px;
+            gap: 30px;
         }
         .reveal .column {
             flex: 1;
         }
-        .reveal .highlight {
+        .reveal .highlight-box {
             background-color: #fff3cd;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 6px 0;
-            font-size: 0.9em;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
         }
-        .reveal .example-box {
+        .reveal .code-block {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            margin: 8px 0;
+        }
+        .reveal .algorithm-box {
             background-color: #f0f8ff;
-            border: 1px solid #4682b4;
-            padding: 10px;
+            border: 1px solid #4169e1;
+            padding: 12px;
             border-radius: 4px;
-            margin: 6px 0;
+            margin: 8px 0;
             font-size: 0.85em;
         }
-        .reveal code {
-            background-color: #f4f4f4;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-size: 0.8em;
-        }
-        .reveal .comparison-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 8px 0;
-            font-size: 0.75em;
-        }
-        .reveal .comparison-table th,
-        .reveal .comparison-table td {
-            border: 1px solid #ddd;
-            padding: 4px;
-            text-align: left;
-        }
-        .reveal .comparison-table th {
-            background-color: #f2f2f2;
-        }
-        .reveal .algorithm-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 12px 0;
-        }
-        .reveal .algorithm-item {
-            background-color: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-            border-left: 3px solid #007bff;
-            font-size: 0.85em;
-        }
-        .reveal .performance-box {
-            background-color: #e8f4fd;
-            border: 2px solid #007bff;
-            padding: 10px;
-            border-radius: 6px;
-            margin: 8px 0;
-            text-align: center;
-        }
-        .reveal .cypher-box {
-            background-color: #f8f9fa;
-            border-left: 3px solid #28a745;
-            padding: 10px;
-            margin: 8px 0;
-            font-family: monospace;
-            font-size: 0.8em;
-        }
-        .reveal .complexity-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 12px 0;
-        }
-        .reveal .complexity-item {
-            background-color: #e8f5e8;
-            padding: 8px;
-            border-radius: 4px;
-            border-left: 3px solid #28a745;
-            font-size: 0.85em;
-        }
-        .reveal .optimization-tip {
+        .reveal .business-insight {
             background-color: #f0f4f8;
-            border-left: 3px solid #6c757d;
-            padding: 8px;
-            margin: 6px 0;
+            border-left: 3px solid #28a745;
+            padding: 10px;
+            margin: 8px 0;
             font-size: 0.85em;
         }
-        .reveal .pattern-box {
+        .reveal .performance-tip {
             background-color: #fff2e6;
             border: 1px solid #ff8c00;
-            padding: 10px;
+            padding: 8px;
             border-radius: 4px;
             margin: 6px 0;
             font-size: 0.85em;
@@ -171,605 +90,398 @@
                 <h3>Day 2: Advanced Analytics & Graph Algorithms</h3>
             </section>
 
-            <!-- Course Overview -->
+            <!-- Course Overview Split into Multiple Slides -->
             <section class="session-header">
                 <h2>Day 2 Learning Journey</h2>
-                <div class="two-column">
-                    <div class="column">
-                        <h3>Sessions (Theory)</h3>
-                        <ul>
-                            <li><strong>Session 5:</strong> Advanced Query Patterns</li>
-                            <li><strong>Session 6:</strong> Aggregations & Statistical Analysis</li>
-                            <li><strong>Session 7:</strong> Graph Algorithms Fundamentals</li>
-                            <li><strong>Session 8:</strong> Advanced Network Analysis</li>
-                        </ul>
-                    </div>
-                    <div class="column">
-                        <h3>Labs (Practice)</h3>
-                        <ul>
-                            <li><strong>Lab 5:</strong> Variable-Length Paths & Complex Queries</li>
-                            <li><strong>Lab 6:</strong> Social Network Analytics & Metrics</li>
-                            <li><strong>Lab 7:</strong> Pathfinding & Centrality Measures</li>
-                            <li><strong>Lab 8:</strong> Community Detection & Applications</li>
-                        </ul>
-                    </div>
-                </div>
+                <h3>Sessions & Labs Overview</h3>
+            </section>
+
+            <section>
+                <h2>Day 2 Sessions (Theory)</h2>
+                <ul style="font-size: 1.1em; line-height: 1.6;">
+                    <li><strong>Session 5:</strong> Advanced Query Patterns & Optimization</li>
+                    <li><strong>Session 6:</strong> Aggregations & Statistical Analysis</li>
+                    <li><strong>Session 7:</strong> Graph Algorithms Fundamentals</li>
+                    <li><strong>Session 8:</strong> Advanced Network Analysis</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Day 2 Labs (Practice)</h2>
+                <ul style="font-size: 1.1em; line-height: 1.6;">
+                    <li><strong>Lab 5:</strong> Variable-Length Paths & Complex Queries</li>
+                    <li><strong>Lab 6:</strong> Social Network Analytics & Business Intelligence</li>
+                    <li><strong>Lab 7:</strong> Pathfinding & Centrality Measures</li>
+                    <li><strong>Lab 8:</strong> Community Detection & Real-World Applications</li>
+                </ul>
             </section>
 
             <!-- Session 5: Advanced Query Patterns -->
             <section class="session-header">
-                <h2>Session 5</h2>
-                <h3>Advanced Query Patterns & Optimization</h3>
+                <h2>Session 5: Advanced Query Patterns & Optimization</h2>
+                <h3>Building Complex Graph Traversals</h3>
             </section>
 
             <section>
-                <h3>Variable-Length Path Patterns</h3>
-                <ul>
-                    <li><strong>Basic Syntax:</strong> Use * notation for variable paths</li>
-                    <li><strong>Depth Control:</strong> Specify minimum and maximum hops</li>
-                    <li><strong>Relationship Filtering:</strong> Filter by type and properties</li>
-                    <li><strong>Performance Considerations:</strong> Limit depth to avoid explosion</li>
+                <h3>Variable-Length Path Fundamentals</h3>
+                <p><strong>Variable-length paths</strong> allow traversing relationships of unknown or varying depth, essential for exploring complex network structures.</p>
+                <h4>Core Concepts</h4>
+                <ul style="font-size: 0.9em; line-height: 1.4;">
+                    <li><strong>Syntax:</strong> <code>(start)-[:RELATIONSHIP*min..max]->(end)</code></li>
+                    <li><strong>Depth Control:</strong> Specify minimum and maximum traversal depths</li>
+                    <li><strong>Bidirectional:</strong> Use <code>-[:REL*]-</code> for undirected traversal</li>
+                    <li><strong>Multiple Types:</strong> <code>[:FOLLOWS|LIKES*]</code> for multiple relationship types</li>
+                    <li><strong>Property Access:</strong> Extract node/relationship properties from paths</li>
                 </ul>
-                <div class="cypher-box">
-                    <strong>Variable Path Examples:</strong><br>
-                    (a)-[:KNOWS*1..3]->(b)  // 1 to 3 hops<br>
-                    (a)-[:KNOWS*]->(b)      // Unlimited depth<br>
-                    (a)-[:KNOWS|FOLLOWS*2..4]->(b)  // Multiple types
+            </section>
+
+            <section>
+                <h3>Variable-Length Path Examples</h3>
+                <div class="code-block" style="font-size: 0.8em;">
+                    <strong>Basic Friend-of-Friend Discovery:</strong><br>
+                    MATCH (alice:User {name: 'Alice'})-[:FOLLOWS*1..2]->(suggestions:User)<br>
+                    WHERE alice &lt;&gt; suggestions<br>
+                    RETURN DISTINCT suggestions.name
                 </div>
+                <div class="code-block" style="font-size: 0.8em;">
+                    <strong>Path Property Filtering:</strong><br>
+                    MATCH path = (start)-[:FOLLOWS*2..4]->(end)<br>
+                    WHERE ALL(node IN nodes(path)[1..-1] WHERE node.active = true)<br>
+                    AND ALL(rel IN relationships(path) WHERE rel.strength > 0.5)<br>
+                    RETURN path
+                </div>
+                <div class="performance-tip">
+                    <strong>Critical:</strong> Always set maximum depth to prevent infinite traversals that can crash your database
+                </div>
+            </section>
+
+            <section>
+                <h3>Variable-Length Path Applications</h3>
+                <h4>Real-World Use Cases</h4>
+                <ul style="font-size: 0.9em; line-height: 1.4;">
+                    <li><strong>Social Networks:</strong> Find friends-of-friends, influence propagation chains</li>
+                    <li><strong>Recommendation Systems:</strong> "People you may know" based on mutual connections</li>
+                    <li><strong>Supply Chains:</strong> Trace products through multi-tier supplier networks</li>
+                    <li><strong>Fraud Detection:</strong> Identify suspicious transaction chains</li>
+                    <li><strong>Knowledge Graphs:</strong> Navigate semantic relationships of varying depth</li>
+                    <li><strong>Network Analysis:</strong> Calculate reachability and connectivity metrics</li>
+                </ul>
             </section>
 
             <section>
                 <h3>Complex Pattern Matching</h3>
-                <ul>
-                    <li><strong>Multiple Patterns:</strong> Combine different relationship paths</li>
-                    <li><strong>Optional Patterns:</strong> Use OPTIONAL MATCH for flexible queries</li>
-                    <li><strong>Pattern Comprehensions:</strong> Collect paths and relationships</li>
-                    <li><strong>Conditional Logic:</strong> Apply WHERE within patterns</li>
+                <p><strong>Advanced pattern matching</strong> combines multiple constraints and conditions to create sophisticated graph queries.</p>
+                <h4>Key Techniques</h4>
+                <ul style="font-size: 0.9em; line-height: 1.4;">
+                    <li><strong>Multiple Relationships:</strong> <code>[:FOLLOWS|LIKES|SHARES*]</code> traverse different connection types</li>
+                    <li><strong>Conditional Filtering:</strong> <code>ALL()</code> and <code>ANY()</code> functions for path validation</li>
+                    <li><strong>Path Functions:</strong> <code>nodes(path)</code>, <code>relationships(path)</code>, <code>length(path)</code></li>
+                    <li><strong>Strategic WITH:</strong> Control query execution flow and intermediate results</li>
                 </ul>
-                <div class="example-box">
-                    <strong>Complex Pattern Example:</strong><br>
-                    Find users who are friends and work colleagues:<br>
-                    MATCH (a:User)-[:FRIENDS]->(b:User), (a)-[:COLLEAGUES]->(b)
+                <div class="code-block" style="font-size: 0.8em;">
+                    <strong>Complex Example:</strong><br>
+                    MATCH path = (user)-[:FOLLOWS*1..3]->(target)<br>
+                    WHERE ANY(middle IN nodes(path)[1..-1] WHERE middle.verified = true)<br>
+                    WITH path, target ORDER BY length(path) LIMIT 10<br>
+                    RETURN target.name, length(path) AS hops
                 </div>
             </section>
 
             <section>
-                <h3>Subqueries and WITH Clauses</h3>
-                <ul>
-                    <li><strong>WITH Clause:</strong> Chain query parts and transform data</li>
-                    <li><strong>Aggregation Pipelines:</strong> Build complex analytical flows</li>
-                    <li><strong>Filtering Results:</strong> Apply conditions on aggregated data</li>
-                    <li><strong>Ordering and Limiting:</strong> Control result sets between steps</li>
+                <h3>Query Optimization Strategies</h3>
+                <p><strong>Performance optimization</strong> is critical for production graph applications, especially with complex patterns.</p>
+                <ul style="font-size: 0.9em; line-height: 1.4;">
+                    <li><strong>Index Usage:</strong> Create indexes on frequently filtered properties</li>
+                    <li><strong>Query Planning:</strong> Use <code>EXPLAIN</code> to understand execution plans</li>
+                    <li><strong>Memory Management:</strong> Monitor heap usage for large traversals</li>
+                    <li><strong>Early Filtering:</strong> Apply WHERE clauses as early as possible</li>
+                    <li><strong>Result Limiting:</strong> Use <code>LIMIT</code> strategically throughout query pipeline</li>
+                    <li><strong>Profiling:</strong> <code>PROFILE</code> queries to identify bottlenecks</li>
                 </ul>
-                <div class="cypher-box">
-                    <strong>Subquery Pattern:</strong><br>
-                    MATCH (u:User)-[:POSTED]->(p:Post)<br>
-                    WITH u, count(p) AS posts<br>
-                    WHERE posts > 10<br>
-                    RETURN u.name, posts
-                </div>
-            </section>
-
-            <section>
-                <h3>Query Performance Optimization</h3>
-                <div class="two-column">
-                    <div class="column">
-                        <h4>Best Practices</h4>
-                        <ul>
-                            <li>Use labels to narrow searches</li>
-                            <li>Index frequently queried properties</li>
-                            <li>Limit variable-length paths</li>
-                            <li>Use EXPLAIN and PROFILE</li>
-                        </ul>
-                    </div>
-                    <div class="column">
-                        <h4>Common Pitfalls</h4>
-                        <ul>
-                            <li>Cartesian products without filters</li>
-                            <li>Unlimited path traversals</li>
-                            <li>Missing indexes on WHERE clauses</li>
-                            <li>Large result sets without LIMIT</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <h3>Index Usage and Query Planning</h3>
-                <ul>
-                    <li><strong>Index Types:</strong> Range, text, point, and composite indexes</li>
-                    <li><strong>Query Planner:</strong> How Cypher chooses execution paths</li>
-                    <li><strong>Hints:</strong> Force specific index usage when needed</li>
-                    <li><strong>Statistics:</strong> Database statistics influence planning</li>
-                </ul>
-                <div class="optimization-tip">
-                    <strong>Performance Tip:</strong> Use PROFILE to see actual execution times and row counts, not just plans.
-                </div>
-            </section>
-
-            <section>
-                <h3>Memory Management</h3>
-                <ul>
-                    <li><strong>Eager Operations:</strong> Operations that load all data into memory</li>
-                    <li><strong>Lazy Evaluation:</strong> Stream processing when possible</li>
-                    <li><strong>Memory Configuration:</strong> Heap and page cache settings</li>
-                    <li><strong>Large Query Handling:</strong> Strategies for big datasets</li>
-                </ul>
-                <div class="performance-box">
-                    <h4>Memory Optimization Strategy</h4>
-                    <p>Use LIMIT early, avoid DISTINCT on large sets, and consider periodic COMMIT for write operations</p>
+                <div class="performance-tip">
+                    <strong>Best Practice:</strong> Start with specific nodes using indexed properties, then expand outward
                 </div>
             </section>
 
             <!-- Lab 5 Callout -->
             <section class="lab-callout">
-                <h3>🛠️ Lab 5: Variable-Length Paths & Complex Queries</h3>
+                <h3>🛠 Lab 5: Variable-Length Paths & Complex Queries</h3>
                 <p><strong>Duration:</strong> 75 minutes</p>
-                <ul>
-                    <li>Implement variable-length path traversals for social networks</li>
-                    <li>Find shortest paths between users across multiple relationship types</li>
-                    <li>Create advanced recommendation systems using complex patterns</li>
-                    <li>Build influence propagation models with depth controls</li>
-                    <li>Practice query performance optimization techniques</li>
-                </ul>
+                <p><strong>Focus:</strong> Master advanced Cypher patterns, implement sophisticated recommendation systems, and optimize query performance for complex graph traversals.</p>
             </section>
 
-            <!-- Session 6: Aggregations & Statistical Analysis -->
+            <!-- Session 6: Aggregations -->
             <section class="session-header">
-                <h2>Session 6</h2>
-                <h3>Aggregations & Statistical Analysis</h3>
+                <h2>Session 6: Aggregations & Statistical Analysis</h2>
+                <h3>Business Intelligence with Graph Data</h3>
             </section>
 
             <section>
-                <h3>Core Aggregation Functions</h3>
-                <ul>
-                    <li><strong>COUNT:</strong> Count nodes, relationships, or patterns</li>
-                    <li><strong>SUM, AVG:</strong> Mathematical aggregations on numeric properties</li>
-                    <li><strong>MIN, MAX:</strong> Find extremes in datasets</li>
-                    <li><strong>COLLECT:</strong> Gather values into lists</li>
-                    <li><strong>DISTINCT:</strong> Remove duplicates from aggregations</li>
+                <h3>Advanced Aggregation Functions</h3>
+                <p><strong>Graph aggregations</strong> transform raw relationship data into meaningful business insights and statistical summaries.</p>
+                <h4>Core Aggregation Functions</h4>
+                <ul style="font-size: 0.9em; line-height: 1.4;">
+                    <li><strong>COUNT:</strong> <code>count(nodes), count(relationships), count(DISTINCT property)</code></li>
+                    <li><strong>Mathematical:</strong> <code>sum(), avg(), min(), max(), stdev()</code></li>
+                    <li><strong>COLLECT:</strong> <code>collect(property)</code> - aggregate values into lists</li>
+                    <li><strong>Percentiles:</strong> <code>percentileCont(), percentileDisc()</code> for distribution analysis</li>
+                    <li><strong>Conditional:</strong> <code>count(CASE WHEN condition THEN 1 END)</code></li>
                 </ul>
-                <div class="cypher-box">
-                    <strong>Aggregation Examples:</strong><br>
-                    count(DISTINCT u)  // Unique users<br>
-                    avg(u.age)         // Average age<br>
-                    collect(u.name)    // List of names
+                <div class="code-block" style="font-size: 0.8em;">
+                    <strong>Example - User Engagement Analysis:</strong><br>
+                    MATCH (u:User)-[:POSTED]->(p:Post)<-[:LIKES]-(liker)<br>
+                    RETURN u.name, count(p) AS posts, count(liker) AS total_likes,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;avg(count(liker)) AS avg_likes_per_post
                 </div>
             </section>
 
             <section>
-                <h3>Grouping Operations</h3>
-                <ul>
-                    <li><strong>Implicit Grouping:</strong> Non-aggregated fields create groups</li>
-                    <li><strong>Multiple Grouping:</strong> Group by multiple properties</li>
-                    <li><strong>Hierarchical Grouping:</strong> Nested grouping patterns</li>
-                    <li><strong>Conditional Grouping:</strong> Group based on calculated fields</li>
+                <h3>Statistical Operations & Business Intelligence</h3>
+                <p><strong>Advanced analytics</strong> turn graph patterns into strategic business insights.</p>
+                <ul style="font-size: 0.9em; line-height: 1.4;">
+                    <li><strong>Temporal Analysis:</strong> Group by time periods to track growth and trends</li>
+                    <li><strong>Cohort Analysis:</strong> Track user behavior and retention over time</li>
+                    <li><strong>Distribution Analysis:</strong> Understand data spread and outliers</li>
+                    <li><strong>Predictive Analytics:</strong> Use historical patterns for forecasting</li>
+                    <li><strong>Segmentation:</strong> Group users/content by behavioral patterns</li>
+                    <li><strong>KPI Calculation:</strong> Engagement rates, viral coefficients, growth metrics</li>
                 </ul>
-                <div class="example-box">
-                    <strong>Grouping Example:</strong><br>
-                    MATCH (u:User)-[:LIVES_IN]->(c:City)<br>
-                    RETURN c.name, count(u) AS residents<br>
-                    ORDER BY residents DESC
+                <div class="business-insight">
+                    <strong>Business Value:</strong> Transform graph connectivity into actionable metrics like user lifetime value, content performance scores, and network health indicators
                 </div>
             </section>
 
             <section>
-                <h3>Temporal Aggregations</h3>
-                <ul>
-                    <li><strong>Date Grouping:</strong> Group by year, month, day</li>
-                    <li><strong>Time Windows:</strong> Rolling aggregations over periods</li>
-                    <li><strong>Duration Calculations:</strong> Time differences and trends</li>
-                    <li><strong>Temporal Filtering:</strong> Recent data and time ranges</li>
-                </ul>
-                <div class="cypher-box">
-                    <strong>Temporal Example:</strong><br>
-                    MATCH (u:User)-[:POSTED]->(p:Post)<br>
-                    WHERE p.timestamp > datetime() - duration('P30D')<br>
-                    RETURN date.truncate('month', p.timestamp) AS month,<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count(p) AS posts
+                <h3>Business Intelligence Patterns</h3>
+                <div class="highlight-box">
+                    <strong>Key Analytics Applications:</strong>
+                    <ul>
+                        <li><strong>User Engagement:</strong> Activity metrics and behavioral segmentation</li>
+                        <li><strong>Content Performance:</strong> Viral coefficient and engagement velocity</li>
+                        <li><strong>Growth Analysis:</strong> Network evolution and user acquisition patterns</li>
+                        <li><strong>KPI Development:</strong> Executive dashboards and strategic insights</li>
+                    </ul>
                 </div>
-            </section>
-
-            <section>
-                <h3>Statistical Analysis Functions</h3>
-                <div class="complexity-grid">
-                    <div class="complexity-item">
-                        <h4>Descriptive Statistics</h4>
-                        <p>percentileDisc(), percentileCont(), stDev(), variance()</p>
-                    </div>
-                    <div class="complexity-item">
-                        <h4>List Operations</h4>
-                        <p>size(), head(), tail(), range(), reduce()</p>
-                    </div>
-                    <div class="complexity-item">
-                        <h4>Mathematical Functions</h4>
-                        <p>abs(), round(), sqrt(), log(), exp()</p>
-                    </div>
-                    <div class="complexity-item">
-                        <h4>String Analytics</h4>
-                        <p>size(), split(), replace(), substring()</p>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <h3>Advanced Analytics Patterns</h3>
-                <ul>
-                    <li><strong>Moving Averages:</strong> Calculate trends over time windows</li>
-                    <li><strong>Percentile Analysis:</strong> Distribution analysis and outliers</li>
-                    <li><strong>Correlation Analysis:</strong> Relationships between metrics</li>
-                    <li><strong>Cohort Analysis:</strong> User behavior over time segments</li>
-                </ul>
-                <div class="pattern-box">
-                    <strong>Analytics Pattern:</strong> Use COLLECT to gather time series data, then apply mathematical functions for trend analysis.
-                </div>
-            </section>
-
-            <section>
-                <h3>Business Intelligence Applications</h3>
-                <ul>
-                    <li><strong>KPI Dashboards:</strong> Key performance indicators from graph data</li>
-                    <li><strong>Customer Segmentation:</strong> Behavioral clustering and analysis</li>
-                    <li><strong>Revenue Analytics:</strong> Sales patterns and forecasting</li>
-                    <li><strong>Operational Metrics:</strong> Network health and performance</li>
-                </ul>
-                <div class="highlight">
-                    <strong>Business Value:</strong> Graph aggregations reveal hidden patterns and insights not visible in traditional analytics.
+                <div class="business-insight">
+                    <strong>Business Value:</strong> Transform graph data into actionable business intelligence for strategic decision making and operational optimization.
                 </div>
             </section>
 
             <!-- Lab 6 Callout -->
             <section class="lab-callout">
-                <h3>🛠️ Lab 6: Social Network Analytics & Metrics</h3>
+                <h3>📊 Lab 6: Social Network Analytics & Business Intelligence</h3>
                 <p><strong>Duration:</strong> 90 minutes</p>
-                <ul>
-                    <li>Calculate engagement metrics and user activity patterns</li>
-                    <li>Analyze content popularity and viral spread mechanisms</li>
-                    <li>Build temporal analysis of network growth and evolution</li>
-                    <li>Create user segmentation based on behavior and demographics</li>
-                    <li>Develop executive-level reporting dashboards with KPIs</li>
-                </ul>
+                <p><strong>Focus:</strong> Build comprehensive business intelligence dashboards, perform user segmentation, and create predictive analytics using advanced aggregation patterns.</p>
             </section>
 
             <!-- Session 7: Graph Algorithms -->
             <section class="session-header">
-                <h2>Session 7</h2>
-                <h3>Graph Algorithms Fundamentals</h3>
+                <h2>Session 7: Graph Algorithms Fundamentals</h2>
+                <h3>Algorithmic Network Analysis</h3>
             </section>
 
             <section>
                 <h3>Pathfinding Algorithms</h3>
-                <div class="algorithm-grid">
-                    <div class="algorithm-item">
-                        <h4>Shortest Path</h4>
-                        <p>Find minimum distance between nodes using BFS or Dijkstra</p>
-                    </div>
-                    <div class="algorithm-item">
-                        <h4>All Shortest Paths</h4>
-                        <p>Find all paths with minimum distance between nodes</p>
-                    </div>
-                    <div class="algorithm-item">
-                        <h4>Weighted Shortest Path</h4>
-                        <p>Consider relationship weights for optimal routing</p>
-                    </div>
-                    <div class="algorithm-item">
-                        <h4>A* Algorithm</h4>
-                        <p>Heuristic pathfinding with estimated costs</p>
-                    </div>
+                <p><strong>Pathfinding algorithms</strong> solve routing and connection problems in graph networks, essential for recommendations and optimization.</p>
+                <h4>Core Algorithm Types</h4>
+                <div class="algorithm-box" style="font-size: 0.9em;">
+                    <strong>Shortest Path:</strong> <code>shortestPath(), allShortestPaths()</code> - find minimal connection routes<br>
+                    <strong>Dijkstra:</strong> Weighted shortest paths considering relationship costs/distances<br>
+                    <strong>Breadth-First Search (BFS):</strong> Explore neighbors level by level, unweighted paths<br>
+                    <strong>Depth-First Search (DFS):</strong> Deep exploration before backtracking
+                </div>
+                <div class="code-block" style="font-size: 0.8em;">
+                    <strong>Weighted Shortest Path Example:</strong><br>
+                    MATCH (start:Location {name: 'New York'}), (end:Location {name: 'Los Angeles'})<br>
+                    CALL gds.shortestPath.dijkstra.stream('transportation', {<br>
+                    &nbsp;&nbsp;sourceNode: start, targetNode: end, relationshipWeightProperty: 'distance'<br>
+                    }) YIELD path RETURN path
                 </div>
             </section>
 
             <section>
-                <h3>Pathfinding Implementation in Cypher</h3>
-                <div class="cypher-box">
-                    <strong>Basic Shortest Path:</strong><br>
-                    MATCH path = shortestPath((a:User {name: 'Alice'})-[:KNOWS*]-(b:User {name: 'Bob'}))<br>
-                    RETURN path, length(path)<br><br>
-                    
-                    <strong>All Shortest Paths:</strong><br>
-                    MATCH paths = allShortestPaths((a)-[:KNOWS*]-(b))<br>
-                    RETURN paths<br><br>
-                    
-                    <strong>Weighted Path:</strong><br>
-                    MATCH path = (a)-[:CONNECTED*]-(b)<br>
-                    RETURN path, reduce(weight = 0, r IN relationships(path) | weight + r.cost) AS total_cost
-                </div>
-            </section>
-
-            <section>
-                <h3>Centrality Algorithms</h3>
-                <ul>
-                    <li><strong>Degree Centrality:</strong> Number of direct connections</li>
-                    <li><strong>Betweenness Centrality:</strong> How often node appears on shortest paths</li>
-                    <li><strong>Closeness Centrality:</strong> Average distance to all other nodes</li>
-                    <li><strong>PageRank:</strong> Importance based on incoming links</li>
-                    <li><strong>Eigenvector Centrality:</strong> Importance of connected nodes</li>
+                <h3>Pathfinding Business Applications</h3>
+                <p><strong>Real-world pathfinding</strong> powers recommendation engines, logistics optimization, and network analysis.</p>
+                <ul style="font-size: 0.9em; line-height: 1.4;">
+                    <li><strong>Social Recommendations:</strong> "People you may know" via shortest social paths</li>
+                    <li><strong>Supply Chain Optimization:</strong> Find most efficient routes through supplier networks</li>
+                    <li><strong>Influence Propagation:</strong> Model how information/trends spread through networks</li>
+                    <li><strong>Fraud Detection:</strong> Identify suspicious transaction chains and money flows</li>
+                    <li><strong>Network Efficiency:</strong> Optimize connection strategies and reduce bottlenecks</li>
+                    <li><strong>Content Discovery:</strong> Route users to relevant content through interest graphs</li>
                 </ul>
-                <div class="example-box">
-                    <strong>Use Cases:</strong> Identify influencers, key connectors, and important nodes in networks.
+                <div class="performance-tip">
+                    <strong>Algorithm Selection:</strong> Use BFS for unweighted/social networks, Dijkstra for logistics/cost optimization, A* for geographic routing
                 </div>
             </section>
 
             <section>
-                <h3>Centrality Calculation Methods</h3>
-                <div class="two-column">
-                    <div class="column">
-                        <h4>Native Cypher</h4>
-                        <ul>
-                            <li>Simple degree calculations</li>
-                            <li>Basic betweenness approximations</li>
-                            <li>Custom scoring algorithms</li>
-                            <li>Good for small networks</li>
-                        </ul>
-                    </div>
-                    <div class="column">
-                        <h4>Graph Data Science Library</h4>
-                        <ul>
-                            <li>Optimized algorithm implementations</li>
-                            <li>Handles large-scale networks</li>
-                            <li>Parallel processing capabilities</li>
-                            <li>Enterprise-grade performance</li>
-                        </ul>
-                    </div>
+                <h3>Centrality Measures</h3>
+                <p><strong>Centrality algorithms</strong> identify the most important, influential, or strategic nodes in a network.</p>
+                <h4>Key Centrality Types & Calculations</h4>
+                <div class="algorithm-box" style="font-size: 0.9em;">
+                    <strong>Degree Centrality:</strong> <code>count((node)-[:REL]-(other))</code> - direct connection count<br>
+                    <strong>Betweenness Centrality:</strong> Measures how often a node lies on shortest paths between others<br>
+                    <strong>Closeness Centrality:</strong> Average distance to all other reachable nodes<br>
+                    <strong>PageRank:</strong> Iterative importance based on connections from important nodes<br>
+                    <strong>Eigenvector Centrality:</strong> Importance based on importance of neighbors
+                </div>
+                <div class="code-block" style="font-size: 0.8em;">
+                    <strong>Degree Centrality Example:</strong><br>
+                    MATCH (user:User)<br>
+                    RETURN user.name, size((user)-[:FOLLOWS]-()) AS degree_centrality<br>
+                    ORDER BY degree_centrality DESC LIMIT 10
+                </div>
+            </section>
+
+            <section>
+                <h3>Centrality Strategic Applications</h3>
+                <p><strong>Centrality insights</strong> drive marketing strategies, risk management, and network optimization decisions.</p>
+                <ul style="font-size: 0.9em; line-height: 1.4;">
+                    <li><strong>Influencer Marketing:</strong> High PageRank/degree users for maximum campaign reach</li>
+                    <li><strong>Risk Management:</strong> High betweenness nodes are critical failure points</li>
+                    <li><strong>Target Marketing:</strong> Closeness centrality identifies users who can reach entire network quickly</li>
+                    <li><strong>Network Resilience:</strong> Protect high-centrality nodes from attacks or failures</li>
+                    <li><strong>Information Bottlenecks:</strong> Betweenness centrality reveals communication chokepoints</li>
+                    <li><strong>Community Leaders:</strong> Local centrality measures identify micro-influencers</li>
+                </ul>
+                <div class="business-insight">
+                    <strong>Strategic Value:</strong> Centrality analysis can identify key employees, critical infrastructure, or high-value customers for targeted strategies
                 </div>
             </section>
 
             <section>
                 <h3>Community Detection Algorithms</h3>
-                <ul>
-                    <li><strong>Louvain Method:</strong> Modularity-based community detection</li>
-                    <li><strong>Label Propagation:</strong> Fast community discovery</li>
-                    <li><strong>Weakly Connected Components:</strong> Find disconnected subgraphs</li>
-                    <li><strong>Strongly Connected Components:</strong> Directed graph communities</li>
-                    <li><strong>Triangle Counting:</strong> Measure clustering coefficient</li>
-                </ul>
-                <div class="performance-box">
-                    <h4>Community Detection Benefits</h4>
-                    <p>Identify natural groups, optimize marketing, and understand network structure</p>
+                <p><strong>Community detection</strong> identifies clusters and groups within networks, revealing hidden organizational structures.</p>
+                <div class="highlight-box" style="font-size: 0.9em;">
+                    <strong>Detection Methods & Approaches:</strong><br>
+                    • <strong>Attribute-Based:</strong> Group by location, profession, interests using node properties<br>
+                    • <strong>Structural:</strong> Analyze connection patterns using modularity and clustering<br>
+                    • <strong>Behavioral:</strong> Cluster based on activity patterns and interaction frequency<br>
+                    • <strong>Hybrid:</strong> Combine multiple signals for robust community identification<br>
+                    • <strong>Hierarchical:</strong> Detect communities at multiple scales and resolutions
                 </div>
-            </section>
-
-            <section>
-                <h3>Algorithm Complexity and Performance</h3>
-                <table class="comparison-table">
-                    <tr>
-                        <th>Algorithm</th>
-                        <th>Time Complexity</th>
-                        <th>Space Complexity</th>
-                        <th>Best Use Case</th>
-                    </tr>
-                    <tr>
-                        <td>BFS Shortest Path</td>
-                        <td>O(V + E)</td>
-                        <td>O(V)</td>
-                        <td>Unweighted paths</td>
-                    </tr>
-                    <tr>
-                        <td>Dijkstra</td>
-                        <td>O((V + E) log V)</td>
-                        <td>O(V)</td>
-                        <td>Weighted paths</td>
-                    </tr>
-                    <tr>
-                        <td>PageRank</td>
-                        <td>O(V + E) per iteration</td>
-                        <td>O(V)</td>
-                        <td>Influence ranking</td>
-                    </tr>
-                    <tr>
-                        <td>Louvain</td>
-                        <td>O(V log V)</td>
-                        <td>O(V + E)</td>
-                        <td>Community detection</td>
-                    </tr>
-                </table>
-            </section>
-
-            <section>
-                <h3>Choosing the Right Algorithm</h3>
-                <div class="two-column">
-                    <div class="column">
-                        <h4>Network Analysis Goals</h4>
-                        <ul>
-                            <li><strong>Pathfinding:</strong> Routing and navigation</li>
-                            <li><strong>Influence:</strong> Marketing and recommendations</li>
-                            <li><strong>Communities:</strong> Segmentation and clustering</li>
-                            <li><strong>Connectivity:</strong> Robustness and resilience</li>
-                        </ul>
-                    </div>
-                    <div class="column">
-                        <h4>Performance Considerations</h4>
-                        <ul>
-                            <li><strong>Graph Size:</strong> Number of nodes and edges</li>
-                            <li><strong>Algorithm Complexity:</strong> Time and space requirements</li>
-                            <li><strong>Update Frequency:</strong> Static vs dynamic networks</li>
-                            <li><strong>Accuracy Needs:</strong> Exact vs approximate results</li>
-                        </ul>
-                    </div>
+                <div class="code-block" style="font-size: 0.8em;">
+                    <strong>Simple Community Detection:</strong><br>
+                    MATCH (u:User) WHERE u.location IS NOT NULL<br>
+                    SET u.community = 'LOC_' + replace(u.location, ' ', '_')<br>
+                    RETURN u.community, count(u) AS size ORDER BY size DESC
                 </div>
             </section>
 
             <!-- Lab 7 Callout -->
             <section class="lab-callout">
-                <h3>🛠️ Lab 7: Pathfinding & Centrality Measures</h3>
+                <h3>🔍 Lab 7: Pathfinding & Centrality Measures</h3>
                 <p><strong>Duration:</strong> 90 minutes</p>
-                <ul>
-                    <li>Implement Dijkstra and breadth-first search algorithms</li>
-                    <li>Calculate various centrality measures for influence analysis</li>
-                    <li>Detect communities and clusters in social networks</li>
-                    <li>Identify bridges and critical connection points</li>
-                    <li>Optimize algorithms for large-scale data processing</li>
-                </ul>
+                <p><strong>Focus:</strong> Implement advanced graph algorithms for pathfinding, calculate centrality measures for influence analysis, and optimize algorithms for production performance.</p>
             </section>
 
             <!-- Session 8: Advanced Network Analysis -->
             <section class="session-header">
-                <h2>Session 8</h2>
-                <h3>Advanced Network Analysis</h3>
+                <h2>Session 8: Advanced Network Analysis</h2>
+                <h3>Real-World Network Science Applications</h3>
             </section>
 
             <section>
-                <h3>Network Topology Analysis</h3>
-                <ul>
-                    <li><strong>Small World Networks:</strong> High clustering, short paths</li>
-                    <li><strong>Scale-Free Networks:</strong> Power-law degree distribution</li>
-                    <li><strong>Random Networks:</strong> Erdős–Rényi model properties</li>
-                    <li><strong>Hierarchical Networks:</strong> Multi-level organizational structures</li>
+                <h3>Network Topology & Structure</h3>
+                <h4>Structural Properties</h4>
+                <ul style="font-size: 1em; line-height: 1.5;">
+                    <li>Network diameter and eccentricity analysis</li>
+                    <li>Small-world properties and clustering</li>
+                    <li>Scale-free network characteristics</li>
+                    <li>Bridge identification and connectivity</li>
                 </ul>
-                <div class="highlight">
-                    <strong>Network Types:</strong> Understanding topology helps predict behavior and optimize interventions.
+            </section>
+
+            <section>
+                <h3>Network Resilience Analysis</h3>
+                <ul style="font-size: 1em; line-height: 1.5;">
+                    <li>Network robustness assessment</li>
+                    <li>Critical node removal impact</li>
+                    <li>Fragmentation risk analysis</li>
+                    <li>Recovery and adaptation patterns</li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>Recommendation Systems</h3>
+                <div class="business-insight">
+                    Multi-signal recommendations using:<br>
+                    • Community-based filtering<br>
+                    • Content similarity analysis<br>
+                    • Collaborative filtering patterns<br>
+                    • Behavioral prediction models
                 </div>
             </section>
 
             <section>
-                <h3>Network Resilience and Robustness</h3>
-                <ul>
-                    <li><strong>Node Removal Impact:</strong> Effects of losing key nodes</li>
-                    <li><strong>Edge Removal Impact:</strong> Disconnection and fragmentation</li>
-                    <li><strong>Attack Strategies:</strong> Random vs targeted attacks</li>
-                    <li><strong>Recovery Mechanisms:</strong> Network healing and adaptation</li>
-                </ul>
-                <div class="example-box">
-                    <strong>Applications:</strong> Infrastructure planning, social media moderation, cybersecurity.
+                <h3>Monitoring & Analytics</h3>
+                <div class="business-insight">
+                    Network health monitoring:<br>
+                    • Activity level tracking<br>
+                    • Community health metrics<br>
+                    • Growth pattern analysis<br>
+                    • Anomaly detection systems
                 </div>
             </section>
 
             <section>
-                <h3>Temporal Networks and Dynamics</h3>
-                <ul>
-                    <li><strong>Time-Varying Graphs:</strong> Networks that change over time</li>
-                    <li><strong>Snapshot Analysis:</strong> Network states at different times</li>
-                    <li><strong>Evolution Patterns:</strong> Growth, decline, and transformation</li>
-                    <li><strong>Temporal Centrality:</strong> Importance changes over time</li>
-                </ul>
-                <div class="pattern-box">
-                    <strong>Temporal Pattern:</strong> Use timestamp properties to create time-based subgraphs for evolution analysis.
+                <h3>Integration with Machine Learning</h3>
+                <div class="highlight-box">
+                    <strong>Graph Feature Engineering:</strong>
+                    <ul>
+                        <li><strong>Node Features:</strong> Centrality measures, clustering coefficients</li>
+                        <li><strong>Edge Features:</strong> Relationship strength, temporal patterns</li>
+                        <li><strong>Subgraph Features:</strong> Community membership, local structure</li>
+                        <li><strong>Global Features:</strong> Network-level metrics and properties</li>
+                    </ul>
                 </div>
-            </section>
-
-            <section>
-                <h3>Multilayer Network Modeling</h3>
-                <ul>
-                    <li><strong>Multiple Relationship Types:</strong> Different interaction layers</li>
-                    <li><strong>Cross-Layer Analysis:</strong> Connections between layers</li>
-                    <li><strong>Layer-Specific Metrics:</strong> Different algorithms per layer</li>
-                    <li><strong>Aggregate Metrics:</strong> Combined multi-layer analysis</li>
-                </ul>
-                <div class="cypher-box">
-                    <strong>Multilayer Example:</strong><br>
-                    MATCH (u1:User)-[:COLLEAGUES]->(u2:User)<br>
-                    MATCH (u1)-[:FRIENDS]->(u2)<br>
-                    RETURN u1, u2  // Users connected in multiple layers
-                </div>
-            </section>
-
-            <section>
-                <h3>Machine Learning Integration</h3>
-                <ul>
-                    <li><strong>Graph Features:</strong> Node and edge properties for ML</li>
-                    <li><strong>Embedding Algorithms:</strong> Node2Vec, GraphSAGE representations</li>
-                    <li><strong>Link Prediction:</strong> Predict future connections</li>
-                    <li><strong>Node Classification:</strong> Predict node labels and properties</li>
-                </ul>
-                <div class="optimization-tip">
-                    <strong>ML Integration:</strong> Graph algorithms provide rich features for traditional machine learning models.
-                </div>
-            </section>
-
-            <section>
-                <h3>Business Applications of Network Science</h3>
-                <div class="algorithm-grid">
-                    <div class="algorithm-item">
-                        <h4>Fraud Detection</h4>
-                        <p>Find suspicious patterns and criminal networks</p>
-                    </div>
-                    <div class="algorithm-item">
-                        <h4>Recommendation Systems</h4>
-                        <p>Collaborative filtering and personalization</p>
-                    </div>
-                    <div class="algorithm-item">
-                        <h4>Supply Chain Optimization</h4>
-                        <p>Logistics and dependency analysis</p>
-                    </div>
-                    <div class="algorithm-item">
-                        <h4>Social Media Analysis</h4>
-                        <p>Influence propagation and viral marketing</p>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <h3>Network Visualization and Interpretation</h3>
-                <ul>
-                    <li><strong>Layout Algorithms:</strong> Force-directed, hierarchical, circular</li>
-                    <li><strong>Visual Encoding:</strong> Size, color, and position meaning</li>
-                    <li><strong>Interactive Exploration:</strong> Drill-down and filtering</li>
-                    <li><strong>Storytelling:</strong> Communicating insights from networks</li>
-                </ul>
-                <div class="performance-box">
-                    <h4>Visualization Best Practices</h4>
-                    <p>Start with high-level overview, then allow detailed exploration of interesting patterns</p>
+                <div class="performance-tip">
+                    <strong>Production Considerations:</strong> Balance algorithm complexity with real-time performance requirements for scalable applications.
                 </div>
             </section>
 
             <!-- Lab 8 Callout -->
             <section class="lab-callout">
-                <h3>🛠️ Lab 8: Community Detection & Real-World Applications</h3>
+                <h3>🌐 Lab 8: Community Detection & Real-World Applications</h3>
                 <p><strong>Duration:</strong> 75 minutes</p>
-                <ul>
-                    <li>Advanced community detection algorithms implementation</li>
-                    <li>Build comprehensive recommendation engines using graph features</li>
-                    <li>Implement network monitoring and anomaly detection systems</li>
-                    <li>Create predictive models using graph-based features</li>
-                    <li>Practice performance optimization for production systems</li>
+                <p><strong>Focus:</strong> Build practical community detection systems, create comprehensive recommendation engines, and implement network monitoring for real-world applications.</p>
+            </section>
+
+            <section>
+                <h2>Day 2 Skills Mastered</h2>
+                <h3>Technical Capabilities</h3>
+                <ul style="font-size: 1em; line-height: 1.5;">
+                    <li>Advanced Cypher query optimization</li>
+                    <li>Variable-length path traversals</li>
+                    <li>Statistical analysis and aggregations</li>
+                    <li>Graph algorithm implementation</li>
+                    <li>Performance profiling and tuning</li>
                 </ul>
             </section>
 
-            <!-- Day 2 Knowledge Check -->
-            <section class="session-header">
-                <h2>Day 2 Knowledge Check</h2>
-                <ul>
-                    <li>What's the difference between shortest path and all shortest paths?</li>
-                    <li>When would you use betweenness centrality vs degree centrality?</li>
-                    <li>How do you optimize variable-length path queries?</li>
-                    <li>What are the key considerations for algorithm selection?</li>
-                    <li>How do temporal networks differ from static analysis?</li>
+            <section>
+                <h2>Day 2 Skills Mastered</h2>
+                <h3>Business Applications</h3>
+                <ul style="font-size: 1em; line-height: 1.5;">
+                    <li>Business intelligence dashboards</li>
+                    <li>Recommendation system development</li>
+                    <li>Network analysis and monitoring</li>
+                    <li>Community detection and segmentation</li>
+                    <li>Predictive analytics with graph features</li>
                 </ul>
             </section>
 
-            <section class="session-header">
-                <h2>Day 2 Summary: Skills Acquired</h2>
-                <ul>
-                    <li><strong>Advanced Cypher:</strong> Variable paths, complex patterns, optimization</li>
-                    <li><strong>Statistical Analysis:</strong> Aggregations, temporal analysis, KPIs</li>
-                    <li><strong>Graph Algorithms:</strong> Pathfinding, centrality, community detection</li>
-                    <li><strong>Network Science:</strong> Topology analysis, resilience, dynamics</li>
-                    <li><strong>Performance Optimization:</strong> Query tuning, algorithm selection</li>
-                    <li><strong>Business Applications:</strong> Real-world problem solving with graphs</li>
-                </ul>
-            </section>
-
-            <section class="session-header">
-                <h2>Day 3 Preview: Production Deployment</h2>
-                <div class="two-column">
-                    <div class="column">
-                        <h3>Data Modeling Excellence</h3>
-                        <ul>
-                            <li>Enterprise-grade schema design</li>
-                            <li>Performance optimization strategies</li>
-                            <li>Scalability and maintenance patterns</li>
-                            <li>Data quality and validation frameworks</li>
-                        </ul>
-                    </div>
-                    <div class="column">
-                        <h3>Python Integration & Deployment</h3>
-                        <ul>
-                            <li>Neo4j Python driver mastery</li>
-                            <li>Application architecture patterns</li>
-                            <li>Production deployment strategies</li>
-                            <li>Monitoring and operational excellence</li>
-                        </ul>
-                    </div>
+            <section>
+                <h2>Tomorrow's Focus: Day 3 Preview</h2>
+                <div class="highlight-box">
+                    <h3>Enterprise Development & Python Integration</h3>
+                    <ul>
+                        <li><strong>Advanced Data Modeling:</strong> Enterprise graph schemas and security</li>
+                        <li><strong>Python Integration:</strong> Neo4j driver and full-stack development</li>
+                        <li><strong>Production Deployment:</strong> Monitoring, scaling, and optimization</li>
+                        <li><strong>Real-World Projects:</strong> Complete application development</li>
+                    </ul>
                 </div>
             </section>
 
@@ -777,10 +489,10 @@
                 <h2>🎉 Congratulations!</h2>
                 <h3>Day 2 Complete</h3>
                 <br>
-                <div style="background-color: #e8f5e8; padding: 15px; border-radius: 5px;">
+                <div style="background-color: rgba(255,255,255,0.1); padding: 15px; border-radius: 5px;">
                     <p><strong>You now have:</strong></p>
                     <ul style="text-align: left; display: inline-block; font-size: 0.9em;">
-                        <li>Advanced Cypher query optimization and pattern matching skills</li>
+                        <li>Advanced Cypher query optimization and complex pattern matching</li>
                         <li>Statistical analysis and business intelligence capabilities</li>
                         <li>Comprehensive graph algorithm implementation experience</li>
                         <li>Network science understanding for real-world applications</li>
@@ -788,7 +500,7 @@
                     </ul>
                 </div>
                 <br>
-                <p><strong>Ready for Day 3: Enterprise Deployment & Python Integration!</strong></p>
+                <p><strong>Ready for Day 3: Enterprise Development & Python Integration!</strong></p>
             </section>
         </div>
     </div>

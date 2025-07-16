@@ -1,0 +1,247 @@
+// ======================================================================
+// INSURANCE DATABASE VISUAL QUERIES
+// Neo4j Enterprise 2025.06.0 Compatible
+// Visual exploration of insurance company data
+// ======================================================================
+
+// ======================================================================
+// BASIC OVERVIEW QUERIES
+// ======================================================================
+
+// 1. Complete Database Overview - All Connected Entities
+MATCH (n)-[r]-(m)
+RETURN n, r, m
+LIMIT 100;
+
+// 2. Customer-Centric View - Show all customer relationships
+MATCH (c:Customer)-[r]-(connected)
+WHERE c.customerId IN ['CUST001', 'CUST002', 'CUST003']
+RETURN c, r, connected;
+
+// 3. High-Value Customer Network
+MATCH (c:Customer)-[r]-(connected)
+WHERE c.totalPremiums > 50000
+RETURN c, r, connected;
+
+// ======================================================================
+// ORGANIZATIONAL STRUCTURE VISUALIZATIONS
+// ======================================================================
+
+// 4. Branch and Agent Hierarchy
+MATCH path = (hq:HeadQuarters)-[:MANAGES]->(b:Branch)<-[:WORKS_AT]-(a:Agent)
+RETURN path;
+
+// 5. Agent Territory Coverage
+MATCH (a:Agent)-[:WORKS_AT]->(b:Branch)
+MATCH (a)-[:SERVES]->(c:Customer)
+RETURN a, b, c
+LIMIT 50;
+
+// 6. Regional Distribution
+MATCH (b:Branch)-[:MANAGES*0..1]-(related)
+RETURN b, related;
+
+// ======================================================================
+// CUSTOMER RELATIONSHIP VISUALIZATIONS
+// ======================================================================
+
+// 7. Customer Asset Portfolio (Vehicles & Properties)
+MATCH (c:Customer)-[:OWNS]->(asset)
+WHERE asset:Vehicle OR asset:Property
+RETURN c, asset
+LIMIT 25;
+
+// 8. Multi-Policy Customers
+MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy)
+WITH c, count(p) AS policyCount
+WHERE policyCount > 1
+MATCH (c)-[:HAS_POLICY]->(policies)
+RETURN c, policies;
+
+// 9. Customer-Agent-Branch Relationships
+MATCH (c:Customer)<-[:SERVES]-(a:Agent)-[:WORKS_AT]->(b:Branch)
+RETURN c, a, b
+LIMIT 30;
+
+// ======================================================================
+// POLICY AND COVERAGE VISUALIZATIONS
+// ======================================================================
+
+// 10. Policy Coverage Network
+MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy)-[:COVERS]->(asset)
+RETURN c, p, asset
+LIMIT 40;
+
+// 11. Auto Insurance Ecosystem
+MATCH path = (c:Customer)-[:HAS_POLICY]->(ap:AutoPolicy)-[:COVERS]->(v:Vehicle)
+RETURN path
+LIMIT 20;
+
+// 12. Home Insurance Ecosystem  
+MATCH path = (c:Customer)-[:HAS_POLICY]->(hp:HomePolicy)-[:COVERS]->(pr:Property)
+RETURN path
+LIMIT 20;
+
+// 13. Active Policies by Type
+MATCH (p:Policy)
+WHERE p.status = 'Active'
+MATCH (c:Customer)-[:HAS_POLICY]->(p)
+RETURN c, p
+LIMIT 50;
+
+// ======================================================================
+// CLAIMS AND RISK VISUALIZATIONS
+// ======================================================================
+
+// 14. Claims Investigation Network
+MATCH (c:Customer)-[:FILED_CLAIM]->(cl:Claim)-[:FILED_AGAINST]->(p:Policy)
+RETURN c, cl, p;
+
+// 15. Claims with Repair Services
+MATCH (cl:Claim)-[:REPAIRED_BY]->(shop)
+MATCH (cl)-[:FILED_AGAINST]->(p:Policy)<-[:HAS_POLICY]-(c:Customer)
+RETURN c, cl, p, shop;
+
+// 16. High-Value Claims Network
+MATCH (c:Customer)-[:FILED_CLAIM]->(cl:Claim)-[:FILED_AGAINST]->(p:Policy)
+WHERE cl.claimAmount > 10000
+RETURN c, cl, p;
+
+// 17. Claims Status Overview
+MATCH (cl:Claim)
+MATCH (c:Customer)-[:FILED_CLAIM]->(cl)-[:FILED_AGAINST]->(p:Policy)
+RETURN c, cl, p
+ORDER BY cl.claimAmount DESC;
+
+// ======================================================================
+// RISK AND ANALYTICS VISUALIZATIONS
+// ======================================================================
+
+// 18. Risk Profile Distribution
+MATCH (c:Customer)
+WITH c.riskProfile AS riskLevel, collect(c) AS customers
+UNWIND customers[0..5] AS sampleCustomers
+MATCH (sampleCustomers)-[r]-(connected)
+RETURN sampleCustomers, r, connected;
+
+// 19. Premium vs Claims Analysis
+MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy)
+OPTIONAL MATCH (c)-[:FILED_CLAIM]->(cl:Claim)
+WITH c, sum(p.premium) AS totalPremiums, sum(coalesce(cl.claimAmount, 0)) AS totalClaims
+WHERE totalClaims > 0
+MATCH (c)-[r]-(related)
+RETURN c, r, related
+LIMIT 25;
+
+// 20. Geographic Risk Clusters
+MATCH (c:Customer)-[:FILED_CLAIM]->(cl:Claim)
+WITH c.state AS state, count(cl) AS claimCount
+WHERE claimCount > 0
+MATCH (customers:Customer)-[r]-(connected)
+WHERE customers.state = state
+RETURN customers, r, connected
+LIMIT 30;
+
+// ======================================================================
+// BUSINESS INTELLIGENCE VISUALIZATIONS
+// ======================================================================
+
+// 21. Agent Performance Network
+MATCH (a:Agent)-[:SERVES]->(c:Customer)-[:HAS_POLICY]->(p:Policy)
+WITH a, sum(p.premium) AS totalSales
+ORDER BY totalSales DESC
+LIMIT 3
+MATCH (a)-[r]-(connected)
+RETURN a, r, connected;
+
+// 22. Cross-Selling Opportunities
+MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy)
+WITH c, count(p) AS policyCount, collect(p.type) AS policyTypes
+WHERE policyCount = 1
+MATCH (c)-[r]-(connected)
+RETURN c, r, connected
+LIMIT 20;
+
+// 23. Customer Lifetime Value Network
+MATCH (c:Customer)
+WHERE c.lifetimeValue > 200000
+MATCH (c)-[r]-(connected)
+RETURN c, r, connected;
+
+// 24. Renewal Risk Analysis
+MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy)
+WHERE p.expirationDate < date('2024-06-01')
+MATCH (c)-[r]-(connected)
+RETURN c, r, connected
+LIMIT 25;
+
+// ======================================================================
+// SPECIALIZED NETWORK VIEWS
+// ======================================================================
+
+// 25. Multi-Vehicle Households
+MATCH (c:Customer)-[:OWNS]->(v:Vehicle)
+WITH c, count(v) AS vehicleCount
+WHERE vehicleCount > 1
+MATCH (c)-[:OWNS]->(vehicles:Vehicle)
+MATCH (c)-[:HAS_POLICY]->(ap:AutoPolicy)-[:COVERS]->(vehicles)
+RETURN c, vehicles, ap;
+
+// 26. Commercial vs Personal Lines
+MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy)
+WHERE p.type IN ['Auto', 'Home', 'Life']
+MATCH (c)-[r]-(connected)
+RETURN c, r, connected
+LIMIT 40;
+
+// 27. Vendor Ecosystem
+MATCH (vendor)-[r]-(connected)
+WHERE vendor:RepairShop OR vendor:Contractor
+RETURN vendor, r, connected;
+
+// 28. Customer Journey Visualization
+MATCH path = (a:Agent)-[:SERVES]->(c:Customer)-[:HAS_POLICY]->(p:Policy)-[:COVERS]->(asset)
+WHERE c.customerId IN ['CUST001', 'CUST002', 'CUST003', 'CUST004', 'CUST005']
+RETURN path;
+
+// ======================================================================
+// ADVANCED PATTERN VISUALIZATIONS
+// ======================================================================
+
+// 29. Complex Customer Relationships
+MATCH path = (c:Customer)-[:HAS_POLICY]->(p:Policy)-[:COVERS]->(asset)-[:OWNS]-(c2:Customer)
+WHERE c <> c2
+RETURN path
+LIMIT 10;
+
+// 30. Full Business Ecosystem Sample
+MATCH (branch:Branch)<-[:WORKS_AT]-(agent:Agent)-[:SERVES]->(customer:Customer)
+MATCH (customer)-[:HAS_POLICY]->(policy:Policy)
+OPTIONAL MATCH (customer)-[:FILED_CLAIM]->(claim:Claim)
+OPTIONAL MATCH (policy)-[:COVERS]->(asset)
+WHERE customer.customerId IN ['CUST001', 'CUST002', 'CUST003']
+RETURN branch, agent, customer, policy, claim, asset;
+
+// ======================================================================
+// GRAPH STATISTICS FOR VISUALIZATION
+// ======================================================================
+
+// 31. Node Degree Analysis (Most Connected Entities)
+MATCH (n)-[r]-(m)
+WITH n, count(r) AS connections
+ORDER BY connections DESC
+LIMIT 10
+MATCH (n)-[rels]-(connected)
+RETURN n, rels, connected;
+
+// 32. Shortest Paths Between Key Entities
+MATCH (c1:Customer {customerId: 'CUST001'}), (c2:Customer {customerId: 'CUST002'})
+MATCH path = shortestPath((c1)-[*]-(c2))
+RETURN path;
+
+// 33. Community Detection Sample
+MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy)
+WHERE c.city = 'Chicago'
+MATCH (c)-[r]-(connected)
+RETURN c, r, connected
+LIMIT 30;

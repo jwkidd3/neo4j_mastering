@@ -1,0 +1,129 @@
+// ======================================================================
+// CUSTOMER 360° RELATIONSHIP VISUALIZATION
+// Complete view of a customer's insurance ecosystem
+// ======================================================================
+
+// 1. COMPLETE CUSTOMER ECOSYSTEM - Single Customer (CUST001)
+// This shows ALL relationships for one high-value customer
+MATCH (customer:Customer {customerId: 'CUST001'})
+OPTIONAL MATCH (customer)-[r1:OWNS]->(assets)
+OPTIONAL MATCH (customer)-[r2:HAS_POLICY]->(policies)
+OPTIONAL MATCH (customer)<-[r3:SERVES]-(agent)
+OPTIONAL MATCH (agent)-[r4:WORKS_AT]->(branch)
+OPTIONAL MATCH (policies)-[r5:COVERS]->(coveredAssets)
+OPTIONAL MATCH (customer)-[r6:FILED_CLAIM]->(claims)
+OPTIONAL MATCH (claims)-[r7:FILED_AGAINST]->(claimPolicies)
+OPTIONAL MATCH (claims)-[r8:REPAIRED_BY]->(vendors)
+RETURN customer, r1, assets, r2, policies, r3, agent, r4, branch, 
+       r5, coveredAssets, r6, claims, r7, claimPolicies, r8, vendors;
+
+// ======================================================================
+
+// 2. MULTI-CUSTOMER COMPARISON - Top 3 Customers
+// Shows relationship patterns across multiple high-value customers
+MATCH (customer:Customer)
+WHERE customer.customerId IN ['CUST001', 'CUST002', 'CUST007']
+OPTIONAL MATCH (customer)-[owns:OWNS]->(assets)
+OPTIONAL MATCH (customer)-[hasPolicy:HAS_POLICY]->(policies)
+OPTIONAL MATCH (customer)<-[serves:SERVES]-(agent)
+OPTIONAL MATCH (customer)-[filed:FILED_CLAIM]->(claims)
+RETURN customer, owns, assets, hasPolicy, policies, serves, agent, filed, claims;
+
+// ======================================================================
+
+// 3. CUSTOMER JOURNEY VISUALIZATION - Policy to Asset Coverage
+// Shows how policies connect to specific assets for a customer
+MATCH path = (customer:Customer {customerId: 'CUST001'})-[:HAS_POLICY]->(policy)-[:COVERS]->(asset)<-[:OWNS]-(customer)
+RETURN path;
+
+// ======================================================================
+
+// 4. CLAIMS INVESTIGATION VIEW - Customer with Claims Network
+// Shows customer, their claims, and all related entities
+MATCH (customer:Customer {customerId: 'CUST001'})-[:FILED_CLAIM]->(claim)
+MATCH (claim)-[:FILED_AGAINST]->(policy)<-[:HAS_POLICY]-(customer)
+OPTIONAL MATCH (policy)-[:COVERS]->(asset)<-[:OWNS]-(customer)
+OPTIONAL MATCH (claim)-[:REPAIRED_BY]->(vendor)
+OPTIONAL MATCH (customer)<-[:SERVES]-(agent)-[:WORKS_AT]->(branch)
+RETURN customer, claim, policy, asset, vendor, agent, branch;
+
+// ======================================================================
+
+// 5. AGENT-CUSTOMER NETWORK - Relationship Management View
+// Shows agent's relationship with their customers and their portfolios
+MATCH (agent:Agent)-[:SERVES]->(customer:Customer)
+WHERE customer.customerId IN ['CUST001', 'CUST002', 'CUST003']
+MATCH (agent)-[:WORKS_AT]->(branch)
+OPTIONAL MATCH (customer)-[:HAS_POLICY]->(policies)
+OPTIONAL MATCH (customer)-[:OWNS]->(assets)
+RETURN agent, customer, branch, policies, assets;
+
+// ======================================================================
+
+// 6. HIGH-VALUE CUSTOMER PORTFOLIO - Premium Customers Only
+// Shows only customers with high lifetime value and their complete ecosystem
+MATCH (customer:Customer)
+WHERE customer.lifetimeValue > 200000
+OPTIONAL MATCH (customer)-[r]-(connected)
+WHERE NOT connected:Customer  // Exclude other customers to focus on business relationships
+RETURN customer, r, connected
+LIMIT 100;
+
+// ======================================================================
+
+// 7. CUSTOMER RISK PROFILE NETWORK - Risk-Based Segmentation
+// Shows customers grouped by risk profile with their relationships
+MATCH (customer:Customer {riskProfile: 'Low'})
+WHERE customer.customerId IN ['CUST001', 'CUST002', 'CUST004', 'CUST007', 'CUST008']
+MATCH (customer)-[r]-(related)
+RETURN customer, r, related;
+
+// ======================================================================
+
+// 8. MULTI-POLICY CUSTOMER ANALYSIS - Cross-Selling Success
+// Shows customers with multiple policies and their complete network
+MATCH (customer:Customer)-[:HAS_POLICY]->(policy)
+WITH customer, count(policy) AS policyCount
+WHERE policyCount > 1
+MATCH (customer)-[r]-(connected)
+RETURN customer, r, connected
+LIMIT 75;
+
+// ======================================================================
+
+// 9. CUSTOMER LIFECYCLE VIEW - Temporal Relationship Analysis
+// Shows customers by tenure with their relationship timeline
+MATCH (customer:Customer)
+WHERE customer.customerSince < date('2015-01-01')  // Long-term customers
+MATCH (customer)-[r]-(connected)
+RETURN customer, r, connected
+LIMIT 50;
+
+// ======================================================================
+
+// 10. CUSTOMER CLAIMS IMPACT NETWORK - Loss Analysis
+// Shows customers who have filed claims and their full ecosystem
+MATCH (customer:Customer)-[:FILED_CLAIM]->(claim)
+MATCH (customer)-[r]-(allConnected)
+RETURN customer, claim, r, allConnected
+LIMIT 60;
+
+// ======================================================================
+
+// VISUALIZATION TIPS FOR NEO4J BROWSER:
+// ======================================================================
+/*
+STYLING RECOMMENDATIONS:
+
+1. NODE COLORS:
+   - Customer: Blue (#1f77b4)
+   - Agent: Green (#2ca02c) 
+   - Policy: Orange (#ff7f0e)
+   - Vehicle: Red (#d62728)
+   - Property: Purple (#9467bd)
+   - Branch: Brown (#8c564b)
+   - Claim: Pink (#e377c2)
+
+2. NODE SIZES:
+   - Scale by: customer.lifetimeValue, policy.premium, claim.claimAmount
+   - Use property inspector to set s
