@@ -123,14 +123,13 @@ LIMIT 12
 ### Step 6: Variable Paths with Property Filtering
 ```cypher
 // Filter paths based on node and relationship properties
-MATCH (u:User)
-WITH u
-LIMIT 1
-MATCH path = (u)-[:FOLLOWS*1..3]->(end:User)
-RETURN end.userId AS discovered_user_id,
+MATCH path = (start:User)-[:FOLLOWS*1..3]->(end:User)
+WHERE start <> end
+RETURN COALESCE(start.username, start.userId) AS start_user,
+       COALESCE(end.username, end.userId) AS end_user,
        length(path) AS hops,
-       [node IN nodes(path) | COALESCE(node.username, node.userId, node.fullName)] AS path_identifiers
-ORDER BY hops
+       [node IN nodes(path) | COALESCE(node.username, node.userId)] AS path_users
+ORDER BY hops, start_user
 LIMIT 10
 ```
 
@@ -139,13 +138,17 @@ LIMIT 10
 ### Step 7: Single Shortest Path Analysis
 ```cypher
 // Find the shortest path between two specific users
-MATCH (alice:User {username: 'alice_codes'}), (bob:User {username: 'bob_travels'})
-MATCH path = shortestPath((alice)-[:FOLLOWS*]-(bob))
-RETURN path,
+MATCH (user1:User)-[:FOLLOWS*]->(user2:User)
+WHERE user1 <> user2
+WITH user1, user2
+LIMIT 1
+
+MATCH path = shortestPath((user1)-[:FOLLOWS*]-(user2))
+RETURN COALESCE(user1.username, user1.userId, user1.fullName) AS user1_id,
+       COALESCE(user2.username, user2.userId, user2.fullName) AS user2_id,
        length(path) AS distance,
-       [node IN nodes(path) | node.username] AS users_in_path,
-       [rel IN relationships(path) | type(rel)] AS relationship_types,
-       [rel IN relationships(path) | rel.relationship] AS relationship_qualities
+       [node IN nodes(path) | COALESCE(node.username, node.userId, node.fullName)] AS users_in_path,
+       [rel IN relationships(path) | type(rel)] AS relationship_types
 ```
 
 ### Step 8: All Shortest Paths Discovery
