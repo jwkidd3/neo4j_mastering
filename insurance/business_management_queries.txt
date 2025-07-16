@@ -1,0 +1,556 @@
+// ======================================================================
+// INSURANCE BUSINESS MANAGEMENT VISUAL QUERIES
+// Neo4j Enterprise 2025.06.0 Compatible
+// Strategic business oversight and operational management
+// ======================================================================
+
+// ======================================================================
+// EXECUTIVE DASHBOARD AND STRATEGIC OVERSIGHT
+// ======================================================================
+
+// 1. ENTERPRISE PERFORMANCE OVERVIEW - Complete business ecosystem for executives
+MATCH (corporate:CorporateOffice)-[r1:MANAGES]->(regional:RegionalHeadquarters)
+MATCH (regional)-[r2:SUPERVISES]->(branches:Branch)
+MATCH (customers:Customer)-[r3:ASSIGNED_TO]->(branches)
+MATCH (customers)-[r4:HAS_POLICY]->(policies:Policy)
+MATCH (customers)<-[r5:SERVES]-(agents:Agent)
+OPTIONAL MATCH (customers)-[r6:FILED_CLAIM]->(claims:Claim)
+OPTIONAL MATCH (premiumPayments:PremiumPayment)-[r7:PAYS_PREMIUM]->(policies)
+WHERE customers.customerSegment IN ['Ultra High Net Worth', 'High Net Worth', 'High Value']
+RETURN corporate, r1, regional, r2, branches, r3, customers, r4, policies, 
+       r5, agents, r6, claims, r7, premiumPayments
+LIMIT 200;
+
+// ======================================================================
+
+// 2. EXECUTIVE STRATEGIC RELATIONSHIPS - C-suite with key business metrics
+MATCH (exec:Executive)-[r1:WORKS_AT]->(corporate:CorporateOffice)
+MATCH (corporate)-[r2:MANAGES]->(regional:RegionalHeadquarters)
+MATCH (regional)-[r3:SUPERVISES]->(topBranches:Branch)
+WHERE topBranches.operationalBudget > 8000000
+OPTIONAL MATCH (customers:Customer)-[r4:ASSIGNED_TO]->(topBranches)
+WHERE customers.lifetimeValue > 200000
+OPTIONAL MATCH (customers)-[r5:HAS_POLICY]->(policies:Policy)
+RETURN exec, r1, corporate, r2, regional, r3, topBranches, r4, customers, r5, policies;
+
+// ======================================================================
+
+// 3. REVENUE PERFORMANCE HIERARCHY - Financial flows through organizational structure
+MATCH (corporate:CorporateOffice)-[r1:MANAGES]->(regional:RegionalHeadquarters)
+MATCH (regional)-[r2:SUPERVISES]->(branches:Branch)
+MATCH (customers:Customer)-[r3:ASSIGNED_TO]->(branches)
+MATCH (customers)-[r4:MADE_PAYMENT]->(payments:PremiumPayment)
+WHERE payments.paymentAmount > 2000
+MATCH (payments)-[r5:PAYS_PREMIUM]->(policies:Policy)
+MATCH (customers)-[r6:HAS_POLICY]->(policies)
+RETURN corporate, r1, regional, r2, branches, r3, customers, r4, payments, r5, policies, r6
+LIMIT 150;
+
+// ======================================================================
+
+// 4. RISK EXPOSURE ENTERPRISE VIEW - Risk management across the organization
+MATCH (customers:Customer)-[r1:CATEGORIZED_AS]->(riskCategories:RiskCategory)
+WHERE riskCategories.riskLevel >= 3  // High and Catastrophic risk
+MATCH (customers)-[r2:HAS_POLICY]->(policies:Policy)
+MATCH (customers)-[r3:ASSIGNED_TO]->(branches:Branch)
+MATCH (branches)<-[r4:SUPERVISES]-(regional:RegionalHeadquarters)
+MATCH (underwriters:Underwriter)-[r5:UNDERWROTE]->(policies)
+OPTIONAL MATCH (customers)-[r6:FILED_CLAIM]->(claims:Claim)
+RETURN customers, r1, riskCategories, r2, policies, r3, branches, r4, regional, 
+       r5, underwriters, r6, claims;
+
+// ======================================================================
+// OPERATIONAL MANAGEMENT AND PERFORMANCE MONITORING
+// ======================================================================
+
+// 5. BRANCH PERFORMANCE COMPARISON - Multi-branch operational analysis
+MATCH (branches:Branch)<-[r1:WORKS_AT]-(agents:Agent)
+WHERE branches.branchCode IN ['BR001', 'BR003', 'BR005', 'BR007']
+MATCH (agents)-[r2:SERVES]->(customers:Customer)
+MATCH (customers)-[r3:HAS_POLICY]->(policies:Policy)
+MATCH (customers)-[r4:MADE_PAYMENT]->(payments:PremiumPayment)
+WHERE payments.paymentAmount > 1000
+OPTIONAL MATCH (customers)-[r5:FILED_CLAIM]->(claims:Claim)
+RETURN branches, r1, agents, r2, customers, r3, policies, r4, payments, r5, claims;
+
+// ======================================================================
+
+// 6. AGENT PRODUCTIVITY AND MENTORSHIP NETWORK - Sales force management
+MATCH (seniorAgents:Agent)-[r1:MENTORS]->(juniorAgents:Agent)
+MATCH (seniorAgents)-[r2:SERVES]->(seniorCustomers:Customer)
+MATCH (juniorAgents)-[r3:SERVES]->(juniorCustomers:Customer)
+MATCH (seniorAgents)-[r4:WORKS_AT]->(branches:Branch)
+MATCH (juniorAgents)-[r5:WORKS_AT]->(branches)
+OPTIONAL MATCH (seniorCustomers)-[r6:HAS_POLICY]->(seniorPolicies:Policy)
+OPTIONAL MATCH (juniorCustomers)-[r7:HAS_POLICY]->(juniorPolicies:Policy)
+RETURN seniorAgents, r1, juniorAgents, r2, seniorCustomers, r3, juniorCustomers, 
+       r4, branches, r5, r6, seniorPolicies, r7, juniorPolicies;
+
+// ======================================================================
+
+// 7. UNDERWRITER WORKLOAD AND RISK DISTRIBUTION - Underwriting management
+MATCH (underwriters:Underwriter)-[r1:UNDERWROTE]->(policies:Policy)
+WHERE underwriters.underwriterId IN ['UW01', 'UW02', 'UW03', 'UW04', 'UW05']
+MATCH (customers:Customer)-[r2:HAS_POLICY]->(policies)
+MATCH (customers)-[r3:CATEGORIZED_AS]->(riskCategories:RiskCategory)
+OPTIONAL MATCH (policies)-[r4:COVERS]->(assets)
+OPTIONAL MATCH (customers)-[r5:FILED_CLAIM]->(claims:Claim)-[r6:FILED_AGAINST]->(policies)
+RETURN underwriters, r1, policies, r2, customers, r3, riskCategories, r4, assets, r5, claims, r6;
+
+// ======================================================================
+
+// 8. CLAIMS PROCESSING EFFICIENCY - Claims management workflow
+MATCH (claims:Claim)-[r1:FILED_AGAINST]->(policies:Policy)
+WHERE claims.status IN ['In Progress', 'Under Investigation']
+MATCH (adjusters:Adjuster)-[r2:ASSIGNED_TO]->(claims)
+MATCH (customers:Customer)-[r3:FILED_CLAIM]->(claims)
+MATCH (customers)<-[r4:SERVES]-(agents:Agent)
+OPTIONAL MATCH (claims)-[r5:REPAIRED_BY]->(vendors)
+OPTIONAL MATCH (claimPayments:ClaimPayment)-[r6:PAYS_CLAIM]->(claims)
+RETURN claims, r1, policies, r2, adjusters, r3, customers, r4, agents, r5, vendors, r6, claimPayments;
+
+// ======================================================================
+// FINANCIAL MANAGEMENT AND CASH FLOW ANALYSIS
+// ======================================================================
+
+// 9. CASH FLOW MANAGEMENT - Premium collections vs claim payments
+MATCH (customers:Customer)-[r1:MADE_PAYMENT]->(premiumPayments:PremiumPayment)
+WHERE premiumPayments.paymentDate >= date('2023-06-01')
+MATCH (premiumPayments)-[r2:PAYS_PREMIUM]->(policies:Policy)
+MATCH (customers)-[r3:HAS_POLICY]->(policies)
+OPTIONAL MATCH (claimPayments:ClaimPayment)-[r4:PAYS_CLAIM]->(claims:Claim)
+OPTIONAL MATCH (customers)-[r5:FILED_CLAIM]->(claims)
+OPTIONAL MATCH (claims)-[r6:FILED_AGAINST]->(policies)
+RETURN customers, r1, premiumPayments, r2, policies, r3, r4, claimPayments, r5, claims, r6
+LIMIT 100;
+
+// ======================================================================
+
+// 10. HIGH-VALUE TRANSACTION MONITORING - Financial oversight and audit management
+MATCH (payments:Payment)-[r1:AUDITED_BY]->(audits:AuditLog)
+MATCH (customers:Customer)-[r2:MADE_PAYMENT]->(payments)
+WHERE payments.paymentAmount > 10000
+MATCH (customers)<-[r3:SERVES]-(agents:Agent)
+MATCH (agents)-[r4:WORKS_AT]->(branches:Branch)
+OPTIONAL MATCH (payments)-[r5:PAYS_PREMIUM]->(policies:Policy)
+OPTIONAL MATCH (payments)-[r6:PAYS_CLAIM]->(claims:Claim)
+RETURN payments, r1, audits, r2, customers, r3, agents, r4, branches, r5, policies, r6, claims;
+
+// ======================================================================
+
+// 11. PROFITABILITY ANALYSIS BY CUSTOMER SEGMENT - Revenue optimization
+MATCH (customers:Customer)-[r1:HAS_POLICY]->(policies:Policy)
+WHERE customers.customerSegment IN ['Ultra High Net Worth', 'High Net Worth', 'High Value']
+MATCH (customers)-[r2:MADE_PAYMENT]->(premiumPayments:PremiumPayment)
+MATCH (premiumPayments)-[r3:PAYS_PREMIUM]->(policies)
+MATCH (customers)<-[r4:SERVES]-(agents:Agent)
+OPTIONAL MATCH (customers)-[r5:FILED_CLAIM]->(claims:Claim)
+OPTIONAL MATCH (claimPayments:ClaimPayment)-[r6:PAYS_CLAIM]->(claims)
+RETURN customers, r1, policies, r2, premiumPayments, r3, r4, agents, r5, claims, r6, claimPayments;
+
+// ======================================================================
+
+// 12. PAYMENT PERFORMANCE AND COLLECTIONS - Accounts receivable management
+MATCH (customers:Customer)-[r1:MADE_PAYMENT]->(payments:PremiumPayment)
+WHERE payments.paymentStatus IN ['Failed', 'Pending', 'Processed']
+MATCH (payments)-[r2:PAYS_PREMIUM]->(policies:Policy)
+MATCH (customers)-[r3:HAS_POLICY]->(policies)
+MATCH (customers)<-[r4:SERVES]-(agents:Agent)
+MATCH (agents)-[r5:WORKS_AT]->(branches:Branch)
+RETURN customers, r1, payments, r2, policies, r3, r4, agents, r5, branches
+LIMIT 80;
+
+// ======================================================================
+// RISK MANAGEMENT AND COMPLIANCE OVERSIGHT
+// ======================================================================
+
+// 13. CATASTROPHIC RISK EXPOSURE MANAGEMENT - High-value asset oversight
+MATCH (customers:Customer)-[r1:OWNS]->(assets)
+WHERE (assets:LuxuryVehicle AND assets.estimatedValue > 100000) OR 
+      (assets:LuxuryProperty AND assets.estimatedValue > 2000000)
+MATCH (policies:Policy)-[r2:COVERS]->(assets)
+MATCH (customers)-[r3:HAS_POLICY]->(policies)
+MATCH (customers)-[r4:HAS_POLICY]->(umbrellaPolicy:UmbrellaPolicy)
+MATCH (underwriters:Underwriter)-[r5:UNDERWROTE]->(policies)
+OPTIONAL MATCH (customers)-[r6:FILED_CLAIM]->(claims:Claim)-[r7:FILED_AGAINST]->(policies)
+RETURN customers, r1, assets, r2, policies, r3, r4, umbrellaPolicy, r5, underwriters, r6, claims, r7;
+
+// ======================================================================
+
+// 14. REGULATORY COMPLIANCE MONITORING - Compliance and audit oversight
+MATCH (policies:Policy)-[r1:COMPLIES_WITH]->(compliance:ComplianceRecord)
+WHERE compliance.complianceStatus = 'Compliant'
+MATCH (customers:Customer)-[r2:HAS_POLICY]->(policies)
+MATCH (underwriters:Underwriter)-[r3:UNDERWROTE]->(policies)
+MATCH (customers)<-[r4:SERVES]-(agents:Agent)
+MATCH (agents)-[r5:WORKS_AT]->(branches:Branch)
+OPTIONAL MATCH (payments:Payment)-[r6:AUDITED_BY]->(audits:AuditLog)
+RETURN policies, r1, compliance, r2, customers, r3, underwriters, r4, agents, r5, branches, r6, payments, audits
+LIMIT 60;
+
+// ======================================================================
+
+// 15. FRAUD DETECTION AND INVESTIGATION - Claims investigation management
+MATCH (claims:Claim)
+WHERE claims.status = 'Under Investigation' AND claims.claimAmount > 20000
+MATCH (customers:Customer)-[r1:FILED_CLAIM]->(claims)
+MATCH (claims)-[r2:FILED_AGAINST]->(policies:Policy)
+MATCH (adjusters:Adjuster)-[r3:ASSIGNED_TO]->(claims)
+MATCH (customers)-[r4:CATEGORIZED_AS]->(riskCategories:RiskCategory)
+WHERE riskCategories.riskLevel >= 2
+OPTIONAL MATCH (claims)-[r5:REPAIRED_BY]->(vendors)
+OPTIONAL MATCH (customers)-[r6:SERVICE_HISTORY]->(agents:Agent)
+RETURN claims, r1, customers, r2, policies, r3, adjusters, r4, riskCategories, r5, vendors, r6, agents;
+
+// ======================================================================
+
+// 16. VENDOR PERFORMANCE MANAGEMENT - Service provider oversight
+MATCH (vendors)
+WHERE vendors:RepairShop OR vendors:Contractor
+MATCH (claims:Claim)-[r1:REPAIRED_BY]->(vendors)
+MATCH (customers:Customer)-[r2:FILED_CLAIM]->(claims)
+MATCH (claims)-[r3:FILED_AGAINST]->(policies:Policy)
+MATCH (adjusters:Adjuster)-[r4:ASSIGNED_TO]->(claims)
+OPTIONAL MATCH (claimPayments:ClaimPayment)-[r5:PAYS_CLAIM]->(claims)
+RETURN vendors, r1, claims, r2, customers, r3, policies, r4, adjusters, r5, claimPayments;
+
+// ======================================================================
+// GROWTH AND STRATEGIC PLANNING
+// ======================================================================
+
+// 17. MARKET EXPANSION OPPORTUNITIES - Geographic and demographic analysis
+MATCH (branches:Branch)<-[r1:ASSIGNED_TO]-(customers:Customer)
+WHERE branches.region IN ['Northeast', 'West', 'Southeast']
+MATCH (customers)-[r2:HAS_POLICY]->(policies:Policy)
+MATCH (customers)<-[r3:SERVES]-(agents:Agent)
+MATCH (agents)-[r4:WORKS_AT]->(branches)
+OPTIONAL MATCH (customers)-[r5:CROSS_SELL_OPPORTUNITY]->(opportunities)
+OPTIONAL MATCH (customers)-[r6:REFERRED]->(referrals:Customer)
+RETURN branches, r1, customers, r2, policies, r3, agents, r4, r5, opportunities, r6, referrals
+LIMIT 120;
+
+// ======================================================================
+
+// 18. CROSS-SELLING PERFORMANCE TRACKING - Revenue growth management
+MATCH (customers:Customer)-[r1:CROSS_SELL_OPPORTUNITY]->(opportunities)
+WHERE opportunities.priority IN ['High', 'Medium']
+MATCH (customers)-[r2:HAS_POLICY]->(currentPolicies:Policy)
+MATCH (customers)<-[r3:SERVES]-(agents:Agent)
+MATCH (agents)-[r4:WORKS_AT]->(branches:Branch)
+OPTIONAL MATCH (customers)-[r5:MADE_PAYMENT]->(payments:PremiumPayment)
+OPTIONAL MATCH (customers)-[r6:REFERRED]->(referrals:Customer)
+RETURN customers, r1, opportunities, r2, currentPolicies, r3, agents, r4, branches, r5, payments, r6, referrals;
+
+// ======================================================================
+
+// 19. CUSTOMER RETENTION AND CHURN ANALYSIS - Retention management
+MATCH (customers:Customer)
+WHERE customers.lifetimeValue > 50000
+MATCH (customers)-[r1:MADE_PAYMENT]->(payments:PremiumPayment)
+WHERE payments.paymentStatus IN ['Failed', 'Pending'] OR 
+      payments.paymentDate < date('2023-06-01')
+MATCH (customers)-[r2:SERVICE_HISTORY]->(agents:Agent)
+MATCH (customers)-[r3:HAS_POLICY]->(policies:Policy)
+WHERE policies.status IN ['Pending', 'Cancelled']
+OPTIONAL MATCH (customers)-[r4:FILED_CLAIM]->(claims:Claim)
+WHERE claims.status = 'Denied'
+RETURN customers, r1, payments, r2, agents, r3, policies, r4, claims;
+
+// ======================================================================
+
+// 20. COMPETITIVE POSITIONING ANALYSIS - Market share and customer value
+MATCH (customers:Customer)
+WHERE customers.customerSegment IN ['Ultra High Net Worth', 'High Net Worth']
+MATCH (customers)-[r1:HAS_POLICY]->(policies:Policy)
+WITH customers, count(policies) AS policyCount
+WHERE policyCount >= 3  // Multi-product customers
+MATCH (customers)-[r2:HAS_POLICY]->(allPolicies:Policy)
+MATCH (customers)<-[r3:SERVES]-(agents:Agent)
+MATCH (customers)-[r4:OWNS]->(assets)
+OPTIONAL MATCH (customers)-[r5:REFERRED]->(referrals:Customer)
+RETURN customers, r2, allPolicies, r3, agents, r4, assets, r5, referrals;
+
+// ======================================================================
+// BUSINESS INTELLIGENCE TABLES FOR MANAGEMENT REPORTING
+// ======================================================================
+
+// 21. EXECUTIVE DASHBOARD METRICS TABLE - Key performance indicators
+MATCH (branches:Branch)
+OPTIONAL MATCH (customers:Customer)-[:ASSIGNED_TO]->(branches)
+OPTIONAL MATCH (customers)-[:HAS_POLICY]->(policies:Policy)
+OPTIONAL MATCH (customers)-[:MADE_PAYMENT]->(premiumPayments:PremiumPayment)
+OPTIONAL MATCH (customers)-[:FILED_CLAIM]->(claims:Claim)
+OPTIONAL MATCH (claimPayments:ClaimPayment)-[:PAYS_CLAIM]->(claims)
+OPTIONAL MATCH (agents:Agent)-[:WORKS_AT]->(branches)
+RETURN 
+  branches.branchCode AS BranchCode,
+  branches.name AS BranchName,
+  branches.region AS Region,
+  branches.operationalBudget AS Budget,
+  count(DISTINCT agents) AS TotalAgents,
+  count(DISTINCT customers) AS TotalCustomers,
+  count(DISTINCT policies) AS TotalPolicies,
+  sum(premiumPayments.paymentAmount) AS TotalPremiumRevenue,
+  count(DISTINCT claims) AS TotalClaims,
+  sum(claims.claimAmount) AS TotalClaimAmount,
+  sum(claimPayments.paymentAmount) AS TotalClaimPayments,
+  (sum(premiumPayments.paymentAmount) - sum(claimPayments.paymentAmount)) AS NetRevenue,
+  CASE 
+    WHEN sum(premiumPayments.paymentAmount) > 0 
+    THEN round((sum(premiumPayments.paymentAmount) - sum(claimPayments.paymentAmount)) * 100.0 / sum(premiumPayments.paymentAmount), 2)
+    ELSE 0 
+  END AS ProfitMarginPercent
+ORDER BY NetRevenue DESC;
+
+// ======================================================================
+
+// 22. AGENT PERFORMANCE MANAGEMENT TABLE - Sales force analytics
+MATCH (agents:SalesAgent)
+OPTIONAL MATCH (agents)-[:SERVES]->(customers:Customer)
+OPTIONAL MATCH (customers)-[:HAS_POLICY]->(policies:Policy)
+OPTIONAL MATCH (customers)-[:MADE_PAYMENT]->(payments:PremiumPayment)
+OPTIONAL MATCH (agents)-[:WORKS_AT]->(branches:Branch)
+OPTIONAL MATCH (senior:Agent)-[:MENTORS]->(agents)
+RETURN 
+  agents.agentId AS AgentID,
+  agents.firstName + ' ' + agents.lastName AS AgentName,
+  branches.branchCode AS BranchCode,
+  branches.region AS Region,
+  agents.hireDate AS HireDate,
+  agents.yearsExperience AS Experience,
+  agents.salesTarget AS SalesTarget,
+  count(DISTINCT customers) AS TotalCustomers,
+  count(DISTINCT policies) AS TotalPolicies,
+  sum(customers.totalPremiums) AS TotalPremiums,
+  sum(payments.paymentAmount) AS TotalPaymentsReceived,
+  avg(customers.lifetimeValue) AS AvgCustomerValue,
+  agents.commissionRate AS CommissionRate,
+  CASE 
+    WHEN agents.salesTarget > 0 
+    THEN round(sum(customers.totalPremiums) * 100.0 / agents.salesTarget, 2)
+    ELSE 0 
+  END AS TargetAchievementPercent,
+  CASE WHEN senior IS NOT NULL THEN senior.agentId ELSE 'None' END AS MentorID
+ORDER BY TotalPremiums DESC
+LIMIT 30;
+
+// ======================================================================
+
+// 23. RISK MANAGEMENT DASHBOARD TABLE - Risk exposure analysis
+MATCH (riskCategories:RiskCategory)<-[:CATEGORIZED_AS]-(customers:Customer)
+OPTIONAL MATCH (customers)-[:HAS_POLICY]->(policies:Policy)
+OPTIONAL MATCH (customers)-[:FILED_CLAIM]->(claims:Claim)
+OPTIONAL MATCH (claimPayments:ClaimPayment)-[:PAYS_CLAIM]->(claims)
+OPTIONAL MATCH (customers)-[:MADE_PAYMENT]->(premiumPayments:PremiumPayment)
+RETURN 
+  riskCategories.categoryName AS RiskCategory,
+  riskCategories.riskLevel AS RiskLevel,
+  riskCategories.baseRate AS BaseRate,
+  count(DISTINCT customers) AS CustomerCount,
+  count(DISTINCT policies) AS PolicyCount,
+  count(DISTINCT claims) AS ClaimCount,
+  sum(claims.claimAmount) AS TotalClaimAmount,
+  sum(claimPayments.paymentAmount) AS TotalClaimPayments,
+  sum(premiumPayments.paymentAmount) AS TotalPremiumRevenue,
+  CASE 
+    WHEN count(DISTINCT customers) > 0 
+    THEN round(count(DISTINCT claims) * 100.0 / count(DISTINCT customers), 2)
+    ELSE 0 
+  END AS ClaimFrequencyPercent,
+  CASE 
+    WHEN sum(premiumPayments.paymentAmount) > 0 
+    THEN round(sum(claimPayments.paymentAmount) * 100.0 / sum(premiumPayments.paymentAmount), 2)
+    ELSE 0 
+  END AS LossRatioPercent,
+  avg(customers.lifetimeValue) AS AvgCustomerValue
+ORDER BY RiskLevel DESC;
+
+// ======================================================================
+
+// 24. CLAIMS MANAGEMENT PERFORMANCE TABLE - Claims processing efficiency
+MATCH (adjusters:Adjuster)
+OPTIONAL MATCH (adjusters)-[:ASSIGNED_TO]->(claims:Claim)
+OPTIONAL MATCH (customers:Customer)-[:FILED_CLAIM]->(claims)
+OPTIONAL MATCH (claims)-[:FILED_AGAINST]->(policies:Policy)
+OPTIONAL MATCH (claimPayments:ClaimPayment)-[:PAYS_CLAIM]->(claims)
+OPTIONAL MATCH (claims)-[:REPAIRED_BY]->(vendors)
+RETURN 
+  adjusters.adjusterId AS AdjusterID,
+  adjusters.firstName + ' ' + adjusters.lastName AS AdjusterName,
+  adjusters.specialization AS Specialization,
+  adjusters.yearsExperience AS Experience,
+  adjusters.caseLoad AS CurrentCaseLoad,
+  count(DISTINCT claims) AS TotalClaimsHandled,
+  count(DISTINCT CASE WHEN claims.status = 'Settled' THEN claims END) AS SettledClaims,
+  count(DISTINCT CASE WHEN claims.status = 'Denied' THEN claims END) AS DeniedClaims,
+  count(DISTINCT CASE WHEN claims.status IN ['In Progress', 'Under Investigation'] THEN claims END) AS PendingClaims,
+  sum(claims.claimAmount) AS TotalClaimValue,
+  sum(claimPayments.paymentAmount) AS TotalPayments,
+  avg(claims.claimAmount) AS AvgClaimValue,
+  CASE 
+    WHEN count(DISTINCT claims) > 0 
+    THEN round(count(DISTINCT CASE WHEN claims.status = 'Settled' THEN claims END) * 100.0 / count(DISTINCT claims), 2)
+    ELSE 0 
+  END AS SettlementRatePercent,
+  count(DISTINCT vendors) AS VendorsWorkedWith
+ORDER BY TotalClaimsHandled DESC, SettlementRatePercent DESC;
+
+// ======================================================================
+
+// 25. FINANCIAL PERFORMANCE SUMMARY TABLE - Revenue and profitability overview
+MATCH (customers:Customer)
+OPTIONAL MATCH (customers)-[:MADE_PAYMENT]->(premiumPayments:PremiumPayment)
+OPTIONAL MATCH (customers)-[:FILED_CLAIM]->(claims:Claim)
+OPTIONAL MATCH (claimPayments:ClaimPayment)-[:PAYS_CLAIM]->(claims)
+OPTIONAL MATCH (customers)-[:HAS_POLICY]->(policies:Policy)
+OPTIONAL MATCH (customers)-[:ASSIGNED_TO]->(branches:Branch)
+WHERE premiumPayments.paymentDate >= date('2023-01-01') OR claims.incidentDate >= date('2023-01-01')
+RETURN 
+  branches.region AS Region,
+  customers.customerSegment AS CustomerSegment,
+  count(DISTINCT customers) AS CustomerCount,
+  count(DISTINCT policies) AS PolicyCount,
+  sum(premiumPayments.paymentAmount) AS TotalPremiumRevenue,
+  count(DISTINCT claims) AS ClaimCount,
+  sum(claims.claimAmount) AS TotalClaimAmount,
+  sum(claimPayments.paymentAmount) AS TotalClaimPayments,
+  (sum(premiumPayments.paymentAmount) - sum(claimPayments.paymentAmount)) AS NetRevenue,
+  CASE 
+    WHEN sum(premiumPayments.paymentAmount) > 0 
+    THEN round(sum(claimPayments.paymentAmount) * 100.0 / sum(premiumPayments.paymentAmount), 2)
+    ELSE 0 
+  END AS LossRatio,
+  CASE 
+    WHEN count(DISTINCT customers) > 0 
+    THEN round(sum(premiumPayments.paymentAmount) / count(DISTINCT customers), 2)
+    ELSE 0 
+  END AS RevenuePerCustomer,
+  CASE 
+    WHEN count(DISTINCT customers) > 0 
+    THEN round(count(DISTINCT claims) * 100.0 / count(DISTINCT customers), 2)
+    ELSE 0 
+  END AS ClaimFrequencyPercent
+ORDER BY Region, CustomerSegment;
+
+// ======================================================================
+
+// 26. VENDOR PERFORMANCE EVALUATION TABLE - Service provider management
+MATCH (vendors)
+WHERE vendors:RepairShop OR vendors:Contractor
+OPTIONAL MATCH (claims:Claim)-[:REPAIRED_BY]->(vendors)
+OPTIONAL MATCH (customers:Customer)-[:FILED_CLAIM]->(claims)
+OPTIONAL MATCH (claimPayments:ClaimPayment)-[:PAYS_CLAIM]->(claims)
+OPTIONAL MATCH (adjusters:Adjuster)-[:ASSIGNED_TO]->(claims)
+RETURN 
+  vendors.shopId AS VendorID,
+  vendors.name AS VendorName,
+  CASE 
+    WHEN vendors:RepairShop THEN 'Repair Shop'
+    WHEN vendors:Contractor THEN 'Contractor'
+    ELSE 'Other'
+  END AS VendorType,
+  vendors.city AS City,
+  vendors.state AS State,
+  vendors.rating AS Rating,
+  vendors.preferredVendor AS PreferredVendor,
+  count(DISTINCT claims) AS TotalJobsCompleted,
+  sum(claims.claimAmount) AS TotalClaimValue,
+  sum(claimPayments.paymentAmount) AS TotalPayments,
+  avg(claims.claimAmount) AS AvgJobValue,
+  CASE 
+    WHEN vendors:RepairShop THEN vendors.avgRepairTime
+    ELSE null
+  END AS AvgRepairTimeDays,
+  count(DISTINCT customers) AS UniqueCustomersServed,
+  count(DISTINCT adjusters) AS AdjustersWorkedWith,
+  CASE 
+    WHEN vendors:RepairShop THEN vendors.certifications
+    WHEN vendors:Contractor THEN vendors.specialties
+    ELSE []
+  END AS Certifications_Specialties
+ORDER BY TotalJobsCompleted DESC, Rating DESC;
+
+// ======================================================================
+// BUSINESS MANAGEMENT QUERY USAGE GUIDE
+// ======================================================================
+/*
+🎯 BUSINESS MANAGEMENT QUERY CATEGORIES:
+
+EXECUTIVE OVERSIGHT (Queries 1-4):
+- Enterprise performance overview
+- Strategic relationships and hierarchy
+- Revenue flow visualization  
+- Risk exposure management
+
+OPERATIONAL MANAGEMENT (Queries 5-8):
+- Branch performance comparison
+- Agent productivity and mentorship
+- Underwriter workload distribution
+- Claims processing efficiency
+
+FINANCIAL MANAGEMENT (Queries 9-12):
+- Cash flow analysis
+- High-value transaction monitoring
+- Profitability by customer segment
+- Payment performance tracking
+
+RISK & COMPLIANCE (Queries 13-16):
+- Catastrophic risk exposure
+- Regulatory compliance monitoring
+- Fraud detection and investigation
+- Vendor performance management
+
+GROWTH & STRATEGY (Queries 17-20):
+- Market expansion opportunities
+- Cross-selling performance
+- Customer retention analysis
+- Competitive positioning
+
+MANAGEMENT REPORTING (Queries 21-26):
+- Executive dashboard metrics
+- Agent performance analytics
+- Risk management dashboard
+- Claims processing efficiency
+- Financial performance summary
+- Vendor evaluation
+
+🎨 VISUALIZATION RECOMMENDATIONS:
+
+NETWORK LAYOUTS:
+- Use Hierarchical layout for organizational queries (1-3)
+- Use Force Atlas for operational workflows (5-8)
+- Use Circular layout for financial flows (9-12)
+- Use Geographic layout for regional analysis (17, 21)
+
+NODE SIZING:
+- Scale by financial values (revenue, claims, payments)
+- Scale by performance metrics (targets, efficiency)
+- Scale by risk levels (exposure, frequency)
+
+COLOR CODING:
+- Green: Profitable operations, high performance
+- Red: Loss-making, high risk, problems
+- Blue: Standard operations, medium performance
+- Gold: High-value customers, premium services
+- Gray: Neutral/administrative entities
+
+RELATIONSHIP STYLING:
+- Financial flows: Thick lines, color by amount
+- Organizational hierarchy: Medium lines, uniform color
+- Performance relationships: Vary thickness by metrics
+- Risk relationships: Color by severity level
+
+INTERACTIVE FEATURES:
+- Filter by region, segment, time period
+- Drill down from summary to detail views
+- Export for executive presentations
+- Group by organizational units
+- Highlight critical paths and bottlenecks
+
+MANAGEMENT DASHBOARDS:
+- Pin key performance nodes for stability
+- Use side-by-side comparisons for branches/agents
+- Implement real-time data refresh capabilities
+- Create saved views for different management roles
+- Enable metric thresholds for alert highlighting
+*/

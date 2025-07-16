@@ -1,129 +1,555 @@
 // ======================================================================
-// CUSTOMER 360° RELATIONSHIP VISUALIZATION
-// Complete view of a customer's insurance ecosystem
+// ENHANCED CUSTOMER 360° RELATIONSHIP VISUALIZATION
+// Complete view of customers in expanded insurance ecosystem
+// All queries optimized for graph visualization or table display
 // ======================================================================
 
-// 1. COMPLETE CUSTOMER ECOSYSTEM - Single Customer (CUST001)
-// This shows ALL relationships for one high-value customer
-MATCH (customer:Customer {customerId: 'CUST001'})
-OPTIONAL MATCH (customer)-[r1:OWNS]->(assets)
-OPTIONAL MATCH (customer)-[r2:HAS_POLICY]->(policies)
-OPTIONAL MATCH (customer)<-[r3:SERVES]-(agent)
-OPTIONAL MATCH (agent)-[r4:WORKS_AT]->(branch)
-OPTIONAL MATCH (policies)-[r5:COVERS]->(coveredAssets)
+// ======================================================================
+// PREMIUM CUSTOMER RELATIONSHIP VISUALIZATIONS
+// ======================================================================
+
+// 1. ULTRA HIGH NET WORTH CUSTOMER ECOSYSTEM - Complete premium customer relationships
+MATCH (customer:PremiumCustomer {customerId: 'CUST001'})
+MATCH (customer)-[r1:OWNS]->(assets)
+MATCH (customer)-[r2:HAS_POLICY]->(policies)
+MATCH (customer)<-[r3:SERVES]-(agent)-[r4:WORKS_AT]->(branch)
+MATCH (branch)<-[r5:SUPERVISES]-(regional:RegionalHeadquarters)
+MATCH (policies)<-[r6:UNDERWROTE]-(underwriter:Underwriter)
+OPTIONAL MATCH (policies)-[r7:COVERS]->(coveredAssets)
+OPTIONAL MATCH (customer)-[r8:FILED_CLAIM]->(claims)
+OPTIONAL MATCH (claims)-[r9:REPAIRED_BY]->(vendors)
+OPTIONAL MATCH (customer)-[r10:MADE_PAYMENT]->(payments)
+OPTIONAL MATCH (customer)-[r11:CATEGORIZED_AS]->(riskCategory:RiskCategory)
+RETURN customer, r1, assets, r2, policies, r3, agent, r4, branch, r5, regional,
+       r6, underwriter, r7, coveredAssets, r8, claims, r9, vendors, r10, payments, r11, riskCategory;
+
+// ======================================================================
+
+// 2. MULTI-CUSTOMER FAMILY PORTFOLIO - Premium customer comparison with relationships
+MATCH (customer:Customer)
+WHERE customer.customerId IN ['CUST001', 'CUST002', 'CUST003'] 
+   OR customer.customerSegment IN ['Ultra High Net Worth', 'High Net Worth']
+MATCH (customer)-[r1:OWNS]->(assets)
+MATCH (customer)-[r2:HAS_POLICY]->(policies)
+MATCH (customer)<-[r3:SERVES]-(agent)-[r4:WORKS_AT]->(branch:Branch)
+MATCH (policies)<-[r5:UNDERWROTE]-(underwriter:Underwriter)
 OPTIONAL MATCH (customer)-[r6:FILED_CLAIM]->(claims)
-OPTIONAL MATCH (claims)-[r7:FILED_AGAINST]->(claimPolicies)
-OPTIONAL MATCH (claims)-[r8:REPAIRED_BY]->(vendors)
+OPTIONAL MATCH (customer)-[r7:MADE_PAYMENT]->(payments:PremiumPayment)
+OPTIONAL MATCH (customer)-[r8:CATEGORIZED_AS]->(risk:RiskCategory)
 RETURN customer, r1, assets, r2, policies, r3, agent, r4, branch, 
-       r5, coveredAssets, r6, claims, r7, claimPolicies, r8, vendors;
+       r5, underwriter, r6, claims, r7, payments, r8, risk;
 
 // ======================================================================
 
-// 2. MULTI-CUSTOMER COMPARISON - Top 3 Customers
-// Shows relationship patterns across multiple high-value customers
-MATCH (customer:Customer)
-WHERE customer.customerId IN ['CUST001', 'CUST002', 'CUST007']
-OPTIONAL MATCH (customer)-[owns:OWNS]->(assets)
-OPTIONAL MATCH (customer)-[hasPolicy:HAS_POLICY]->(policies)
-OPTIONAL MATCH (customer)<-[serves:SERVES]-(agent)
-OPTIONAL MATCH (customer)-[filed:FILED_CLAIM]->(claims)
-RETURN customer, owns, assets, hasPolicy, policies, serves, agent, filed, claims;
+// 3. CUSTOMER FINANCIAL ECOSYSTEM - Complete financial relationship flows
+MATCH (customer:Customer {customerId: 'CUST001'})
+MATCH (customer)-[r1:HAS_POLICY]->(policies:Policy)
+MATCH (customer)-[r2:MADE_PAYMENT]->(premiumPayments:PremiumPayment)
+MATCH (premiumPayments)-[r3:PAYS_PREMIUM]->(policies)
+MATCH (customer)<-[r4:SERVES]-(agent:Agent)-[r5:WORKS_AT]->(branch:Branch)
+MATCH (policies)<-[r6:UNDERWROTE]-(underwriter:Underwriter)
+OPTIONAL MATCH (customer)-[r7:FILED_CLAIM]->(claims:Claim)-[r8:FILED_AGAINST]->(policies)
+OPTIONAL MATCH (claimPayments:ClaimPayment)-[r9:PAYS_CLAIM]->(claims)
+OPTIONAL MATCH (premiumPayments)-[r10:AUDITED_BY]->(audits:AuditLog)
+RETURN customer, r1, policies, r2, premiumPayments, r3, r4, agent, r5, branch, 
+       r6, underwriter, r7, claims, r8, r9, claimPayments, r10, audits;
 
 // ======================================================================
 
-// 3. CUSTOMER JOURNEY VISUALIZATION - Policy to Asset Coverage
-// Shows how policies connect to specific assets for a customer
-MATCH path = (customer:Customer {customerId: 'CUST001'})-[:HAS_POLICY]->(policy)-[:COVERS]->(asset)<-[:OWNS]-(customer)
-RETURN path;
+// 4. CUSTOMER SERVICE AND SATISFACTION NETWORK - Service relationships with organizational context
+MATCH (customer:Customer {customerId: 'CUST002'})
+MATCH (customer)-[r1:SERVICE_HISTORY]->(agent:Agent)
+MATCH (agent)-[r2:WORKS_AT]->(branch:Branch)
+MATCH (branch)<-[r3:SUPERVISES]-(regional:RegionalHeadquarters)
+MATCH (customer)-[r4:HAS_POLICY]->(policies:Policy)
+OPTIONAL MATCH (customer)-[r5:CROSS_SELL_OPPORTUNITY]->(opportunities)
+OPTIONAL MATCH (customer)-[r6:REFERRED]->(referralNetwork:Customer)
+OPTIONAL MATCH (agent)<-[r7:MENTORS]-(seniorAgent:Agent)
+RETURN customer, r1, agent, r2, branch, r3, regional, r4, policies, 
+       r5, opportunities, r6, referralNetwork, r7, seniorAgent;
 
 // ======================================================================
 
-// 4. CLAIMS INVESTIGATION VIEW - Customer with Claims Network
-// Shows customer, their claims, and all related entities
-MATCH (customer:Customer {customerId: 'CUST001'})-[:FILED_CLAIM]->(claim)
-MATCH (claim)-[:FILED_AGAINST]->(policy)<-[:HAS_POLICY]-(customer)
-OPTIONAL MATCH (policy)-[:COVERS]->(asset)<-[:OWNS]-(customer)
-OPTIONAL MATCH (claim)-[:REPAIRED_BY]->(vendor)
-OPTIONAL MATCH (customer)<-[:SERVES]-(agent)-[:WORKS_AT]->(branch)
-RETURN customer, claim, policy, asset, vendor, agent, branch;
-
-// ======================================================================
-
-// 5. AGENT-CUSTOMER NETWORK - Relationship Management View
-// Shows agent's relationship with their customers and their portfolios
-MATCH (agent:Agent)-[:SERVES]->(customer:Customer)
+// 5. CUSTOMER CLAIMS AND VENDOR ECOSYSTEM - Complete claims processing relationships
+MATCH (customer:Customer)-[r1:FILED_CLAIM]->(claims:Claim)
 WHERE customer.customerId IN ['CUST001', 'CUST002', 'CUST003']
-MATCH (agent)-[:WORKS_AT]->(branch)
-OPTIONAL MATCH (customer)-[:HAS_POLICY]->(policies)
-OPTIONAL MATCH (customer)-[:OWNS]->(assets)
-RETURN agent, customer, branch, policies, assets;
+MATCH (claims)-[r2:FILED_AGAINST]->(policies:Policy)
+MATCH (customer)-[r3:HAS_POLICY]->(policies)
+MATCH (adjuster:Adjuster)-[r4:ASSIGNED_TO]->(claims)
+MATCH (policies)-[r5:COVERS]->(assets)
+MATCH (customer)<-[r6:SERVES]-(agent:Agent)
+OPTIONAL MATCH (claims)-[r7:REPAIRED_BY]->(vendors)
+OPTIONAL MATCH (claimPayments:ClaimPayment)-[r8:PAYS_CLAIM]->(claims)
+OPTIONAL MATCH (claimPayments)-[r9:AUDITED_BY]->(audits:AuditLog)
+RETURN customer, r1, claims, r2, policies, r3, r4, adjuster, r5, assets, 
+       r6, agent, r7, vendors, r8, claimPayments, r9, audits;
 
 // ======================================================================
 
-// 6. HIGH-VALUE CUSTOMER PORTFOLIO - Premium Customers Only
-// Shows only customers with high lifetime value and their complete ecosystem
+// 6. CUSTOMER RISK AND COMPLIANCE PROFILE - Risk assessment with compliance relationships
 MATCH (customer:Customer)
-WHERE customer.lifetimeValue > 200000
-OPTIONAL MATCH (customer)-[r]-(connected)
-WHERE NOT connected:Customer  // Exclude other customers to focus on business relationships
-RETURN customer, r, connected
-LIMIT 100;
+WHERE customer.customerId IN ['CUST001', 'CUST002', 'CUST004', 'CUST005']
+MATCH (customer)-[r1:CATEGORIZED_AS]->(riskCategory:RiskCategory)
+MATCH (customer)-[r2:HAS_POLICY]->(policies:Policy)
+MATCH (policies)-[r3:COMPLIES_WITH]->(compliance:ComplianceRecord)
+MATCH (underwriter:Underwriter)-[r4:UNDERWROTE]->(policies)
+MATCH (customer)<-[r5:SERVES]-(agent:Agent)-[r6:WORKS_AT]->(branch:Branch)
+OPTIONAL MATCH (customer)-[r7:FILED_CLAIM]->(claims:Claim)
+RETURN customer, r1, riskCategory, r2, policies, r3, compliance, 
+       r4, underwriter, r5, agent, r6, branch, r7, claims;
 
 // ======================================================================
 
-// 7. CUSTOMER RISK PROFILE NETWORK - Risk-Based Segmentation
-// Shows customers grouped by risk profile with their relationships
-MATCH (customer:Customer {riskProfile: 'Low'})
-WHERE customer.customerId IN ['CUST001', 'CUST002', 'CUST004', 'CUST007', 'CUST008']
-MATCH (customer)-[r]-(related)
-RETURN customer, r, related;
-
-// ======================================================================
-
-// 8. MULTI-POLICY CUSTOMER ANALYSIS - Cross-Selling Success
-// Shows customers with multiple policies and their complete network
-MATCH (customer:Customer)-[:HAS_POLICY]->(policy)
-WITH customer, count(policy) AS policyCount
-WHERE policyCount > 1
-MATCH (customer)-[r]-(connected)
-RETURN customer, r, connected
-LIMIT 75;
-
-// ======================================================================
-
-// 9. CUSTOMER LIFECYCLE VIEW - Temporal Relationship Analysis
-// Shows customers by tenure with their relationship timeline
+// 7. CUSTOMER ASSET PROTECTION STRATEGY - High-value asset coverage relationships
 MATCH (customer:Customer)
-WHERE customer.customerSince < date('2015-01-01')  // Long-term customers
-MATCH (customer)-[r]-(connected)
-RETURN customer, r, connected
-LIMIT 50;
+WHERE customer.customerSegment IN ['Ultra High Net Worth', 'High Net Worth']
+MATCH (customer)-[r1:OWNS]->(assets)
+WHERE (assets:LuxuryVehicle AND assets.estimatedValue > 80000) OR 
+      (assets:LuxuryProperty AND assets.estimatedValue > 1000000)
+MATCH (policies:Policy)-[r2:COVERS]->(assets)
+MATCH (customer)-[r3:HAS_POLICY]->(policies)
+MATCH (customer)-[r4:HAS_POLICY]->(umbrellaPolicy:UmbrellaPolicy)
+MATCH (customer)<-[r5:SERVES]-(agent:Agent)
+MATCH (underwriter:Underwriter)-[r6:UNDERWROTE]->(policies)
+OPTIONAL MATCH (customer)-[r7:FILED_CLAIM]->(claims:Claim)-[r8:FILED_AGAINST]->(policies)
+RETURN customer, r1, assets, r2, policies, r3, r4, umbrellaPolicy, 
+       r5, agent, r6, underwriter, r7, claims, r8;
 
 // ======================================================================
 
-// 10. CUSTOMER CLAIMS IMPACT NETWORK - Loss Analysis
-// Shows customers who have filed claims and their full ecosystem
-MATCH (customer:Customer)-[:FILED_CLAIM]->(claim)
-MATCH (customer)-[r]-(allConnected)
-RETURN customer, claim, r, allConnected
+// 8. CUSTOMER CROSS-SELLING AND GROWTH OPPORTUNITIES - Revenue expansion relationships
+MATCH (customer:Customer)-[r1:CROSS_SELL_OPPORTUNITY]->(opportunities)
+MATCH (customer)-[r2:HAS_POLICY]->(currentPolicies:Policy)
+MATCH (customer)<-[r3:SERVES]-(agent:Agent)-[r4:WORKS_AT]->(branch:Branch)
+MATCH (customer)-[r5:MADE_PAYMENT]->(payments:PremiumPayment)
+MATCH (customer)-[r6:OWNS]->(assets)
+MATCH (branch)<-[r7:SUPERVISES]-(regional:RegionalHeadquarters)
+OPTIONAL MATCH (customer)-[r8:REFERRED]->(referrals:Customer)
+RETURN customer, r1, opportunities, r2, currentPolicies, r3, agent, r4, branch, 
+       r5, payments, r6, assets, r7, regional, r8, referrals;
+
+// ======================================================================
+
+// 9. CUSTOMER PAYMENT BEHAVIOR AND FINANCIAL PATTERNS - Payment relationships with audit oversight
+MATCH (customer:Customer)-[r1:MADE_PAYMENT]->(payments:Payment)
+WHERE customer.lifetimeValue > 100000
+MATCH (customer)<-[r2:SERVES]-(agent:Agent)
+MATCH (customer)-[r3:HAS_POLICY]->(allPolicies:Policy)
+OPTIONAL MATCH (payments)-[r4:PAYS_PREMIUM]->(premiumPolicies:Policy)
+OPTIONAL MATCH (payments)-[r5:PAYS_CLAIM]->(claims:Claim)
+OPTIONAL MATCH (payments)-[r6:AUDITED_BY]->(audits:AuditLog)
+RETURN customer, r1, payments, r2, agent, r3, allPolicies, 
+       r4, premiumPolicies, r5, claims, r6, audits
 LIMIT 60;
 
 // ======================================================================
 
-// VISUALIZATION TIPS FOR NEO4J BROWSER:
+// 10. CUSTOMER REFERRAL AND SOCIAL NETWORK - Word-of-mouth marketing relationships
+MATCH (customer:Customer)-[r1:REFERRED]->(referrals:Customer)
+MATCH (customer)<-[r2:SERVES]-(agent:Agent)
+MATCH (referrals)<-[r3:SERVES]-(referralAgent:Agent)
+MATCH (customer)-[r4:HAS_POLICY]->(customerPolicies:Policy)
+MATCH (referrals)-[r5:HAS_POLICY]->(referralPolicies:Policy)
+MATCH (agent)-[r6:WORKS_AT]->(branch:Branch)
+RETURN customer, r1, referrals, r2, agent, r3, referralAgent, 
+       r4, customerPolicies, r5, referralPolicies, r6, branch;
+
+// ======================================================================
+
+// 11. CUSTOMER LIFECYCLE JOURNEY ANALYSIS - Complete customer timeline relationships
+MATCH (customer:Customer)
+WHERE customer.customerSince < date('2015-01-01')  // Long-term customers
+AND customer.lifetimeValue > 150000
+MATCH (customer)-[r1:HAS_POLICY]->(policies:Policy)
+MATCH (customer)<-[r2:SERVES]-(agent:Agent)-[r3:WORKS_AT]->(branch:Branch)
+MATCH (customer)-[r4:SERVICE_HISTORY]->(serviceAgent:Agent)
+MATCH (policies)<-[r5:UNDERWROTE]-(underwriter:Underwriter)
+OPTIONAL MATCH (customer)-[r6:FILED_CLAIM]->(claims:Claim)
+OPTIONAL MATCH (customer)-[r7:MADE_PAYMENT]->(payments:Payment)
+RETURN customer, r1, policies, r2, agent, r3, branch, r4, serviceAgent, 
+       r5, underwriter, r6, claims, r7, payments
+LIMIT 40;
+
+// ======================================================================
+
+// 12. CUSTOMER GEOGRAPHIC AND BRANCH ANALYSIS - Regional customer relationships
+MATCH (customer:Customer)-[r1:ASSIGNED_TO]->(branch:Branch)
+WHERE customer.state IN ['NY', 'CA', 'FL', 'TX']
+MATCH (branch)<-[r2:SUPERVISES]-(regional:RegionalHeadquarters)
+MATCH (customer)<-[r3:SERVES]-(agent:Agent)
+MATCH (customer)-[r4:HAS_POLICY]->(policies:Policy)
+MATCH (customer)-[r5:CATEGORIZED_AS]->(risk:RiskCategory)
+OPTIONAL MATCH (customer)-[r6:FILED_CLAIM]->(claims:Claim)
+RETURN customer, r1, branch, r2, regional, r3, agent, 
+       r4, policies, r5, risk, r6, claims
+LIMIT 80;
+
+// ======================================================================
+
+// 13. CUSTOMER COMPETITIVE ANALYSIS - Multi-policy vs single-policy relationships
+MATCH (customer:Customer)-[r1:HAS_POLICY]->(policies:Policy)
+WITH customer, count(policies) AS policyCount
+WHERE policyCount >= 2
+MATCH (customer)-[r2:HAS_POLICY]->(allPolicies:Policy)
+MATCH (allPolicies)-[r3:COVERS]->(assets)
+MATCH (customer)<-[r4:SERVES]-(agent:Agent)
+MATCH (customer)-[r5:MADE_PAYMENT]->(payments:PremiumPayment)
+MATCH (payments)-[r6:PAYS_PREMIUM]->(allPolicies)
+MATCH (underwriter:Underwriter)-[r7:UNDERWROTE]->(allPolicies)
+RETURN customer, r2, allPolicies, r3, assets, r4, agent, r5, payments, r6, r7, underwriter;
+
+// ======================================================================
+
+// 14. CUSTOMER EXECUTIVE RELATIONSHIP MAPPING - High-value customer executive attention
+MATCH (customer:Customer)
+WHERE customer.customerSegment IN ['Ultra High Net Worth', 'High Net Worth'] 
+   OR customer.lifetimeValue > 500000
+MATCH (customer)<-[r1:SERVES]-(agent:Agent)-[r2:WORKS_AT]->(branch:Branch)
+MATCH (branch)<-[r3:SUPERVISES]-(regional:RegionalHeadquarters)
+MATCH (regional)<-[r4:MANAGES]-(corporate:CorporateOffice)
+MATCH (manager:BranchManager)-[r5:WORKS_AT]->(branch)
+MATCH (customer)-[r6:HAS_POLICY]->(policies:Policy)
+OPTIONAL MATCH (customer)-[r7:FILED_CLAIM]->(claims:Claim)
+RETURN customer, r1, agent, r2, branch, r3, regional, r4, corporate, 
+       r5, manager, r6, policies, r7, claims;
+
+// ======================================================================
+
+// 15. CUSTOMER SATISFACTION AND SERVICE QUALITY NETWORK - Service excellence relationships
+MATCH (customer:Customer)-[r1:SERVICE_HISTORY]->(agent:Agent)
+WHERE customer.lifetimeValue > 75000
+MATCH (agent)-[r2:WORKS_AT]->(branch:Branch)
+MATCH (customer)-[r3:HAS_POLICY]->(policies:Policy)
+MATCH (agent)<-[r4:MENTORS]-(seniorAgent:Agent)
+MATCH (customer)-[r5:CROSS_SELL_OPPORTUNITY]->(opportunities)
+MATCH (branch)<-[r6:SUPERVISES]-(regional:RegionalHeadquarters)
+OPTIONAL MATCH (customer)-[r7:FILED_CLAIM]->(claims:Claim)
+RETURN customer, r1, agent, r2, branch, r3, policies, r4, seniorAgent, 
+       r5, opportunities, r6, regional, r7, claims;
+
+// ======================================================================
+// ADVANCED CUSTOMER RELATIONSHIP ANALYSIS
+// ======================================================================
+
+// 16. CUSTOMER FAMILY WEALTH MANAGEMENT - Multi-generational customer relationships
+MATCH (customer:Customer)
+WHERE customer.lastName IN ['Johnson', 'Williams', 'Brown', 'Davis', 'Miller'] 
+AND customer.lifetimeValue > 50000
+MATCH (customer)-[r1:HAS_POLICY]->(policies:Policy)
+MATCH (customer)-[r2:OWNS]->(assets)
+MATCH (customer)<-[r3:SERVES]-(agent:Agent)
+OPTIONAL MATCH (customer)-[r4:REFERRED]->(referredCustomers:Customer)
+OPTIONAL MATCH (customer)-[r5:SERVICE_HISTORY]->(serviceAgents:Agent)
+RETURN customer, r1, policies, r2, assets, r3, agent, r4, referredCustomers, r5, serviceAgents
+LIMIT 70;
+
+// ======================================================================
+
+// 17. CUSTOMER CLAIMS FREQUENCY ANALYSIS - Risk pattern relationship identification
+MATCH (customer:Customer)-[r1:FILED_CLAIM]->(claims:Claim)
+WITH customer, count(claims) AS claimCount
+WHERE claimCount > 1
+MATCH (customer)-[r2:FILED_CLAIM]->(allClaims:Claim)
+MATCH (allClaims)-[r3:FILED_AGAINST]->(policies:Policy)
+MATCH (adjuster:Adjuster)-[r4:ASSIGNED_TO]->(allClaims)
+MATCH (customer)-[r5:CATEGORIZED_AS]->(risk:RiskCategory)
+MATCH (customer)<-[r6:SERVES]-(agent:Agent)
+RETURN customer, r2, allClaims, r3, policies, r4, adjuster, r5, risk, r6, agent;
+
+// ======================================================================
+
+// 18. CUSTOMER DIGITAL ENGAGEMENT - Payment and communication preference relationships
+MATCH (customer:Customer)-[r1:MADE_PAYMENT]->(payments:PremiumPayment)
+WHERE payments.paymentMethod IN ['Auto Pay', 'Credit Card', 'ACH Transfer']
+AND customer.preferredContact IN ['Email', 'Text']
+MATCH (customer)-[r2:HAS_POLICY]->(policies:Policy)
+MATCH (customer)<-[r3:SERVES]-(agent:Agent)
+MATCH (customer)-[r4:SERVICE_HISTORY]->(serviceAgent:Agent)
+RETURN customer, r1, payments, r2, policies, r3, agent, r4, serviceAgent
+LIMIT 50;
+
+// ======================================================================
+
+// 19. CUSTOMER RETENTION RISK ANALYSIS - At-risk customer relationship patterns
+MATCH (customer:Customer)
+WHERE customer.lifetimeValue > 25000
+MATCH (customer)-[r1:MADE_PAYMENT]->(payments:PremiumPayment)
+WHERE payments.paymentStatus IN ['Failed', 'Pending']
+MATCH (customer)-[r2:SERVICE_HISTORY]->(agent:Agent)
+MATCH (customer)-[r3:HAS_POLICY]->(policies:Policy)
+WHERE policies.status = 'Pending'
+OPTIONAL MATCH (customer)-[r4:FILED_CLAIM]->(claims:Claim)
+WHERE claims.status = 'Denied'
+RETURN customer, r1, payments, r2, agent, r3, policies, r4, claims;
+
+// ======================================================================
+
+// 20. CUSTOMER SUCCESS STORIES - High-satisfaction, high-value customer relationships
+MATCH (customer:Customer)-[r1:SERVICE_HISTORY]->(agent:Agent)
+WHERE customer.lifetimeValue > 200000
+MATCH (customer)-[r2:HAS_POLICY]->(policies:Policy)
+WITH customer, agent, count(policies) AS policyCount
+WHERE policyCount > 2
+MATCH (customer)-[r3:HAS_POLICY]->(allPolicies:Policy)
+MATCH (customer)-[r4:MADE_PAYMENT]->(payments:PremiumPayment)
+WHERE payments.paymentStatus = 'Processed'
+MATCH (agent)-[r5:WORKS_AT]->(branch:Branch)
+OPTIONAL MATCH (customer)-[r6:REFERRED]->(referrals:Customer)
+RETURN customer, r1, agent, r3, allPolicies, r4, payments, r5, branch, r6, referrals;
+
+// ======================================================================
+// CUSTOMER TABLE-BASED ANALYTICS
+// ======================================================================
+
+// 21. CUSTOMER PORTFOLIO COMPREHENSIVE TABLE - Complete customer metrics
+MATCH (c:Customer)
+OPTIONAL MATCH (c)-[:HAS_POLICY]->(p:Policy)
+OPTIONAL MATCH (c)-[:FILED_CLAIM]->(cl:Claim)
+OPTIONAL MATCH (c)-[:MADE_PAYMENT]->(pay:Payment)
+OPTIONAL MATCH (c)<-[:SERVES]-(a:Agent)
+OPTIONAL MATCH (c)-[:ASSIGNED_TO]->(b:Branch)
+OPTIONAL MATCH (c)-[:OWNS]->(assets)
+RETURN 
+  c.customerId AS CustomerID,
+  c.firstName + ' ' + c.lastName AS CustomerName,
+  c.customerSegment AS Segment,
+  c.lifetimeValue AS LifetimeValue,
+  c.totalPremiums AS TotalPremiums,
+  count(DISTINCT p) AS TotalPolicies,
+  count(DISTINCT cl) AS TotalClaims,
+  count(DISTINCT pay) AS TotalPayments,
+  sum(pay.paymentAmount) AS TotalPaymentAmount,
+  c.riskProfile AS RiskProfile,
+  c.creditScore AS CreditScore,
+  c.preferredContact AS PreferredContact,
+  c.customerSince AS CustomerSince,
+  a.agentId AS AgentID,
+  b.branchCode AS BranchCode,
+  c.city AS City,
+  c.state AS State,
+  count(DISTINCT assets) AS TotalAssets
+ORDER BY c.lifetimeValue DESC
+LIMIT 50;
+
+// ======================================================================
+
+// 22. CUSTOMER FINANCIAL PERFORMANCE TABLE - Revenue and profitability analysis
+MATCH (c:Customer)
+OPTIONAL MATCH (c)-[:MADE_PAYMENT]->(premPay:PremiumPayment)
+OPTIONAL MATCH (c)-[:FILED_CLAIM]->(cl:Claim)
+OPTIONAL MATCH (claimPay:ClaimPayment)-[:PAYS_CLAIM]->(cl)
+OPTIONAL MATCH (c)-[:HAS_POLICY]->(p:Policy)
+RETURN 
+  c.customerId AS CustomerID,
+  c.firstName + ' ' + c.lastName AS CustomerName,
+  c.customerSegment AS Segment,
+  c.lifetimeValue AS LifetimeValue,
+  count(DISTINCT p) AS PolicyCount,
+  sum(premPay.paymentAmount) AS TotalPremiumPayments,
+  count(DISTINCT cl) AS ClaimCount,
+  sum(cl.claimAmount) AS TotalClaimAmount,
+  sum(claimPay.paymentAmount) AS TotalClaimPayments,
+  (sum(premPay.paymentAmount) - sum(claimPay.paymentAmount)) AS NetRevenue,
+  CASE 
+    WHEN sum(premPay.paymentAmount) > 0 
+    THEN round((sum(premPay.paymentAmount) - sum(claimPay.paymentAmount)) * 100.0 / sum(premPay.paymentAmount), 2)
+    ELSE null 
+  END AS ProfitMarginPercent,
+  c.riskProfile AS RiskProfile
+ORDER BY NetRevenue DESC
+LIMIT 30;
+
+// ======================================================================
+
+// 23. CUSTOMER SERVICE QUALITY TABLE - Service metrics and satisfaction
+MATCH (c:Customer)
+OPTIONAL MATCH (c)-[sh:SERVICE_HISTORY]->(a:Agent)
+OPTIONAL MATCH (c)<-[:SERVES]-(primaryAgent:Agent)
+OPTIONAL MATCH (c)-[:CROSS_SELL_OPPORTUNITY]->(opp)
+OPTIONAL MATCH (c)-[:REFERRED]->(ref:Customer)
+RETURN 
+  c.customerId AS CustomerID,
+  c.firstName + ' ' + c.lastName AS CustomerName,
+  c.customerSegment AS Segment,
+  c.lifetimeValue AS LifetimeValue,
+  primaryAgent.agentId AS PrimaryAgentID,
+  primaryAgent.firstName + ' ' + primaryAgent.lastName AS PrimaryAgentName,
+  count(DISTINCT sh) AS ServiceInteractions,
+  avg(sh.satisfactionRating) AS AvgSatisfactionRating,
+  max(sh.lastServiceCall) AS LastServiceDate,
+  count(DISTINCT opp) AS CrossSellOpportunities,
+  count(DISTINCT ref) AS ReferralsMade,
+  c.preferredContact AS PreferredContact,
+  c.customerSince AS CustomerSince,
+  duration.between(c.customerSince, date()).years AS YearsAsCustomer
+ORDER BY AvgSatisfactionRating DESC, c.lifetimeValue DESC
+LIMIT 40;
+
+// ======================================================================
+
+// 24. CUSTOMER RISK ASSESSMENT TABLE - Risk and compliance metrics
+MATCH (c:Customer)
+OPTIONAL MATCH (c)-[:CATEGORIZED_AS]->(risk:RiskCategory)
+OPTIONAL MATCH (c)-[:HAS_POLICY]->(p:Policy)
+OPTIONAL MATCH (p)-[:COMPLIES_WITH]->(comp:ComplianceRecord)
+OPTIONAL MATCH (c)-[:FILED_CLAIM]->(cl:Claim)
+RETURN 
+  c.customerId AS CustomerID,
+  c.firstName + ' ' + c.lastName AS CustomerName,
+  c.riskProfile AS CustomerRiskProfile,
+  risk.categoryName AS RiskCategoryName,
+  risk.riskLevel AS RiskLevel,
+  c.creditScore AS CreditScore,
+  count(DISTINCT p) AS PolicyCount,
+  count(DISTINCT cl) AS ClaimCount,
+  sum(cl.claimAmount) AS TotalClaimAmount,
+  count(DISTINCT comp) AS ComplianceRecords,
+  c.lifetimeValue AS LifetimeValue,
+  c.totalPremiums AS TotalPremiums,
+  CASE 
+    WHEN c.totalPremiums > 0 
+    THEN round(sum(cl.claimAmount) * 100.0 / c.totalPremiums, 2)
+    ELSE 0 
+  END AS ClaimRatioPercent,
+  c.customerSince AS CustomerSince
+ORDER BY RiskLevel DESC, ClaimRatioPercent DESC
+LIMIT 50;
+
+// ======================================================================
+
+// 25. CUSTOMER ASSET PORTFOLIO TABLE - Asset protection and coverage analysis
+MATCH (c:Customer)
+OPTIONAL MATCH (c)-[:OWNS]->(vehicle:Vehicle)
+OPTIONAL MATCH (c)-[:OWNS]->(property:Property)
+OPTIONAL MATCH (c)-[:HAS_POLICY]->(autoPolicy:AutoPolicy)
+OPTIONAL MATCH (c)-[:HAS_POLICY]->(homePolicy:HomePolicy)
+OPTIONAL MATCH (c)-[:HAS_POLICY]->(umbrellaPolicy:UmbrellaPolicy)
+RETURN 
+  c.customerId AS CustomerID,
+  c.firstName + ' ' + c.lastName AS CustomerName,
+  c.customerSegment AS Segment,
+  count(DISTINCT vehicle) AS VehicleCount,
+  sum(vehicle.estimatedValue) AS TotalVehicleValue,
+  count(DISTINCT property) AS PropertyCount,
+  sum(property.estimatedValue) AS TotalPropertyValue,
+  (sum(vehicle.estimatedValue) + sum(property.estimatedValue)) AS TotalAssetValue,
+  count(DISTINCT autoPolicy) AS AutoPolicies,
+  count(DISTINCT homePolicy) AS HomePolicies,
+  count(DISTINCT umbrellaPolicy) AS UmbrellaPolicies,
+  sum(autoPolicy.premium) AS TotalAutoPremium,
+  sum(homePolicy.premium) AS TotalHomePremium,
+  sum(umbrellaPolicy.premium) AS TotalUmbrellaPremium,
+  c.lifetimeValue AS LifetimeValue,
+  CASE 
+    WHEN (sum(vehicle.estimatedValue) + sum(property.estimatedValue)) > 0 
+    THEN round((sum(autoPolicy.premium) + sum(homePolicy.premium) + sum(umbrellaPolicy.premium)) * 100.0 / 
+         (sum(vehicle.estimatedValue) + sum(property.estimatedValue)), 4)
+    ELSE 0 
+  END AS InsuranceToAssetRatio
+ORDER BY TotalAssetValue DESC
+LIMIT 30;
+
+// ======================================================================
+
+// 26. CUSTOMER CROSS-SELLING ANALYSIS TABLE - Revenue growth opportunities
+MATCH (c:Customer)
+OPTIONAL MATCH (c)-[:HAS_POLICY]->(p:Policy)
+OPTIONAL MATCH (c)-[:CROSS_SELL_OPPORTUNITY]->(opp)
+OPTIONAL MATCH (c)<-[:SERVES]-(a:Agent)
+WITH c, 
+     collect(DISTINCT p.type) AS currentPolicyTypes,
+     count(DISTINCT p) AS policyCount,
+     opp, a
+RETURN 
+  c.customerId AS CustomerID,
+  c.firstName + ' ' + c.lastName AS CustomerName,
+  c.customerSegment AS Segment,
+  c.lifetimeValue AS LifetimeValue,
+  policyCount AS CurrentPolicyCount,
+  currentPolicyTypes AS CurrentPolicyTypes,
+  opp.recommendedProducts AS RecommendedProducts,
+  opp.priority AS OpportunityPriority,
+  opp.contacted AS AlreadyContacted,
+  opp.identifiedDate AS OpportunityDate,
+  a.agentId AS ResponsibleAgentID,
+  c.preferredContact AS PreferredContact,
+  CASE 
+    WHEN 'Auto' IN currentPolicyTypes AND 'Home' IN currentPolicyTypes AND 'Life' IN currentPolicyTypes 
+    THEN 'Full Coverage Customer'
+    WHEN size(currentPolicyTypes) >= 2 
+    THEN 'Multi-Product Customer'
+    ELSE 'Single Product Customer'
+  END AS CustomerType
+ORDER BY 
+  CASE opp.priority WHEN 'High' THEN 1 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 3 ELSE 4 END,
+  c.lifetimeValue DESC
+LIMIT 40;
+
+// ======================================================================
+// CUSTOMER VISUALIZATION CONFIGURATION GUIDE
 // ======================================================================
 /*
-STYLING RECOMMENDATIONS:
+🎯 CUSTOMER QUERY USAGE GUIDE:
 
-1. NODE COLORS:
-   - Customer: Blue (#1f77b4)
-   - Agent: Green (#2ca02c) 
-   - Policy: Orange (#ff7f0e)
-   - Vehicle: Red (#d62728)
-   - Property: Purple (#9467bd)
-   - Branch: Brown (#8c564b)
-   - Claim: Pink (#e377c2)
+RELATIONSHIP VISUALIZATIONS (Queries 1-20):
+✅ All queries return explicit node-relationship-node patterns
+✅ Perfect for Neo4j Browser graph visualization  
+✅ Show actual customer business connections and data flows
 
-2. NODE SIZES:
-   - Scale by: customer.lifetimeValue, policy.premium, claim.claimAmount
-   - Use property inspector to set s
+TABLE ANALYTICS (Queries 21-26):
+✅ Return structured customer data in table format
+✅ Perfect for business reporting and executive dashboards
+✅ Exportable to spreadsheet and BI tools
+
+🎨 OPTIMAL NEO4J BROWSER SETTINGS FOR CUSTOMER QUERIES:
+
+NODE STYLING BY CUSTOMER TIER:
+- Ultra High Net Worth: Gold (#FFD700), Size: 70-90px
+- High Net Worth: Silver (#C0C0C0), Size: 60-80px  
+- High Value: Royal Blue (#4169E1), Size: 50-70px
+- Standard: Light Blue (#87CEEB), Size: 40-60px
+- Basic: Light Gray (#D3D3D3), Size: 30-50px
+
+SUPPORTING ENTITY STYLING:
+- Agent: Orange (#FFA500), Size: 40-60px
+- Policy: Green (#32CD32), Size: 35-55px
+- Asset: Teal (#008080), Size: 30-50px
+- Payment: Purple (#9370DB), Size: 25-45px
+- Branch: Brown (#8B4513), Size: 45-65px
+- Claim: Pink (#FF69B4), Size: 30-50px
+
+RELATIONSHIP STYLING BY TYPE:
+- Financial relationships (MADE_PAYMENT, PAYS_PREMIUM): Thick Purple
+- Service relationships (SERVES, SERVICE_HISTORY): Medium Blue
+- Ownership relationships (OWNS, HAS_POLICY): Thick Black
+- Coverage relationships (COVERS): Medium Green
+- Claims relationships (FILED_CLAIM, FILED_AGAINST): Medium Red
+- Organizational relationships (WORKS_AT, SUPERVISES): Thin Gray
+
+LAYOUT RECOMMENDATIONS:
+- Use Force Atlas 2 for customer ecosystem queries (1-20)
+- Enable "Prevent Overlap" for clarity
+- Adjust gravity (30-50) and scaling (5-10) for optimal spacing
+- Pin customer nodes as anchor points for stable layouts
+- Use "Noverlap" for dense relationship networks
+
+INTERACTION OPTIMIZATION:
+- Double-click customer nodes to expand hidden relationships
+- Right-click to hide/show specific relationship types
+- Use relationship filters to focus on financial, service, or coverage flows
+- Group similar customers using community detection
+- Export high-value customer visualizations for executive presentations
+
+QUERY PERFORMANCE TIPS:
+- Queries 1-5: Best for individual customer deep-dives
+- Queries 6-10: Ideal for customer segment analysis  
+- Queries 11-15: Perfect for customer lifecycle and service quality
+- Queries 16-20: Advanced relationship pattern analysis
+- Queries 21-26: Executive reporting and business intelligence
+
+TABLE VIEW OPTIMIZATION:
+- Sort by LifetimeValue, TotalPremiums, or CustomerSegment
+- Filter by risk profile, geographic region, or policy count
+- Export to Excel for further analysis and reporting
+- Use aggregation functions for summary statistics
+*/
