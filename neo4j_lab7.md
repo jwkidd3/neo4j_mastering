@@ -51,8 +51,7 @@ RETURN count(u) AS total_users,
 
 ```cypher
 MATCH ()-[r:FOLLOWS]->() 
-RETURN count(r) AS follow_relationships,
-       avg(COUNT { (startNode(r))<-[:FOLLOWS]-() }) AS avg_followers
+RETURN count(r) AS follow_relationships
 ```
 
 ```cypher

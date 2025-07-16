@@ -52,8 +52,7 @@ RETURN count(u) AS total_users,
 
 ```cypher
 MATCH ()-[r:FOLLOWS]->() 
-RETURN count(r) AS follow_relationships,
-       avg(COUNT { (startNode(r))<-[:FOLLOWS]-() }) AS avg_followers
+RETURN count(r) AS follow_relationships
 ```
 
 ```cypher
@@ -64,7 +63,8 @@ RETURN count(r) AS like_interactions
 ```cypher
 MATCH (p:Post)
 RETURN count(p) AS total_posts,
-       count(DISTINCT p.topic) AS unique_post_topics
+       collect(DISTINCT p.postId)[0..5] AS sample_post_ids,
+       collect(DISTINCT keys(p))[0] AS available_properties
 ```
 
 ### Step 2: Calculate Advanced User Engagement Metrics
@@ -73,47 +73,35 @@ RETURN count(p) AS total_posts,
 MATCH (u:User)
 OPTIONAL MATCH (u)-[:POSTED]->(p:Post)
 OPTIONAL MATCH (u)-[:LIKES]->(liked_post:Post)
+OPTIONAL MATCH (u)<-[:FOLLOWS]-(followers:User)
+OPTIONAL MATCH (u)-[:FOLLOWS]->(following:User)
 
-// Calculate comprehensive engagement scores
 WITH u,
      count(DISTINCT p) AS user_posts,
      count(DISTINCT liked_post) AS user_likes,
-     COUNT { (u)<-[:FOLLOWS]-() } AS user_followers,
-     COUNT { (u)-[:FOLLOWS]->() } AS user_following,
-     // Calculate days since joining (simulated)
-     duration.between(u.joinDate, date()).days AS days_on_platform
+     count(DISTINCT followers) AS user_followers,
+     count(DISTINCT following) AS user_following
 
-// Calculate engagement rates and activity patterns
-WITH u, user_posts, user_likes, user_followers, user_following, days_on_platform,
-     CASE WHEN days_on_platform > 0 
-          THEN toFloat(user_posts) / (days_on_platform / 30.0) // Posts per month
-          ELSE 0 END AS posts_per_month,
-     CASE WHEN user_followers > 0 
-          THEN toFloat(user_likes) / user_followers // Engagement ratio
-          ELSE 0 END AS engagement_ratio,
-     CASE WHEN user_following > 0 
-          THEN toFloat(user_followers) / user_following // Influence ratio
-          ELSE 0 END AS influence_ratio
-
-RETURN u.username AS username,
-       u.profession AS profession,
-       u.location AS location,
+RETURN COALESCE(u.username, u.userId, u.fullName) AS username,
+       COALESCE(u.profession, 'Unknown') AS profession,
+       COALESCE(u.location, 'Unknown') AS location,
        user_posts,
        user_likes,
        user_followers,
        user_following,
-       days_on_platform,
-       round(posts_per_month * 100) / 100 AS monthly_post_rate,
-       round(engagement_ratio * 100) / 100 AS likes_per_follower,
-       round(influence_ratio * 100) / 100 AS follower_to_following_ratio,
-       // User engagement classification
+       CASE WHEN user_followers > 0 
+            THEN round((toFloat(user_likes) / user_followers) * 100) / 100
+            ELSE 0 END AS likes_per_follower,
+       CASE WHEN user_following > 0 
+            THEN round((toFloat(user_followers) / user_following) * 100) / 100
+            ELSE 0 END AS follower_to_following_ratio,
        CASE 
-         WHEN posts_per_month > 10 AND user_followers > 2 THEN 'Power User'
-         WHEN posts_per_month > 5 OR user_followers > 1 THEN 'Active User'
-         WHEN user_posts > 0 OR user_likes > 0 THEN 'Casual User'
+         WHEN user_posts > 2 AND user_followers > 1 THEN 'Power User'
+         WHEN user_posts > 0 OR user_followers > 0 THEN 'Active User'
+         WHEN user_likes > 0 THEN 'Casual User'
          ELSE 'Lurker'
        END AS user_type
-ORDER BY user_followers DESC, posts_per_month DESC
+ORDER BY user_followers DESC, user_posts DESC
 ```
 
 ### Step 3: Content Performance Analysis

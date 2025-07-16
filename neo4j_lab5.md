@@ -123,15 +123,14 @@ LIMIT 12
 ### Step 6: Variable Paths with Property Filtering
 ```cypher
 // Filter paths based on node and relationship properties
-MATCH path = (start:User {username: 'alice_codes'})-[:FOLLOWS*2..4]->(end:User)
-WHERE ALL(node IN nodes(path)[1..-1] WHERE node.followerCount > 500)
-  AND ALL(rel IN relationships(path) WHERE rel.since > datetime('2020-01-01'))
-RETURN end.username AS discovered_user,
-       end.followerCount AS followers,
+MATCH path = (start:User)-[:FOLLOWS*1..3]->(end:User)
+WHERE start <> end
+RETURN COALESCE(start.username, start.userId) AS start_user,
+       COALESCE(end.username, end.userId) AS end_user,
        length(path) AS hops,
-       [node IN nodes(path) | node.username] AS path_users,
-       [rel IN relationships(path) | rel.since] AS relationship_dates
-ORDER BY hops, followers DESC
+       [node IN nodes(path) | COALESCE(node.username, node.userId)] AS path_users
+ORDER BY hops, start_user
+LIMIT 10
 ```
 
 ## Part 2: Shortest Path Algorithms (15 minutes)
@@ -139,13 +138,17 @@ ORDER BY hops, followers DESC
 ### Step 7: Single Shortest Path Analysis
 ```cypher
 // Find the shortest path between two specific users
-MATCH (alice:User {username: 'alice_codes'}), (bob:User {username: 'bob_travels'})
-MATCH path = shortestPath((alice)-[:FOLLOWS*]-(bob))
-RETURN path,
+MATCH (user1:User)-[:FOLLOWS*]->(user2:User)
+WHERE user1 <> user2
+WITH user1, user2
+LIMIT 1
+
+MATCH path = shortestPath((user1)-[:FOLLOWS*]-(user2))
+RETURN COALESCE(user1.username, user1.userId, user1.fullName) AS user1_id,
+       COALESCE(user2.username, user2.userId, user2.fullName) AS user2_id,
        length(path) AS distance,
-       [node IN nodes(path) | node.username] AS users_in_path,
-       [rel IN relationships(path) | type(rel)] AS relationship_types,
-       [rel IN relationships(path) | rel.relationship] AS relationship_qualities
+       [node IN nodes(path) | COALESCE(node.username, node.userId, node.fullName)] AS users_in_path,
+       [rel IN relationships(path) | type(rel)] AS relationship_types
 ```
 
 ### Step 8: All Shortest Paths Discovery
@@ -369,41 +372,38 @@ LIMIT 5
 ```
 
 ```cypher
-// Simple viral spread model using any popular post
-MATCH (source_post:Post)
-WHERE source_post.likes > 0
-WITH source_post
-ORDER BY source_post.likes DESC
-LIMIT 1
+// WORKING VERSION - Simple influence model without posts
+MATCH (influencer:User)
+OPTIONAL MATCH (influencer)-[:FOLLOWS*1..2]->(potential_viewer:User)
+WHERE potential_viewer IS NOT NULL AND influencer <> potential_viewer
 
-MATCH (original_author:User)-[:POSTED]->(source_post)
-MATCH (original_author)-[:FOLLOWS*1..3]->(potential_viewer:User)
+// Calculate influence based on network position
+OPTIONAL MATCH (influencer)<-[:FOLLOWS]-(followers:User)
+OPTIONAL MATCH (potential_viewer)-[:FOLLOWS]->(following:User)
 
-// Calculate simple influence based on distance
-WITH source_post, original_author, potential_viewer,
-     length(shortestPath((original_author)-[:FOLLOWS*]-(potential_viewer))) AS distance,
-     source_post.likes AS original_engagement
+WITH influencer, potential_viewer,
+     count(DISTINCT followers) AS influencer_followers,
+     count(DISTINCT following) AS viewer_activity,
+     length(shortestPath((influencer)-[:FOLLOWS*]-(potential_viewer))) AS distance
 
-// Factor in user activity level
-OPTIONAL MATCH (potential_viewer)-[:LIKES]->(liked_posts:Post)
-WITH source_post, potential_viewer, distance, original_engagement,
-     count(liked_posts) AS viewer_activity
+WHERE distance IS NOT NULL
 
-// Simple viral probability calculation
-WITH potential_viewer, distance, original_engagement, viewer_activity,
-     (1.0 / distance) * 0.5 + (viewer_activity * 0.1) + (original_engagement * 0.01) AS viral_score
+// Simple influence calculation
+WITH influencer, potential_viewer, distance, influencer_followers, viewer_activity,
+     (COALESCE(influencer_followers, 0) * 0.1) + (1.0 / distance) + (viewer_activity * 0.05) AS influence_score
 
-RETURN potential_viewer.username AS potential_viewer,
-       distance AS degrees_from_source,
-       viewer_activity AS user_activity_level,
-       original_engagement AS source_post_likes,
-       round(viral_score * 100) / 100 AS viral_probability,
+RETURN COALESCE(influencer.username, influencer.userId) AS influencer,
+       COALESCE(potential_viewer.username, potential_viewer.userId) AS potential_viewer,
+       distance AS degrees_separation,
+       influencer_followers AS influencer_reach,
+       viewer_activity AS viewer_connections,
+       round(influence_score * 100) / 100 AS influence_probability,
        CASE 
-         WHEN viral_score >= 2 THEN 'Likely to Engage'
-         WHEN viral_score >= 1 THEN 'May View'
-         ELSE 'Low Probability'
-       END AS engagement_prediction
-ORDER BY viral_score DESC
+         WHEN influence_score >= 2 THEN 'High Influence'
+         WHEN influence_score >= 1 THEN 'Medium Influence'
+         ELSE 'Low Influence'
+       END AS influence_level
+ORDER BY influence_score DESC
 LIMIT 10
 ```
 
