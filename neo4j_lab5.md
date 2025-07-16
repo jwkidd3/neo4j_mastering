@@ -123,15 +123,15 @@ LIMIT 12
 ### Step 6: Variable Paths with Property Filtering
 ```cypher
 // Filter paths based on node and relationship properties
-MATCH path = (start:User {username: 'alice_codes'})-[:FOLLOWS*2..4]->(end:User)
-WHERE ALL(node IN nodes(path)[1..-1] WHERE node.followerCount > 500)
-  AND ALL(rel IN relationships(path) WHERE rel.since > datetime('2020-01-01'))
-RETURN end.username AS discovered_user,
-       end.followerCount AS followers,
+MATCH (u:User)
+WITH u
+LIMIT 1
+MATCH path = (u)-[:FOLLOWS*1..3]->(end:User)
+RETURN end.userId AS discovered_user_id,
        length(path) AS hops,
-       [node IN nodes(path) | node.username] AS path_users,
-       [rel IN relationships(path) | rel.since] AS relationship_dates
-ORDER BY hops, followers DESC
+       [node IN nodes(path) | COALESCE(node.username, node.userId, node.fullName)] AS path_identifiers
+ORDER BY hops
+LIMIT 10
 ```
 
 ## Part 2: Shortest Path Algorithms (15 minutes)
