@@ -167,77 +167,59 @@ except Exception as e:
 
 ### Step 3: Enterprise Data Models and DTOs
 ```python
-from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional, List, Dict, Any
+# Step 3: Enterprise Data Models with Lab 9 Patterns
+from pydantic import BaseModel, Field
+from typing import List, Optional
 from datetime import datetime
-from enum import Enum
 
-class UserStatus(str, Enum):
-    ACTIVE = "Active"
-    INACTIVE = "Inactive"
-    SUSPENDED = "Suspended"
-    PENDING = "Pending"
+class UserCreate(BaseModel):
+    """User registration model with enterprise validation patterns"""
+    username: str = Field(
+        ..., 
+        pattern=r'^[a-zA-Z0-9_-]{3,20}$',
+        description="Username: 3-20 characters, alphanumeric, underscore, hyphen only"
+    )
+    email: str = Field(
+        ..., 
+        pattern=r'^[^@]+@[^@]+\.[^@]+$',
+        description="Valid email address format"
+    )
+    fullName: str = Field(..., min_length=2, max_length=100)
+    location: str = Field(..., min_length=2, max_length=200)
+    profession: str = Field(..., min_length=2, max_length=100)
+    password: str = Field(
+        ..., 
+        min_length=8, 
+        max_length=100,
+        description="Password: minimum 8 characters"
+    )
+    skills: List[str] = Field(default_factory=list)
 
-class DataClassification(str, Enum):
-    PUBLIC = "PUBLIC"
-    INTERNAL = "INTERNAL"
-    CONFIDENTIAL = "CONFIDENTIAL"
-    RESTRICTED = "RESTRICTED"
+class UserLogin(BaseModel):
+    """User authentication model"""
+    username: str = Field(..., min_length=3, max_length=20)
+    password: str = Field(..., min_length=8, max_length=100)
 
-class UserProfileDTO(BaseModel):
-    """Data Transfer Object for User Profile"""
-    user_id: str = Field(..., description="Unique user identifier")
-    tenant_id: str = Field(..., description="Tenant identifier")
-    email: EmailStr = Field(..., description="User email address")
-    employee_id: Optional[str] = Field(None, description="Employee ID")
-    first_name: str = Field(..., min_length=1, max_length=50)
-    last_name: str = Field(..., min_length=1, max_length=50)
-    display_name: Optional[str] = Field(None, max_length=100)
-    job_title: Optional[str] = Field(None, max_length=100)
-    department: Optional[str] = Field(None, max_length=50)
-    location: Optional[str] = Field(None, max_length=100)
-    phone: Optional[str] = Field(None, regex=r'^\+?[1-9]\d{1,14}$')
-    status: UserStatus = Field(default=UserStatus.ACTIVE)
-    data_classification: DataClassification = Field(default=DataClassification.INTERNAL)
-    created_at: Optional[datetime] = None
-    last_login_at: Optional[datetime] = None
-    
-    @validator('display_name', always=True)
-    def set_display_name(cls, v, values):
-        if not v and 'first_name' in values and 'last_name' in values:
-            return f"{values['first_name']} {values['last_name']}"
-        return v
-
-class RoleAssignmentDTO(BaseModel):
-    """Data Transfer Object for Role Assignment"""
+class UserResponse(BaseModel):
+    """User response model for API returns"""
     user_id: str
-    role_id: str
-    role_name: str
-    assigned_at: datetime
-    assigned_by: str
-    valid_from: datetime
-    valid_to: Optional[datetime] = None
-    status: str = "Active"
+    username: str
+    fullName: str
+    location: str
+    profession: str
+    skills: List[str]
+    created_at: Optional[str] = None
 
-class PermissionDTO(BaseModel):
-    """Data Transfer Object for Permission"""
-    permission_id: str
-    name: str
-    description: str
-    resource_type: str
-    action: str
-    scope: str
-    risk_level: str
+class NetworkStats(BaseModel):
+    """Network statistics model following Lab 6 analytics patterns"""
+    total_users: int
+    total_connections: int
+    total_posts: int
+    avg_connections_per_user: float
+    network_density: float
+    most_connected_user: str
 
-class UserWithRolesDTO(BaseModel):
-    """Complete user information with roles and permissions"""
-    profile: UserProfileDTO
-    roles: List[RoleAssignmentDTO]
-    permissions: List[PermissionDTO]
-    tenant_name: str
-    department_name: Optional[str] = None
-
-print("✅ Data models and DTOs defined successfully")
+print("✅ Enterprise data models created with Pydantic v2 compatibility")
 ```
 
 ### Step 4: Repository Pattern Implementation
