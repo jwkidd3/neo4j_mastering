@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neo4j Day 2 - Advanced Analytics & Business Intelligence</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/white.min.css">
+    <style>
+        .reveal {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+        
+        .reveal h1, .reveal h2, .reveal h3 {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .reveal h1 {
+            font-size: 2.2em;
+            text-transform: none;
+            line-height: 1.2;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .title-slide {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50 !important;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .session-header {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50 !important;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .session-header h2 {
+            margin: 0;
+            color: #2c3e50 !important;
+        }
+        
+        .enterprise-highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .enterprise-highlight h3 {
+            color: white;
+            margin-top: 0;
+        }
+        
+        .lab-intro {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.3);
+        }
+        
+        .lab-intro h2 {
+            color: white;
+            margin-top: 0;
+        }
+        
+        .lab-duration {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 0.5rem 0;
+            font-weight: bold;
+        }
+        
+        .two-column {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        
+        .column {
+            flex: 1;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .stat-box {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(116, 185, 255, 0.3);
+        }
+        
+        .stat-box h3 {
+            color: white;
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1em;
+        }
+        
+        .stat-box p {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .stat-box small {
+            opacity: 0.9;
+            font-size: 0.8em;
+        }
+        
+        .reveal ul {
+            margin: 1rem 0;
+        }
+        
+        .reveal li {
+            margin: 0.5rem 0;
+            line-height: 1.4;
+        }
+        
+        .reveal strong {
+            color: #2c3e50;
+        }
+        
+        .reveal .slides section {
+            text-align: left;
+        }
+        
+        .reveal .slides section[data-center] {
+            text-align: center;
+        }
+        
+        .algorithm-showcase {
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 5px 20px rgba(0, 184, 148, 0.3);
+        }
+        
+        .algorithm-showcase h3 {
+            color: white;
+            margin-top: 0;
+        }
+        
+        .business-value {
+            background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 5px 20px rgba(253, 203, 110, 0.3);
+        }
+        
+        .business-value h3 {
+            color: white;
+            margin-top: 0;
+        }
+        
+        .fraud-detection {
+            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 5px 20px rgba(253, 121, 168, 0.3);
+        }
+        
+        .fraud-detection h3 {
+            color: white;
+            margin-top: 0;
+        }
+        
+        .performance-highlight {
+            background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 5px 20px rgba(162, 155, 254, 0.3);
+        }
+        
+        .performance-highlight h3 {
+            color: white;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- Title Slide -->
+            <section data-center>
+                <div class="title-slide">
+                    <h1>Neo4j Day 2</h1>
+                    <h2>Advanced Analytics & Business Intelligence</h2>
+                    <p><strong>Graph Data Science | Customer Analytics | Fraud Detection</strong></p>
+                </div>
+            </section>
+
+            <!-- Day 2 Overview -->
+            <section>
+                <h2>Day 2: Building Advanced Analytics Systems</h2>
+                <div class="enterprise-highlight">
+                    <h3>Today's Learning Journey</h3>
+                    <ul>
+                        <li><strong>Graph-Powered Business Intelligence:</strong> Transform data into actionable insights using relationship analysis</li>
+                        <li><strong>Customer Analytics & Segmentation:</strong> Lifetime value calculations and behavioral pattern recognition</li>
+                        <li><strong>Graph Data Science Algorithms:</strong> Centrality analysis, community detection, and influence scoring</li>
+                        <li><strong>Fraud Detection Networks:</strong> Pattern recognition and anomaly detection for financial crime prevention</li>
+                        <li><strong>Performance Optimization:</strong> Production-scale query tuning and enterprise monitoring</li>
+                        <li><strong>Predictive Analytics:</strong> Machine learning integration for future business outcomes</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Enterprise Analytics Value Proposition -->
+            <section>
+                <h2>Enterprise Analytics Value Proposition</h2>
+                <div class="business-value">
+                    <h3>Why Graph Analytics Matter for Insurance</h3>
+                    <ul>
+                        <li><strong>Customer 360-Degree Views:</strong> Complete relationship mapping across policies, claims, and interactions</li>
+                        <li><strong>Real-Time Fraud Detection:</strong> Network pattern analysis identifying suspicious activity as it happens</li>
+                        <li><strong>Risk Portfolio Optimization:</strong> Geographic and demographic concentration analysis for better underwriting</li>
+                        <li><strong>Predictive Customer Insights:</strong> Churn prediction and lifetime value modeling using behavioral networks</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Analytics Architecture Overview -->
+            <section>
+                <h2>Advanced Analytics Architecture</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Data Science Pipeline</h3>
+                        <ul>
+                            <li><strong>Graph Data Science Library:</strong> Production-ready algorithms</li>
+                            <li><strong>Memory Management:</strong> Efficient projection handling</li>
+                            <li><strong>Algorithm Chaining:</strong> Multi-step analytical workflows</li>
+                            <li><strong>Result Integration:</strong> Business intelligence systems</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Business Intelligence Integration</h3>
+                        <ul>
+                            <li><strong>KPI Dashboards:</strong> Real-time metrics and trending</li>
+                            <li><strong>Regulatory Reporting:</strong> Automated compliance documentation</li>
+                            <li><strong>Executive Analytics:</strong> Strategic decision support systems</li>
+                            <li><strong>Operational Insights:</strong> Daily performance monitoring</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Day 2 Database Evolution -->
+            <section>
+                <h2>Database Evolution: From Foundation to Intelligence</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Starting Point</h3>
+                        <p>200 nodes, 300 relationships</p>
+                        <small>Day 1 comprehensive insurance foundation</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Mid-Day Target</h3>
+                        <p>400 nodes, 500 relationships</p>
+                        <small>Advanced algorithms and performance optimization</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>End of Day 2</h3>
+                        <p>600 nodes, 750 relationships</p>
+                        <small>Machine learning integration and predictive capabilities</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Advanced Features</h3>
+                        <p>Graph algorithms & ML</p>
+                        <small>Production-ready analytics and intelligence systems</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Morning Session Overview -->
+            <section>
+                <div class="session-header">
+                    <h2>Morning Session: Customer Intelligence & Graph Algorithms</h2>
+                </div>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Business Intelligence Foundation</h3>
+                        <ul>
+                            <li><strong>Analytical Query Patterns:</strong> KPIs, aggregations, and business metrics</li>
+                            <li><strong>Customer 360-Degree Views:</strong> Complete relationship mapping and interaction history</li>
+                            <li><strong>Temporal Analysis:</strong> Time-series insights using graph structures</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Graph Data Science</h3>
+                        <ul>
+                            <li><strong>Centrality Algorithms:</strong> PageRank, betweenness, degree centrality</li>
+                            <li><strong>Community Detection:</strong> Louvain algorithm for customer segmentation</li>
+                            <li><strong>Performance Optimization:</strong> Production-scale query tuning</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Session 6: Business Intelligence -->
+            <section>
+                <div class="session-header">
+                    <h2>📊 Session 6: Graph-Powered Business Intelligence</h2>
+                </div>
+                <div class="business-value">
+                    <h3>Analytical Query Patterns for Insurance</h3>
+                    <ul>
+                        <li><strong>Key Performance Indicators:</strong> Premium revenue, claim ratios, customer acquisition costs</li>
+                        <li><strong>Customer Analytics:</strong> Segmentation by behavior, value, and risk profiles</li>
+                        <li><strong>Temporal Analysis:</strong> Trend identification using time-based graph traversals</li>
+                        <li><strong>Risk Assessment:</strong> Portfolio analysis and concentration monitoring</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Advanced KPI Development -->
+            <section>
+                <h2>Advanced KPI Development with Graphs</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Customer Metrics</h3>
+                        <ul>
+                            <li><strong>Lifetime Value Calculation:</strong> Premium history + claim costs + referral value</li>
+                            <li><strong>Risk Score Aggregation:</strong> Policy complexity + claim frequency + demographic factors</li>
+                            <li><strong>Engagement Patterns:</strong> Interaction frequency + channel preferences + satisfaction scores</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Business Performance</h3>
+                        <ul>
+                            <li><strong>Agent Productivity:</strong> Sales volume + customer retention + territory coverage</li>
+                            <li><strong>Product Performance:</strong> Profitability + market penetration + competitive positioning</li>
+                            <li><strong>Operational Efficiency:</strong> Claims processing time + customer service metrics + cost ratios</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Temporal Analytics Deep Dive -->
+            <section>
+                <h2>Temporal Analytics & Trend Analysis</h2>
+                <div class="enterprise-highlight">
+                    <h3>Time-Based Graph Intelligence</h3>
+                    <ul>
+                        <li><strong>Seasonal Pattern Recognition:</strong> Claim frequency variations by season, weather, and geographic region</li>
+                        <li><strong>Customer Lifecycle Analysis:</strong> Policy purchase patterns, renewal behaviors, and churn indicators</li>
+                        <li><strong>Market Trend Integration:</strong> Economic indicators correlated with policy sales and claim frequencies</li>
+                        <li><strong>Predictive Seasonality:</strong> Forecast models incorporating historical temporal patterns and external factors</li>
+                        <li><strong>Real-Time Monitoring:</strong> Live dashboards tracking KPI changes and alerting on anomalies</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Lab 6 Introduction -->
+            <section>
+                <div class="lab-intro">
+                    <h2>🔧 Lab Introduction: Advanced Customer Analytics</h2>
+                    <div class="lab-duration">
+                        Duration: 45 minutes
+                    </div>
+                    <p><strong>Objective:</strong> Students will implement sophisticated customer lifetime value calculations and behavioral segmentation</p>
+                    <p><strong>What You'll Build:</strong> Customer intelligence systems with churn prediction and cross-sell analytics</p>
+                    <p><strong>Database Evolution:</strong> 200 nodes → 280 nodes, 300 relationships → 380 relationships</p>
+                </div>
+            </section>
+
+            <!-- Session 7: Graph Algorithms -->
+            <section>
+                <div class="session-header">
+                    <h2>📊 Session 7: Graph Data Science & Machine Learning</h2>
+                </div>
+                <div class="algorithm-showcase">
+                    <h3>Enterprise Graph Algorithms</h3>
+                    <ul>
+                        <li><strong>Centrality Algorithms:</strong> PageRank for customer influence, betweenness for network bridges</li>
+                        <li><strong>Community Detection:</strong> Louvain algorithm for natural customer groupings</li>
+                        <li><strong>Path Finding:</strong> Shortest paths for referral analysis and network distance</li>
+                        <li><strong>Similarity Algorithms:</strong> Node similarity for recommendation systems</li>
+                        <li><strong>ML Integration:</strong> Feature engineering using graph structure</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Algorithm Implementation Details -->
+            <section>
+                <h2>Algorithm Implementation & Business Applications</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Centrality Measures</h3>
+                        <ul>
+                            <li><strong>PageRank:</strong> Customer influence scoring for referral programs and VIP identification</li>
+                            <li><strong>Betweenness Centrality:</strong> Network bridge customers connecting different segments</li>
+                            <li><strong>Degree Centrality:</strong> Direct connection analysis for network reach assessment</li>
+                            <li><strong>Eigenvector Centrality:</strong> Influence based on connection to other influential nodes</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Community Detection</h3>
+                        <ul>
+                            <li><strong>Louvain Algorithm:</strong> Natural customer groupings for targeted marketing campaigns</li>
+                            <li><strong>Connected Components:</strong> Isolated network segments and fraud ring identification</li>
+                            <li><strong>Triangle Counting:</strong> Network density analysis for community strength assessment</li>
+                            <li><strong>Label Propagation:</strong> Dynamic community evolution tracking over time</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Advanced Algorithm Applications -->
+            <section>
+                <h2>Advanced Algorithm Applications in Insurance</h2>
+                <div class="enterprise-highlight">
+                    <h3>Business Intelligence Through Network Science</h3>
+                    <ul>
+                        <li><strong>Customer Influence Networks:</strong> Identify customers who drive referrals and influence policy purchases within their networks</li>
+                        <li><strong>Agent Territory Optimization:</strong> Use betweenness centrality to find agents who bridge different customer communities effectively</li>
+                        <li><strong>Risk Concentration Analysis:</strong> Community detection reveals geographic or demographic clustering that affects portfolio risk</li>
+                        <li><strong>Fraud Ring Detection:</strong> Connected components and triangle counting expose organized fraud patterns</li>
+                        <li><strong>Cross-Sell Opportunity Mapping:</strong> Similarity algorithms identify customers likely to purchase additional products</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Memory Management & Performance -->
+            <section>
+                <h2>Graph Algorithm Performance & Memory Management</h2>
+                <div class="performance-highlight">
+                    <h3>Production-Ready Algorithm Implementation</h3>
+                    <ul>
+                        <li><strong>Graph Projections:</strong> Efficient in-memory representations for algorithm execution</li>
+                        <li><strong>Memory Optimization:</strong> Projection cleanup and resource management for production environments</li>
+                        <li><strong>Parallel Processing:</strong> Multi-threaded algorithm execution for large-scale networks</li>
+                        <li><strong>Result Storage:</strong> Persistent storage of algorithm results for business intelligence integration</li>
+                        <li><strong>Incremental Updates:</strong> Efficient re-computation when network structure changes</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Lab 7 Introduction -->
+            <section>
+                <div class="lab-intro">
+                    <h2>🔧 Lab Introduction: Graph Algorithms for Insurance</h2>
+                    <div class="lab-duration">
+                        Duration: 45 minutes
+                    </div>
+                    <p><strong>Objective:</strong> Students will apply centrality measures and community detection for business insights</p>
+                    <p><strong>What You'll Build:</strong> Customer influence scoring, agent network analysis, and fraud pattern detection</p>
+                    <p><strong>Database Evolution:</strong> 280 nodes → 350 nodes, 380 relationships → 450 relationships</p>
+                </div>
+            </section>
+
+            <!-- Session 8: Performance -->
+            <section>
+                <div class="session-header">
+                    <h2>📊 Session 8: Enterprise Performance & Scalability</h2>
+                </div>
+                <div class="performance-highlight">
+                    <h3>Production Optimization Strategies</h3>
+                    <ul>
+                        <li><strong>Query Optimization:</strong> Index strategies, query planning, and execution profiling</li>
+                        <li><strong>Memory Management:</strong> Heap sizing, garbage collection tuning</li>
+                        <li><strong>Scaling Strategies:</strong> Read replicas, clustering, and load balancing</li>
+                        <li><strong>Monitoring Systems:</strong> Performance metrics and alerting frameworks</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Advanced Indexing Strategies -->
+            <section>
+                <h2>Advanced Indexing & Query Optimization</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Strategic Index Design</h3>
+                        <ul>
+                            <li><strong>Composite Indexes:</strong> Multi-property indexes for complex business queries</li>
+                            <li><strong>Range Indexes:</strong> Optimized date and numeric range searching</li>
+                            <li><strong>Text Indexes:</strong> Full-text search capabilities for customer and policy data</li>
+                            <li><strong>Relationship Indexes:</strong> Efficient traversal optimization</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Query Performance Tuning</h3>
+                        <ul>
+                            <li><strong>Execution Plan Analysis:</strong> PROFILE and EXPLAIN for optimization</li>
+                            <li><strong>Cypher Query Patterns:</strong> Efficient traversal and filtering strategies</li>
+                            <li><strong>Memory Usage Optimization:</strong> Query memory allocation and management</li>
+                            <li><strong>Caching Strategies:</strong> Result caching and warm-up procedures</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Enterprise Monitoring & Alerting -->
+            <section>
+                <h2>Enterprise Monitoring & Alerting Systems</h2>
+                <div class="enterprise-highlight">
+                    <h3>Production Monitoring Framework</h3>
+                    <ul>
+                        <li><strong>Performance Metrics Collection:</strong> Query response times, memory usage, CPU utilization, and throughput monitoring</li>
+                        <li><strong>Business KPI Tracking:</strong> Customer acquisition rates, claim processing times, and fraud detection accuracy</li>
+                        <li><strong>Automated Alerting:</strong> Threshold-based alerts for performance degradation and system anomalies</li>
+                        <li><strong>Capacity Planning:</strong> Growth trend analysis and resource scaling recommendations</li>
+                        <li><strong>Health Dashboards:</strong> Real-time system status and business metrics visualization</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Lab 8 Introduction -->
+            <section>
+                <div class="lab-intro">
+                    <h2>🔧 Lab Introduction: Performance Optimization</h2>
+                    <div class="lab-duration">
+                        Duration: 45 minutes
+                    </div>
+                    <p><strong>Objective:</strong> Students will implement strategic indexing and monitoring for production workloads</p>
+                    <p><strong>What You'll Build:</strong> Performance tuning, caching strategies, and monitoring dashboards</p>
+                    <p><strong>Database Evolution:</strong> 350 nodes → 400 nodes, 450 relationships → 500 relationships</p>
+                </div>
+            </section>
+
+            <!-- Afternoon Session Overview -->
+            <section>
+                <div class="session-header">
+                    <h2>Afternoon Session: Fraud Detection & Predictive Analytics</h2>
+                </div>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Fraud Detection Systems</h3>
+                        <ul>
+                            <li><strong>Pattern Recognition:</strong> Suspicious transaction networks and claim patterns</li>
+                            <li><strong>Network Analysis:</strong> Organized fraud ring detection</li>
+                            <li><strong>Risk Scoring:</strong> Multi-dimensional fraud assessment</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Predictive Analytics</h3>
+                        <ul>
+                            <li><strong>Machine Learning Integration:</strong> Graph features for ML models</li>
+                            <li><strong>Compliance Automation:</strong> Regulatory reporting systems</li>
+                            <li><strong>Business Forecasting:</strong> Revenue and risk prediction</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Session 9: Fraud Detection -->
+            <section>
+                <div class="session-header">
+                    <h2>📊 Session 9: Advanced Fraud Detection Systems</h2>
+                </div>
+                <div class="fraud-detection">
+                    <h3>Network-Based Fraud Prevention</h3>
+                    <ul>
+                        <li><strong>Pattern Analysis:</strong> Identify suspicious claim timing and vendor relationships</li>
+                        <li><strong>Network Investigation:</strong> Discover organized fraud through shared entities</li>
+                        <li><strong>Anomaly Detection:</strong> Statistical outliers in transaction patterns</li>
+                        <li><strong>Risk Scoring:</strong> Multi-factor fraud probability calculations</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Fraud Detection Methodologies -->
+            <section>
+                <h2>Advanced Fraud Detection Methodologies</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Network Pattern Analysis</h3>
+                        <ul>
+                            <li><strong>Shared Vendor Networks:</strong> Multiple customers using the same repair shops within suspicious timeframes</li>
+                            <li><strong>Claim Timing Patterns:</strong> Coordinated claim filing suggesting organized fraud rings</li>
+                            <li><strong>Geographic Clustering:</strong> Unusual concentration of claims in specific areas</li>
+                            <li><strong>Relationship Mapping:</strong> Hidden connections between seemingly unrelated claimants</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Anomaly Detection Systems</h3>
+                        <ul>
+                            <li><strong>Statistical Outlier Analysis:</strong> Claims amounts significantly above normal patterns</li>
+                            <li><strong>Behavioral Deviation:</strong> Customer actions inconsistent with historical patterns</li>
+                            <li><strong>Network Centrality Anomalies:</strong> Unusual influence patterns in customer networks</li>
+                            <li><strong>Temporal Anomalies:</strong> Claim frequency spikes and unusual timing patterns</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Real-Time Fraud Scoring -->
+            <section>
+                <h2>Real-Time Fraud Scoring & Investigation</h2>
+                <div class="fraud-detection">
+                    <h3>Multi-Dimensional Risk Assessment</h3>
+                    <ul>
+                        <li><strong>Network Risk Factors:</strong> Customer network position, shared connections, and influence metrics</li>
+                        <li><strong>Historical Pattern Analysis:</strong> Claim frequency, amounts, and vendor relationships compared to peer groups</li>
+                        <li><strong>Real-Time Scoring:</strong> Dynamic risk calculation as new claims are submitted</li>
+                        <li><strong>Investigation Prioritization:</strong> Automated case routing based on fraud probability scores</li>
+                        <li><strong>Evidence Compilation:</strong> Network-based evidence gathering for fraud investigations</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Lab 9 Introduction -->
+            <section>
+                <div class="lab-intro">
+                    <h2>🔧 Lab Introduction: Fraud Detection Networks</h2>
+                    <div class="lab-duration">
+                        Duration: 45 minutes
+                    </div>
+                    <p><strong>Objective:</strong> Students will build fraud detection systems using network analysis and pattern recognition</p>
+                    <p><strong>What You'll Build:</strong> Suspicious pattern identification, fraud ring detection, and investigation tools</p>
+                    <p><strong>Database Evolution:</strong> 400 nodes → 480 nodes, 500 relationships → 580 relationships</p>
+                </div>
+            </section>
+
+            <!-- Session 10: Compliance -->
+            <section>
+                <div class="session-header">
+                    <h2>📊 Session 10: Compliance Automation & Regulatory Reporting</h2>
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Automated Compliance Systems</h3>
+                    <ul>
+                        <li><strong>Regulatory Reporting:</strong> Automated generation of compliance documents</li>
+                        <li><strong>Audit Trails:</strong> Complete transaction and decision tracking</li>
+                        <li><strong>Data Governance:</strong> Quality assurance and lineage tracking</li>
+                        <li><strong>Risk Monitoring:</strong> Continuous compliance validation</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Regulatory Compliance Framework -->
+            <section>
+                <h2>Comprehensive Regulatory Compliance Framework</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Audit Trail Management</h3>
+                        <ul>
+                            <li><strong>Transaction Logging:</strong> Complete record of all policy changes and claim decisions</li>
+                            <li><strong>Decision Tracking:</strong> Automated documentation of underwriting and claims decisions</li>
+                            <li><strong>User Activity Monitoring:</strong> Comprehensive tracking of agent and adjuster actions</li>
+                            <li><strong>Data Lineage:</strong> Complete tracking of data sources and transformations</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Automated Reporting</h3>
+                        <ul>
+                            <li><strong>Regulatory Submissions:</strong> Automated generation of required regulatory reports</li>
+                            <li><strong>Risk Assessment Reports:</strong> Portfolio risk analysis and concentration reporting</li>
+                            <li><strong>Fraud Detection Reports:</strong> Suspicious activity reporting to regulatory authorities</li>
+                            <li><strong>Performance Metrics:</strong> Business performance and compliance KPI reporting</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Governance & Quality -->
+            <section>
+                <h2>Data Governance & Quality Assurance</h2>
+                <div class="enterprise-highlight">
+                    <h3>Enterprise Data Management</h3>
+                    <ul>
+                        <li><strong>Data Quality Monitoring:</strong> Automated validation of data completeness, accuracy, and consistency</li>
+                        <li><strong>Schema Evolution Tracking:</strong> Version control and change management for data models</li>
+                        <li><strong>Privacy Compliance:</strong> GDPR and CCPA compliance with data anonymization and deletion capabilities</li>
+                        <li><strong>Access Control Management:</strong> Role-based access control with complete activity logging</li>
+                        <li><strong>Retention Policy Automation:</strong> Automated data archival and deletion based on regulatory requirements</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Lab 10 Introduction -->
+            <section>
+                <div class="lab-intro">
+                    <h2>🔧 Lab Introduction: Compliance Automation</h2>
+                    <div class="lab-duration">
+                        Duration: 45 minutes
+                    </div>
+                    <p><strong>Objective:</strong> Students will implement automated compliance systems and regulatory reporting</p>
+                    <p><strong>What You'll Build:</strong> Audit trails, compliance validation, and automated reporting systems</p>
+                    <p><strong>Database Evolution:</strong> 480 nodes → 550 nodes, 580 relationships → 650 relationships</p>
+                </div>
+            </section>
+
+            <!-- Session 11: Predictive Analytics -->
+            <section>
+                <div class="session-header">
+                    <h2>📊 Session 11: Machine Learning Integration & Predictive Analytics</h2>
+                </div>
+                <div class="business-value">
+                    <h3>Advanced Predictive Capabilities</h3>
+                    <ul>
+                        <li><strong>Feature Engineering:</strong> Graph structure as ML features</li>
+                        <li><strong>Churn Prediction:</strong> Customer retention modeling</li>
+                        <li><strong>Revenue Forecasting:</strong> Premium and claim prediction models</li>
+                        <li><strong>Risk Assessment:</strong> Predictive risk scoring and portfolio optimization</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- ML Feature Engineering with Graphs -->
+            <section>
+                <h2>Machine Learning Feature Engineering with Graph Data</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Network-Based Features</h3>
+                        <ul>
+                            <li><strong>Centrality Measures:</strong> PageRank, betweenness, and degree centrality as customer influence indicators</li>
+                            <li><strong>Community Membership:</strong> Customer segment identification through community detection algorithms</li>
+                            <li><strong>Network Distance:</strong> Shortest path lengths to high-value customers and fraud cases</li>
+                            <li><strong>Local Clustering:</strong> Network density around individual customers</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Behavioral Features</h3>
+                        <ul>
+                            <li><strong>Interaction Patterns:</strong> Frequency and timing of customer touchpoints</li>
+                            <li><strong>Relationship Strength:</strong> Connection weights based on shared attributes and behaviors</li>
+                            <li><strong>Temporal Dynamics:</strong> Network evolution patterns and relationship changes over time</li>
+                            <li><strong>Cross-Product Affinity:</strong> Multi-policy relationship patterns for cross-sell prediction</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Predictive Model Applications -->
+            <section>
+                <h2>Predictive Model Applications in Insurance</h2>
+                <div class="business-value">
+                    <h3>Advanced Business Intelligence Models</h3>
+                    <ul>
+                        <li><strong>Customer Lifetime Value Prediction:</strong> Combine premium history, claim patterns, and network influence to forecast long-term customer value</li>
+                        <li><strong>Churn Risk Modeling:</strong> Identify customers likely to cancel policies using network isolation and behavioral change patterns</li>
+                        <li><strong>Cross-Sell Opportunity Scoring:</strong> Predict likelihood of additional product purchases based on network similarity and product affinity</li>
+                        <li><strong>Claim Frequency Forecasting:</strong> Model future claim likelihood using customer risk profiles and network exposure patterns</li>
+                        <li><strong>Fraud Propensity Scoring:</strong> Real-time fraud risk assessment using network anomaly detection and behavioral pattern analysis</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Model Integration & Deployment -->
+            <section>
+                <h2>Model Integration & Production Deployment</h2>
+                <div class="performance-highlight">
+                    <h3>MLOps for Graph-Based Models</h3>
+                    <ul>
+                        <li><strong>Feature Pipeline Automation:</strong> Automated extraction of graph features for model training and inference</li>
+                        <li><strong>Model Version Management:</strong> Version control and A/B testing frameworks for predictive models</li>
+                        <li><strong>Real-Time Scoring:</strong> Low-latency prediction services integrated with business applications</li>
+                        <li><strong>Model Performance Monitoring:</strong> Continuous validation of prediction accuracy and model drift detection</li>
+                        <li><strong>Feedback Loop Integration:</strong> Incorporating business outcomes back into model training for continuous improvement</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Lab 11 Introduction -->
+            <section>
+                <div class="lab-intro">
+                    <h2>🔧 Lab Introduction: Predictive Analytics</h2>
+                    <div class="lab-duration">
+                        Duration: 45 minutes
+                    </div>
+                    <p><strong>Objective:</strong> Students will integrate machine learning with graph data for predictive business insights</p>
+                    <p><strong>What You'll Build:</strong> Predictive models, risk assessment, and business forecasting systems</p>
+                    <p><strong>Database Evolution:</strong> 550 nodes → 600 nodes, 650 relationships → 750 relationships</p>
+                </div>
+            </section>
+
+            <!-- Day 2 Business Value Summary -->
+            <section>
+                <h2>Day 2 Business Value Delivered</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Customer Intelligence</h3>
+                        <p>360° customer views</p>
+                        <small>Lifetime value calculations and behavioral segmentation</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Fraud Prevention</h3>
+                        <p>Network-based detection</p>
+                        <small>Pattern recognition and organized fraud identification</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Performance Optimization</h3>
+                        <p>Production-ready systems</p>
+                        <small>Enterprise-scale query optimization and monitoring</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Predictive Analytics</h3>
+                        <p>ML-powered insights</p>
+                        <small>Business forecasting and risk assessment capabilities</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Advanced Analytics Capabilities -->
+            <section>
+                <h2>Advanced Analytics Capabilities You've Built</h2>
+                <div class="enterprise-highlight">
+                    <h3>Enterprise-Grade Analytics Systems</h3>
+                    <ul>
+                        <li><strong>Customer Influence Analysis:</strong> Identify key referral sources and influential customers using PageRank</li>
+                        <li><strong>Community-Based Segmentation:</strong> Natural customer groupings through Louvain algorithm</li>
+                        <li><strong>Fraud Ring Detection:</strong> Network analysis revealing organized insurance fraud</li>
+                        <li><strong>Risk Concentration Monitoring:</strong> Geographic and portfolio risk assessment</li>
+                        <li><strong>Predictive Churn Modeling:</strong> Customer retention strategies based on behavior patterns</li>
+                        <li><strong>Automated Compliance Reporting:</strong> Regulatory requirement fulfillment with audit trails</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- ROI & Business Impact -->
+            <section>
+                <h2>Return on Investment & Business Impact</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Fraud Detection ROI</h3>
+                        <p>15-25% reduction</p>
+                        <small>Average fraud loss reduction through network analysis</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Customer Retention</h3>
+                        <p>8-12% improvement</p>
+                        <small>Churn reduction through predictive analytics</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Cross-Sell Success</h3>
+                        <p>20-30% increase</p>
+                        <small>Higher conversion rates through network-based targeting</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Operational Efficiency</h3>
+                        <p>40-60% faster</p>
+                        <small>Accelerated fraud investigation and compliance reporting</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Maturity Roadmap -->
+            <section>
+                <h2>Analytics Maturity Roadmap</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Current Capabilities (Day 2)</h3>
+                        <ul>
+                            <li><strong>Descriptive Analytics:</strong> Historical pattern analysis and KPI reporting</li>
+                            <li><strong>Diagnostic Analytics:</strong> Fraud detection and anomaly identification</li>
+                            <li><strong>Predictive Analytics:</strong> Churn prediction and risk scoring models</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Future Enhancement Opportunities</h3>
+                        <ul>
+                            <li><strong>Prescriptive Analytics:</strong> Automated decision recommendations and optimization</li>
+                            <li><strong>Real-Time Intelligence:</strong> Streaming analytics and immediate response systems</li>
+                            <li><strong>Advanced AI Integration:</strong> Deep learning and natural language processing</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Day 3 Preview -->
+            <section>
+                <h2>Day 3 Preview: Python Integration & Production Deployment</h2>
+                <div class="enterprise-highlight">
+                    <h3>Tomorrow's Advanced Learning Objectives</h3>
+                    <ul>
+                        <li><strong>Python Application Architecture:</strong> Neo4j driver patterns, service layers, and error handling</li>
+                        <li><strong>RESTful API Development:</strong> FastAPI integration with authentication and business logic</li>
+                        <li><strong>Interactive Web Applications:</strong> Real-time dashboards and user interfaces</li>
+                        <li><strong>Production Deployment:</strong> Docker orchestration, monitoring, and scaling strategies</li>
+                        <li><strong>Enterprise Integration:</strong> Multi-line insurance platform and innovation showcase</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Day 3 Technology Evolution -->
+            <section>
+                <h2>Day 3 Technology Integration Targets</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Starting Foundation</h3>
+                        <p>600 nodes, 750 relationships</p>
+                        <small>Day 2 advanced analytics and ML integration</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Mid-Day Integration</h3>
+                        <p>800 nodes, 1000 relationships</p>
+                        <small>Web applications and API development</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>End of Day 3 Target</h3>
+                        <p>1000+ nodes, 1300+ relationships</p>
+                        <small>Complete enterprise platform with innovation features</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Production Features</h3>
+                        <p>Full-stack applications</p>
+                        <small>Python integration, APIs, and deployment automation</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Preparation for Day 3 -->
+            <section>
+                <h2>Preparation Checklist for Day 3</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Technical Readiness</h3>
+                        <ul>
+                            <li><strong>Environment Verification:</strong> Neo4j container "neo4j" running with Day 2 data</li>
+                            <li><strong>Python Dependencies:</strong> Neo4j driver, FastAPI, and web frameworks ready</li>
+                            <li><strong>Jupyter Lab Setup:</strong> Clean workspace for Python development</li>
+                            <li><strong>Database State:</strong> 600 nodes, 750 relationships with analytics capabilities</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Knowledge Foundation</h3>
+                        <ul>
+                            <li><strong>Graph Analytics Mastery:</strong> Understanding of centrality and community algorithms</li>
+                            <li><strong>Fraud Detection Patterns:</strong> Network analysis for suspicious activity identification</li>
+                            <li><strong>Performance Optimization:</strong> Query tuning and monitoring strategies</li>
+                            <li><strong>Business Intelligence:</strong> Customer analytics and predictive modeling concepts</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Day 2 Success Metrics -->
+            <section>
+                <h2>Day 2 Learning Success Metrics</h2>
+                <div class="enterprise-highlight">
+                    <h3>Mastery Indicators</h3>
+                    <ul>
+                        <li><strong>Algorithm Implementation:</strong> Successfully apply PageRank, Louvain, and centrality measures</li>
+                        <li><strong>Fraud Detection Systems:</strong> Build network-based pattern recognition for insurance fraud</li>
+                        <li><strong>Performance Optimization:</strong> Implement strategic indexing and monitoring for production scale</li>
+                        <li><strong>Business Intelligence:</strong> Create customer analytics with lifetime value and churn prediction</li>
+                        <li><strong>Predictive Analytics:</strong> Integrate machine learning features derived from graph structure</li>
+                        <li><strong>Compliance Automation:</strong> Build regulatory reporting with automated audit trails</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Closing -->
+            <section data-center>
+                <div class="title-slide">
+                    <h1>Day 2 Complete</h1>
+                    <h2>Advanced Analytics & Business Intelligence Mastery</h2>
+                    <p><strong>Ready for Day 3: Python Integration & Production Deployment</strong></p>
+                    <div class="enterprise-highlight" style="margin-top: 2rem;">
+                        <p><em>You've successfully built enterprise-grade analytics systems with graph algorithms, fraud detection, and predictive capabilities. Tomorrow, we'll integrate these systems with Python applications and deploy them to production environments.</em></p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            controls: true,
+            progress: true,
+            center: false,
+            touch: true,
+            loop: false,
+            fragments: true,
+            help: true,
+            width: 1200,
+            height: 800,
+            margin: 0.04,
+            minScale: 0.2,
+            maxScale: 2.0
+        });
+    </script>
+</body>
+</html>
