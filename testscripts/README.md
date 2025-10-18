@@ -51,24 +51,42 @@ testscripts/
 
 ### Prerequisites
 
-1. **Neo4j Database**
-   - Neo4j Enterprise 2025.06.0 running in Docker
-   - Container name: `neo4j`
-   - URI: `neo4j://localhost:7687`
-   - Credentials: `neo4j`/`password`
-   - Database: `insurance`
+**The test scripts are completely self-contained and automated!**
 
-2. **Python Environment**
-   ```bash
-   # Install required packages
-   pip install pytest neo4j
-   ```
+You only need:
 
-3. **Complete Lab Data**
-   - Ensure you have completed the labs you want to test
-   - Or load the appropriate data reload script
+1. **Docker** installed and running
+   - Docker Desktop (Mac/Windows) or Docker Engine (Linux)
+   - Check with: `docker --version`
+   - Ensure Docker daemon is running
+
+2. **Python 3.8 or higher** installed
+   - Check with: `python3 --version` (Mac/Linux) or `python --version` (Windows)
+
+**That's it! No other manual setup required.**
 
 ### Running All Tests
+
+**The scripts will automatically:**
+- ✅ Check Docker and Python installation
+- ✅ Pull Neo4j Enterprise 5.26.9 image (if not already present)
+- ✅ Create and start Neo4j container
+- ✅ Install APOC plugin
+- ✅ Wait for Neo4j to be ready
+- ✅ Create insurance database
+- ✅ **Load Labs 1-8 sequentially** (foundation: ~400 nodes, ~500 relationships)
+- ✅ **Load Lab 17 advanced features** (Labs 9-17: additional ~600 nodes, ~800 relationships)
+- ✅ Create temporary Python virtual environment
+- ✅ Install all required packages (pytest, neo4j, etc.)
+- ✅ Run the comprehensive test suite (188+ tests)
+- ✅ Clean up and delete everything:
+  - Python virtual environment
+  - Neo4j container
+  - Neo4j image (if pulled during this run)
+
+**Complete isolation - no manual setup, no leftover artifacts!**
+
+**Note:** Data loads progressively (Labs 1→2→3→4→5→6→7→8→17) to build the complete insurance platform. All 17 lab tests validate against the full dataset (1000+ nodes, 1300+ relationships).
 
 #### Unix/Mac/Linux:
 ```bash
@@ -82,10 +100,32 @@ cd testscripts
 run_tests.bat
 ```
 
-#### Python Direct:
+**What happens:**
+1. Script checks prerequisites (Docker, Python)
+2. Sets up complete Neo4j environment
+3. Sets up Python test environment
+4. Runs all tests
+5. Cleans up everything automatically
+
+**Time:** First run ~5-10 minutes (image download), subsequent runs ~2-3 minutes
+
+#### Python Direct (Advanced - Not Recommended):
 ```bash
+# This requires manual Docker and environment setup
+# Start Neo4j manually first
+docker run -d --name neo4j -p 7474:7474 -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/password -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
+  neo4j:5.26.9-enterprise
+
+# Install dependencies
 cd testscripts
+pip install -r requirements.txt
+
+# Run tests
 python test_runner.py
+
+# Manual cleanup required
+docker stop neo4j && docker rm neo4j
 ```
 
 ### Running Specific Tests
@@ -303,10 +343,10 @@ To integrate with CI/CD:
 ## 📚 Additional Resources
 
 - **Main Course:** `/neo4j_mastering/`
+- **Course Documentation:** `/README.md` (setup, course structure, learning outcomes)
 - **Lab Files:** `/labs/neo4j_lab_*.md`
 - **Presentation Files:** `/presentations/neo4j_day*.html`
 - **Data Reload Scripts:** `/data/lab_*_data_reload.cypher`
-- **Course Flow:** `/course_flow.md`
 
 ## 🆘 Support
 

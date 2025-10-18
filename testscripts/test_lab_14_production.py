@@ -74,13 +74,29 @@ class TestLab14:
         assert result[0]['audited_entities'] >= 100, "Not enough entities with audit trails"
         print(f"  ✓ Audit trail compliance: {result[0]['audited_entities']} entities")
 
+    # ===================================
+    # OPERATIONAL TESTS: Lab 14 Operations
+    # ===================================
+
+    def test_operation_integrity_validation(self, query_executor):
+        """Test: Students can validate referential integrity"""
+        query = """
+        MATCH (p:Policy)
+        WHERE NOT EXISTS { MATCH (p)<-[:HOLDS_POLICY]-(:Customer) }
+        RETURN count(p) as orphaned_policies
+        """
+        result = query_executor(query)
+        assert result[0]['orphaned_policies'] == 0
+        print(f"  ✓ Referential integrity validation works")
+
     def test_lab14_summary(self, db_validator):
         """Print Lab 14 completion summary"""
         nodes = db_validator.count_nodes()
         rels = db_validator.count_relationships()
 
-        print("\n  Lab 14 Summary:")
-        print(f"    Total Nodes: {nodes}")
-        print(f"    Total Relationships: {rels}")
-        print("    Production Readiness: Validated")
+        print("\n  Lab 14 Operations Summary:")
+        print(f"    Data: {nodes} nodes, {rels} relationships")
+        print("    ✓ Data quality checks")
+        print("    ✓ Referential integrity validation")
+        print("    ✓ Production readiness verified")
         print("  ✓ Lab 14 validation complete")

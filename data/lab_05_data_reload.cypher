@@ -22,10 +22,10 @@ CREATE CONSTRAINT agent_id_unique IF NOT EXISTS FOR (a:Agent) REQUIRE a.agent_id
 
 // Ensure we have the basic foundation (summarized for performance)
 MERGE (customer1:Customer:Individual {customer_number: "CUST-001234"})
-ON CREATE SET customer1.id = randomUUID(), customer1.first_name = "Sarah", customer1.last_name = "Johnson", customer1.city = "Austin", customer1.state = "TX", customer1.credit_score = 720, customer1.risk_tier = "Standard", customer1.lifetime_value = 12500.00, customer1.created_at = datetime(), customer1.created_by = "underwriting_system", customer1.version = 1
+ON CREATE SET customer1.id = randomUUID(), customer1.first_name = "Sarah", customer1.last_name = "Johnson", customer1.city = "Austin", customer1.state = "TX", customer1.credit_score = 720, customer1.risk_tier = "Standard", customer1.lifetime_value = 12500.00, customer1.created_at = datetime(), customer1.created_by = "underwriting_system", customer1.version = 1;
 
 MERGE (customer2:Customer:Individual {customer_number: "CUST-001235"})
-ON CREATE SET customer2.id = randomUUID(), customer2.first_name = "Michael", customer2.last_name = "Chen", customer2.city = "Austin", customer2.state = "TX", customer2.credit_score = 680, customer2.risk_tier = "Standard", customer2.lifetime_value = 18750.00, customer2.created_at = datetime(), customer2.created_by = "underwriting_system", customer2.version = 1
+ON CREATE SET customer2.id = randomUUID(), customer2.first_name = "Michael", customer2.last_name = "Chen", customer2.city = "Austin", customer2.state = "TX", customer2.credit_score = 680, customer2.risk_tier = "Standard", customer2.lifetime_value = 18750.00, customer2.created_at = datetime(), customer2.created_by = "underwriting_system", customer2.version = 1;
 
 MERGE (customer3:Customer:Individual {customer_number: "CUST-001236"})
 ON CREATE SET customer3.id = randomUUID(), customer3.first_name = "Emma", customer3.last_name = "Rodriguez", customer3.city = "Dallas", customer3.state = "TX", customer3.credit_score = 750, customer3.risk_tier = "Preferred", customer3.lifetime_value = 8900.00, customer3.created_at = datetime(), customer3.created_by = "underwriting_system", customer3.version = 1;
@@ -56,10 +56,10 @@ ON CREATE SET
 
 // Create essential agents
 MERGE (agent1:Agent:Employee {agent_id: "AGT-001"})
-ON CREATE SET agent1.id = randomUUID(), agent1.first_name = "David", agent1.last_name = "Wilson", agent1.territory = "Central Texas", agent1.performance_rating = "Excellent", agent1.ytd_sales = 85000, agent1.customer_count = 3, agent1.created_at = datetime(), agent1.created_by = "hr_system"
+ON CREATE SET agent1.id = randomUUID(), agent1.first_name = "David", agent1.last_name = "Wilson", agent1.territory = "Central Texas", agent1.performance_rating = "Excellent", agent1.ytd_sales = 85000, agent1.customer_count = 3, agent1.created_at = datetime(), agent1.created_by = "hr_system";
 
 MERGE (agent2:Agent:Employee {agent_id: "AGT-002"})
-ON CREATE SET agent2.id = randomUUID(), agent2.first_name = "Lisa", agent2.last_name = "Thompson", agent2.territory = "North Texas", agent2.performance_rating = "Very Good", agent2.ytd_sales = 72000, agent2.customer_count = 2, agent2.created_at = datetime(), agent2.created_by = "hr_system"
+ON CREATE SET agent2.id = randomUUID(), agent2.first_name = "Lisa", agent2.last_name = "Thompson", agent2.territory = "North Texas", agent2.performance_rating = "Very Good", agent2.ytd_sales = 72000, agent2.customer_count = 2, agent2.created_at = datetime(), agent2.created_by = "hr_system";
 
 // Create additional agents
 WITH [

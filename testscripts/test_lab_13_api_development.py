@@ -93,13 +93,31 @@ class TestLab13:
         assert len(result) > 0, "No agent dashboard data"
         print("  ✓ Agent dashboard API data available")
 
+    # ===================================
+    # OPERATIONAL TESTS: Lab 13 Operations
+    # ===================================
+
+    def test_operation_dashboard_aggregations(self, query_executor):
+        """Test: Students can build dashboard metrics"""
+        query = """
+        MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)
+        WITH count(DISTINCT c) as customers,
+             count(p) as policies,
+             sum(p.annual_premium) as premium
+        RETURN customers, policies, round(premium * 100) / 100 as totalPremium
+        """
+        result = query_executor(query)
+        assert len(result) == 1
+        print(f"  ✓ Dashboard aggregation operations work")
+
     def test_lab13_summary(self, db_validator):
         """Print Lab 13 completion summary"""
         nodes = db_validator.count_nodes()
         rels = db_validator.count_relationships()
 
-        print("\n  Lab 13 Summary:")
-        print(f"    Total Nodes: {nodes}")
-        print(f"    Total Relationships: {rels}")
-        print("    API Data Structures: Validated")
+        print("\n  Lab 13 Operations Summary:")
+        print(f"    Data: {nodes} nodes, {rels} relationships")
+        print("    ✓ Customer 360 view queries")
+        print("    ✓ Dashboard aggregations")
+        print("    ✓ API data structures")
         print("  ✓ Lab 13 validation complete")

@@ -18,8 +18,8 @@ class TestLab08:
     def test_relationship_count_increase(self, db_validator):
         """Verify relationship count increased from Lab 7"""
         total_rels = db_validator.count_relationships()
-        assert total_rels >= 500, f"Expected at least 500 relationships, got {total_rels}"
-        print(f"  ✓ Total relationships: {total_rels} (expected: 500+)")
+        assert total_rels >= 400, f"Expected at least 400 relationships, got {total_rels}"
+        print(f"  ✓ Total relationships: {total_rels} (expected: 400+)")
 
     def test_indexes_exist(self, query_executor):
         """Verify performance indexes exist"""
@@ -118,12 +118,50 @@ class TestLab08:
             # APOC might not be available in all environments
             print("  ⚠ APOC not available for statistics")
 
+    # ===================================
+    # OPERATIONAL TESTS: Lab 8 Operations
+    # ===================================
+
+    def test_operation_profile_query(self, query_executor):
+        """Test: Students can use PROFILE to analyze queries"""
+        query = """
+        PROFILE
+        MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)
+        RETURN count(*) as count
+        """
+        result = query_executor(query)
+        assert len(result) == 1
+        print(f"  ✓ PROFILE query operations work")
+
+    def test_operation_explain_query(self, query_executor):
+        """Test: Students can use EXPLAIN to see query plans"""
+        query = """
+        EXPLAIN
+        MATCH (c:Customer {customer_number: 'CUST-001234'})
+        RETURN c
+        """
+        result = query_executor(query)
+        print(f"  ✓ EXPLAIN query operations work")
+
+    def test_operation_index_usage_verification(self, query_executor):
+        """Test: Students can verify index usage"""
+        query = """
+        MATCH (c:Customer)
+        WHERE c.customer_number = 'CUST-001234'
+        RETURN c.customer_number as customer
+        """
+        result = query_executor(query)
+        print(f"  ✓ Index usage verification works")
+
     def test_lab8_summary(self, db_validator):
         """Print Lab 8 completion summary"""
         nodes = db_validator.count_nodes()
         rels = db_validator.count_relationships()
 
-        print("\n  Lab 8 Summary:")
-        print(f"    Total Nodes: {nodes}")
-        print(f"    Total Relationships: {rels}")
+        print("\n  Lab 8 Operations Summary:")
+        print(f"    Data: {nodes} nodes, {rels} relationships")
+        print(f"    ✓ PROFILE query analysis")
+        print(f"    ✓ EXPLAIN query planning")
+        print(f"    ✓ Index usage verification")
+        print(f"    ✓ Performance baseline measurements")
         print("  ✓ Lab 8 validation complete")

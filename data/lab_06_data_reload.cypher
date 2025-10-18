@@ -244,7 +244,8 @@ WITH profile, customer,
      collect(claim) AS claims,
      COALESCE(sum(policy.annual_premium), 0.0) AS total_premium,
      count(policy) AS policy_count,
-     count(claim) AS claim_count
+     count(claim) AS claim_count,
+     count(DISTINCT policy.product_type) AS distinct_product_count
 
 SET profile.total_annual_premium = total_premium,
     profile.average_policy_value = CASE WHEN policy_count > 0 THEN total_premium / policy_count ELSE 0.0 END,
@@ -252,7 +253,7 @@ SET profile.total_annual_premium = total_premium,
     profile.total_claims = claim_count,
     profile.claims_ratio = CASE WHEN policy_count > 0 THEN (claim_count * 1.0) / policy_count ELSE 0.0 END,
     profile.product_mix = [p IN policies | p.product_type],
-    profile.policy_diversity_score = size(collect(DISTINCT [p IN policies | p.product_type]));
+    profile.policy_diversity_score = distinct_product_count;
 
 // ===================================
 // STEP 6: CREATE CUSTOMER SEGMENTATION

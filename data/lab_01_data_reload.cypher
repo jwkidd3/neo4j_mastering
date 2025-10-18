@@ -12,8 +12,7 @@
 // STEP 2: CREATE DATABASE STRUCTURE
 // ===================================
 
-// Switch to insurance database
-:use insurance
+// Note: Database is specified via -d parameter in cypher-shell
 
 // ===================================
 // STEP 3: CREATE INSURANCE CUSTOMERS

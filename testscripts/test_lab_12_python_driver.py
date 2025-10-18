@@ -116,13 +116,29 @@ class TestLab12:
         except Exception as e:
             print("  ✓ Error handling works")
 
+    # ===================================
+    # OPERATIONAL TESTS: Lab 12 Operations
+    # ===================================
+
+    def test_operation_parameterized_queries(self, neo4j_session):
+        """Test: Students can execute parameterized queries"""
+        result = neo4j_session.run(
+            "MATCH (c:Customer {customer_number: $customer_number}) RETURN c.customer_number as number",
+            customer_number="CUST-001234"
+        )
+        records = list(result)
+        assert len(records) >= 0
+        print("  ✓ Parameterized query operations work")
+
     def test_lab12_summary(self, db_validator):
         """Print Lab 12 completion summary"""
         nodes = db_validator.count_nodes()
         rels = db_validator.count_relationships()
 
-        print("\n  Lab 12 Summary:")
-        print(f"    Total Nodes: {nodes}")
-        print(f"    Total Relationships: {rels}")
-        print("    Python Driver: Operational")
+        print("\n  Lab 12 Operations Summary:")
+        print(f"    Data: {nodes} nodes, {rels} relationships")
+        print("    ✓ Python driver connections")
+        print("    ✓ Parameterized queries")
+        print("    ✓ Transaction management")
+        print("    ✓ Error handling")
         print("  ✓ Lab 12 validation complete")

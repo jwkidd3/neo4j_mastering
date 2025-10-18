@@ -108,75 +108,21 @@ CREATE (perf_monitor:QueryPerformanceMonitor {
   monitor_id: "PERF-MON-001",
   monitoring_start_date: datetime(),
 
-  // Common query patterns and their performance
-  frequent_queries: [
-    {
-      query_type: "Customer Lookup by Risk Tier",
-      avg_execution_time_ms: 15.2,
-      executions_per_hour: 450,
-      index_usage: "customer_risk_tier",
-      optimization_level: "Optimized"
-    },
-    {
-      query_type: "Policy Portfolio Analysis",
-      avg_execution_time_ms: 89.7,
-      executions_per_hour: 120,
-      index_usage: "policy_status_type",
-      optimization_level: "Needs Optimization"
-    },
-    {
-      query_type: "Customer 360 View",
-      avg_execution_time_ms: 156.3,
-      executions_per_hour: 85,
-      index_usage: "customer_number_unique",
-      optimization_level: "Optimized"
-    },
-    {
-      query_type: "Claims Analysis by Status",
-      avg_execution_time_ms: 67.4,
-      executions_per_hour: 200,
-      index_usage: "claim_status_amount",
-      optimization_level: "Optimized"
-    },
-    {
-      query_type: "Agent Performance Dashboard",
-      avg_execution_time_ms: 234.1,
-      executions_per_hour: 45,
-      index_usage: "agent_territory_performance",
-      optimization_level: "Review Required"
-    }
-  ],
-
   // Performance metrics
   total_queries_per_hour: 900,
   avg_response_time_ms: 78.5,
-  cache_hit_ratio: 0.73, // 73% cache hit rate
+  cache_hit_ratio: 0.73,
   memory_usage_mb: 512.8,
   cpu_utilization_percent: 45.2,
 
-  // Index performance
-  index_usage_stats: {
-    customer_indexes: 85.3, // % usage
-    policy_indexes: 92.1,
-    claim_indexes: 67.8,
-    agent_indexes: 78.9,
-    fulltext_indexes: 34.5
-  },
+  // Index usage percentages
+  customer_indexes_usage: 85.3,
+  policy_indexes_usage: 92.1,
+  claim_indexes_usage: 67.8,
+  agent_indexes_usage: 78.9,
+  fulltext_indexes_usage: 34.5,
 
-  // Slow queries identified
-  slow_queries: [
-    {
-      query_pattern: "Complex relationship traversals without limits",
-      avg_time_ms: 1250.7,
-      recommendation: "Add LIMIT clauses and use shortest path algorithms"
-    },
-    {
-      query_pattern: "Unindexed property filters",
-      avg_time_ms: 890.3,
-      recommendation: "Create composite indexes for frequently filtered properties"
-    }
-  ],
-
+  // Recommendations
   recommendations: [
     "Add RANGE index on policy.annual_premium for faster range queries",
     "Implement query result caching for dashboard queries",
@@ -212,44 +158,9 @@ CREATE (cache_opt:CacheOptimization {
   cache_evictions_per_hour: 145,
   cache_updates_per_hour: 320,
 
-  // Cached query categories
-  cached_query_types: [
-    {
-      category: "Customer Profiles",
-      hit_ratio: 0.89,
-      avg_size_kb: 2.4,
-      ttl_seconds: 1800,
-      entries_count: 1250
-    },
-    {
-      category: "Policy Summaries",
-      hit_ratio: 0.82,
-      avg_size_kb: 1.8,
-      ttl_seconds: 3600,
-      entries_count: 890
-    },
-    {
-      category: "Agent Performance Metrics",
-      hit_ratio: 0.95,
-      avg_size_kb: 5.2,
-      ttl_seconds: 900,
-      entries_count: 150
-    },
-    {
-      category: "Claims Statistics",
-      hit_ratio: 0.67,
-      avg_size_kb: 3.1,
-      ttl_seconds: 1800,
-      entries_count: 680
-    },
-    {
-      category: "Centrality Scores",
-      hit_ratio: 0.91,
-      avg_size_kb: 4.7,
-      ttl_seconds: 7200,
-      entries_count: 420
-    }
-  ],
+  // Cached query category names
+  cached_query_categories: ["Customer Profiles", "Policy Summaries", "Agent Performance Metrics", "Claims Statistics", "Centrality Scores"],
+  total_cache_entries: 3390,
 
   // Cache optimization strategies
   optimization_strategies: [
@@ -260,18 +171,15 @@ CREATE (cache_opt:CacheOptimization {
   ],
 
   // Performance improvements
-  performance_gains: {
-    avg_query_time_reduction_percent: 68.4,
-    database_load_reduction_percent: 42.1,
-    user_experience_improvement_score: 8.7, // out of 10
-    cost_savings_percent: 23.8
-  },
+  avg_query_time_reduction_percent: 68.4,
+  database_load_reduction_percent: 42.1,
+  user_experience_improvement_score: 8.7,
+  cost_savings_percent: 23.8,
 
-  memory_efficiency: {
-    compression_ratio: 0.73, // 27% size reduction
-    memory_fragmentation_percent: 8.2,
-    garbage_collection_frequency: "Every 2 hours"
-  },
+  // Memory efficiency
+  compression_ratio: 0.73,
+  memory_fragmentation_percent: 8.2,
+  garbage_collection_frequency: "Every 2 hours",
 
   created_at: datetime(),
   created_by: "cache_optimization_system",
@@ -288,110 +196,24 @@ CREATE (query_opt:QueryOptimization {
   optimization_id: "QUERY-OPT-001",
   optimization_date: datetime(),
 
-  // Original vs optimized query performance
-  optimization_results: [
-    {
-      query_category: "Customer Risk Analysis",
-      original_avg_time_ms: 245.8,
-      optimized_avg_time_ms: 67.3,
-      improvement_percent: 72.6,
-      optimization_techniques: ["Added composite index", "Reduced relationship hops", "Added LIMIT clause"],
-      before_plan: "NodeByLabelScan -> Filter -> Expand -> Filter",
-      after_plan: "NodeIndexSeek -> Expand(Cached) -> Project"
-    },
-    {
-      query_category: "Policy Portfolio Aggregation",
-      original_avg_time_ms: 456.2,
-      optimized_avg_time_ms: 89.7,
-      improvement_percent: 80.3,
-      optimization_techniques: ["Created range index on premium", "Used aggregation pushdown", "Parallel execution"],
-      before_plan: "AllNodesScan -> Filter -> Aggregation",
-      after_plan: "NodeIndexSeekByRange -> ParallelAggregation"
-    },
-    {
-      query_category: "Claims Fraud Detection",
-      original_avg_time_ms: 1234.5,
-      optimized_avg_time_ms: 234.1,
-      improvement_percent: 81.0,
-      optimization_techniques: ["Graph projection for algorithms", "Cached centrality scores", "Batch processing"],
-      before_plan: "Complex multi-hop traversal",
-      after_plan: "IndexSeek -> CachedExpand -> AlgorithmExecution"
-    },
-    {
-      query_category: "Agent Performance Dashboard",
-      original_avg_time_ms: 789.3,
-      optimized_avg_time_ms: 156.8,
-      improvement_percent: 80.1,
-      optimization_techniques: ["Materialized views", "Precomputed aggregations", "Strategic caching"],
-      before_plan: "Multiple scans with aggregations",
-      after_plan: "MaterializedView -> IndexJoin -> Project"
-    },
-    {
-      query_category: "Customer 360 Deep Dive",
-      original_avg_time_ms: 567.9,
-      optimized_avg_time_ms: 123.4,
-      improvement_percent: 78.3,
-      optimization_techniques: ["Relationship indexing", "Path caching", "Lazy loading"],
-      before_plan: "NodeByLabelScan -> MultipleExpands",
-      after_plan: "NodeIndexSeek -> CachedPath -> LazyExpand"
-    }
-  ],
+  // Query optimization statistics
+  optimized_query_categories: ["Customer Risk Analysis", "Policy Portfolio Aggregation", "Claims Fraud Detection", "Agent Performance Dashboard", "Customer 360 Deep Dive"],
+  avg_improvement_percent: 78.5,
+  total_optimizations: 5,
 
-  // Index recommendations implemented
-  index_optimizations: [
-    {
-      index_name: "customer_ltv_risk_composite",
-      properties: ["lifetime_value", "risk_tier"],
-      query_types_improved: ["High-value customer analysis", "Risk segmentation"],
-      performance_gain_percent: 68.4,
-      storage_overhead_mb: 8.3
-    },
-    {
-      index_name: "policy_premium_date_composite",
-      properties: ["annual_premium", "effective_date"],
-      query_types_improved: ["Premium analysis", "Renewal forecasting"],
-      performance_gain_percent: 72.1,
-      storage_overhead_mb: 12.7
-    },
-    {
-      index_name: "claim_amount_status_composite",
-      properties: ["claim_amount", "claim_status"],
-      query_types_improved: ["Claims analytics", "Settlement analysis"],
-      performance_gain_percent: 59.8,
-      storage_overhead_mb: 6.9
-    }
-  ],
+  // Index optimizations
+  implemented_indexes: ["customer_ltv_risk_composite", "policy_premium_date_composite", "claim_amount_status_composite"],
+  avg_index_performance_gain: 66.8,
 
-  // Query pattern optimizations
-  pattern_optimizations: [
-    {
-      pattern_type: "Fan-out Traversals",
-      optimization: "Depth-limited expansion with strategic indexing",
-      use_cases: ["Customer network analysis", "Referral chain tracking"],
-      performance_improvement: "75% reduction in execution time"
-    },
-    {
-      pattern_type: "Aggregation Queries",
-      optimization: "Materialized aggregations with incremental updates",
-      use_cases: ["Dashboard KPIs", "Reporting summaries"],
-      performance_improvement: "80% reduction in computation time"
-    },
-    {
-      pattern_type: "Full-text Search",
-      optimization: "Hybrid exact-match and fuzzy search with ranking",
-      use_cases: ["Customer search", "Policy lookup"],
-      performance_improvement: "65% improvement in search relevance"
-    }
-  ],
+  // Pattern optimization types
+  optimized_patterns: ["Fan-out Traversals", "Aggregation Queries", "Full-text Search"],
 
   // Overall performance improvements
-  overall_metrics: {
-    total_queries_optimized: 47,
-    avg_performance_improvement_percent: 74.8,
-    total_cost_savings_annual: 125000.00,
-    user_satisfaction_improvement: 8.3, // out of 10
-    system_scalability_factor: 3.2 // 3.2x more capacity
-  },
+  total_queries_optimized: 47,
+  avg_performance_improvement_percent: 74.8,
+  total_cost_savings_annual: 125000.00,
+  user_satisfaction_improvement: 8.3,
+  system_scalability_factor: 3.2,
 
   created_at: datetime(),
   created_by: "query_optimization_engine",
@@ -415,121 +237,23 @@ CREATE (benchmark:PerformanceBenchmark {
   database_size_relationships: customer_count * 12, // Estimated relationships
 
   // Benchmark categories
-  benchmark_results: [
-    {
-      category: "Simple Lookups",
-      test_queries: [
-        "Customer by number",
-        "Policy by number",
-        "Agent by ID"
-      ],
-      avg_execution_time_ms: 3.2,
-      throughput_qps: 2500, // Queries per second
-      resource_usage: "Low CPU, minimal memory",
-      optimization_status: "Fully optimized"
-    },
-    {
-      category: "Range Queries",
-      test_queries: [
-        "Customers by credit score range",
-        "Policies by premium range",
-        "Claims by amount range"
-      ],
-      avg_execution_time_ms: 15.7,
-      throughput_qps: 680,
-      resource_usage: "Medium CPU, low memory",
-      optimization_status: "Optimized with range indexes"
-    },
-    {
-      category: "Relationship Traversals",
-      test_queries: [
-        "Customer policy portfolio",
-        "Agent customer relationships",
-        "Claims and settlements"
-      ],
-      avg_execution_time_ms: 45.3,
-      throughput_qps: 220,
-      resource_usage: "Medium CPU, medium memory",
-      optimization_status: "Optimized with relationship caching"
-    },
-    {
-      category: "Complex Analytics",
-      test_queries: [
-        "Customer 360 views",
-        "Risk analysis with network effects",
-        "Predictive model execution"
-      ],
-      avg_execution_time_ms: 156.8,
-      throughput_qps: 65,
-      resource_usage: "High CPU, high memory",
-      optimization_status: "Optimized with materialized views"
-    },
-    {
-      category: "Graph Algorithms",
-      test_queries: [
-        "PageRank for customer influence",
-        "Community detection",
-        "Shortest path analysis"
-      ],
-      avg_execution_time_ms: 890.4,
-      throughput_qps: 12,
-      resource_usage: "Very high CPU, very high memory",
-      optimization_status: "Optimized with projections"
-    }
-  ],
+  benchmark_categories: ["Simple Lookups", "Range Queries", "Relationship Traversals", "Complex Analytics", "Graph Algorithms"],
+  simple_lookups_avg_ms: 3.2,
+  range_queries_avg_ms: 15.7,
+  traversals_avg_ms: 45.3,
+  analytics_avg_ms: 156.8,
+  algorithms_avg_ms: 890.4,
 
-  // Scalability projections
-  scalability_analysis: {
-    current_load_capacity: "10,000 concurrent users",
-    projected_10x_growth: {
-      hardware_requirements: "4x CPU, 6x RAM",
-      performance_degradation_percent: 25.3,
-      recommended_optimizations: [
-        "Implement horizontal scaling",
-        "Add read replicas for analytics",
-        "Implement query result caching"
-      ]
-    },
-    bottleneck_identification: [
-      "Memory-intensive graph algorithms",
-      "Complex relationship traversals",
-      "Real-time aggregation queries"
-    ]
-  },
+  // Scalability
+  current_load_capacity: "10,000 concurrent users",
+  projected_growth_hardware: "4x CPU, 6x RAM",
+  performance_degradation_percent: 25.3,
+  bottlenecks: ["Memory-intensive graph algorithms", "Complex relationship traversals", "Real-time aggregation queries"],
 
-  // Optimization recommendations by priority
-  optimization_roadmap: [
-    {
-      priority: "High",
-      optimization: "Implement query result caching for dashboard queries",
-      estimated_improvement: "40% reduction in response time",
-      implementation_effort: "2 weeks"
-    },
-    {
-      priority: "High",
-      optimization: "Add composite indexes for multi-property filters",
-      estimated_improvement: "60% improvement in search queries",
-      implementation_effort: "1 week"
-    },
-    {
-      priority: "Medium",
-      optimization: "Optimize graph algorithm execution with projections",
-      estimated_improvement: "70% reduction in algorithm runtime",
-      implementation_effort: "3 weeks"
-    },
-    {
-      priority: "Medium",
-      optimization: "Implement materialized views for complex aggregations",
-      estimated_improvement: "80% improvement in reporting queries",
-      implementation_effort: "4 weeks"
-    },
-    {
-      priority: "Low",
-      optimization: "Add read replicas for analytics workloads",
-      estimated_improvement: "Infinite horizontal scaling for reads",
-      implementation_effort: "6 weeks"
-    }
-  ],
+  // Optimization roadmap
+  high_priority_optimizations: ["Implement query result caching for dashboard queries", "Add composite indexes for multi-property filters"],
+  medium_priority_optimizations: ["Optimize graph algorithm execution with projections", "Implement materialized views for complex aggregations"],
+  low_priority_optimizations: ["Add read replicas for analytics workloads"],
 
   created_at: datetime(),
   created_by: "performance_benchmark_system",
@@ -655,24 +379,6 @@ RETURN perf.total_queries_per_hour AS queries_per_hour,
        perf.avg_response_time_ms AS avg_response_time,
        perf.cache_hit_ratio AS cache_hit_ratio,
        perf.cpu_utilization_percent AS cpu_usage
-LIMIT 1
-
-UNION ALL
-
-MATCH (cache:CacheOptimization)
-RETURN cache.cache_hit_ratio AS cache_performance,
-       cache.performance_gains.avg_query_time_reduction_percent AS query_improvement,
-       cache.performance_gains.database_load_reduction_percent AS load_reduction,
-       cache.performance_gains.cost_savings_percent AS cost_savings
-LIMIT 1
-
-UNION ALL
-
-MATCH (opt:QueryOptimization)
-RETURN opt.overall_metrics.avg_performance_improvement_percent AS avg_improvement,
-       opt.overall_metrics.total_cost_savings_annual AS annual_savings,
-       opt.overall_metrics.user_satisfaction_improvement AS satisfaction_gain,
-       opt.overall_metrics.system_scalability_factor AS scalability_factor
 LIMIT 1;
 
 // Agent performance optimization summary

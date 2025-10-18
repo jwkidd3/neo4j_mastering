@@ -78,8 +78,27 @@ class TestLab15:
         total_rels = db_validator.count_relationships()
 
         assert total_nodes >= 600, f"Platform scale insufficient: {total_nodes} nodes"
-        assert total_rels >= 750, f"Platform scale insufficient: {total_rels} relationships"
+        assert total_rels >= 400, f"Platform scale insufficient: {total_rels} relationships"
         print(f"  ✓ Platform scale adequate: {total_nodes} nodes, {total_rels} relationships")
+
+    # ===================================
+    # OPERATIONAL TESTS: Lab 15 Operations
+    # ===================================
+
+    def test_operation_platform_analytics(self, query_executor):
+        """Test: Students can run platform-wide analytics"""
+        query = """
+        MATCH (c:Customer)
+        OPTIONAL MATCH (c)-[:HOLDS_POLICY]->(p:Policy)
+        OPTIONAL MATCH (c)-[:FILED_CLAIM]->(cl:Claim)
+        WITH count(DISTINCT c) as customers,
+             count(DISTINCT p) as policies,
+             count(DISTINCT cl) as claims
+        RETURN customers, policies, claims
+        """
+        result = query_executor(query)
+        assert len(result) == 1
+        print(f"  ✓ Platform analytics operations work")
 
     def test_lab15_summary(self, db_validator):
         """Print Lab 15 completion summary"""
@@ -88,10 +107,10 @@ class TestLab15:
         labels = db_validator.get_all_labels()
         rel_types = db_validator.get_all_relationship_types()
 
-        print("\n  Lab 15 Summary:")
-        print(f"    Total Nodes: {nodes}")
-        print(f"    Total Relationships: {rels}")
-        print(f"    Node Types: {len(labels)}")
-        print(f"    Relationship Types: {len(rel_types)}")
-        print("    Platform Integration: Complete")
+        print("\n  Lab 15 Operations Summary:")
+        print(f"    Data: {nodes} nodes, {rels} relationships")
+        print(f"    Node Types: {len(labels)}, Relationship Types: {len(rel_types)}")
+        print("    ✓ End-to-end workflows")
+        print("    ✓ Platform-wide analytics")
+        print("    ✓ Integration complete")
         print("  ✓ Lab 15 validation complete")

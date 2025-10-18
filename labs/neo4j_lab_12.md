@@ -18,7 +18,7 @@ Building on Lab 11's predictive analytics capabilities, you'll now transition fr
 
 ### Step 1: Python Environment Setup
 
-**Please refer to the `python_env.md` file for complete Python environment setup instructions including:**
+**Please refer to the main `README.md` file (Step 2: Python Environment Setup section) for complete Python environment setup instructions including:**
 - Python 3.8+ installation and verification
 - Virtual environment creation and activation
 - Package manager configuration

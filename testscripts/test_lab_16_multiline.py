@@ -54,15 +54,32 @@ class TestLab16:
         result = query_executor(query)
         print("  ✓ Product bundling opportunities identified")
 
+    # ===================================
+    # OPERATIONAL TESTS: Lab 16 Operations
+    # ===================================
+
+    def test_operation_cross_product_analysis(self, query_executor):
+        """Test: Students can analyze across product lines"""
+        query = """
+        MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)
+        WITH c, collect(DISTINCT p.product_type) as products
+        RETURN size(products) as product_count,
+               count(c) as customers
+        ORDER BY product_count DESC
+        """
+        result = query_executor(query)
+        assert len(result) >= 1
+        print(f"  ✓ Cross-product analysis operations work")
+
     def test_lab16_summary(self, db_validator):
         """Print Lab 16 completion summary"""
         nodes = db_validator.count_nodes()
         rels = db_validator.count_relationships()
         products = db_validator.count_nodes("Product")
 
-        print("\n  Lab 16 Summary:")
-        print(f"    Total Nodes: {nodes}")
-        print(f"    Total Relationships: {rels}")
-        print(f"    Product Types: {products}")
-        print("    Multi-Line Platform: Operational")
+        print("\n  Lab 16 Operations Summary:")
+        print(f"    Data: {nodes} nodes, {rels} relationships, Products: {products}")
+        print("    ✓ Cross-product analysis")
+        print("    ✓ Bundle recommendations")
+        print("    ✓ Multi-line platform operational")
         print("  ✓ Lab 16 validation complete")
