@@ -2286,14 +2286,14 @@ print("=" * 60)
 course_summary = """
 📚 COURSE PROGRESSION OVERVIEW:
 
-DAY 1 - FOUNDATIONS:
+SESSION 1 - FOUNDATIONS:
   🏗️  Lab 1: Neo4j Fundamentals (10 nodes)
   👥 Lab 2: Customer Relationships (25 nodes)  
   💰 Lab 3: Claims & Financial (60 nodes)
   🌍 Lab 4: Network Expansion (120 nodes)
   📊 Lab 5: Advanced Queries (150 nodes)
 
-DAY 2 - OPERATIONS:
+SESSION 2 - OPERATIONS:
   🚗 Lab 6: Assets & Vendors (200 nodes)
   🔍 Lab 7: Advanced Analytics (300 nodes)
   🛡️  Lab 8: Security & Performance (350 nodes)
@@ -2301,7 +2301,7 @@ DAY 2 - OPERATIONS:
   📋 Lab 10: Compliance Systems (550 nodes)
   🤖 Lab 11: Machine Learning (650 nodes)
 
-DAY 3 - ENTERPRISE:
+SESSION 3 - ENTERPRISE:
   🐍 Lab 12: Python Integration (700 nodes)
   🌐 Lab 13: API Development (750 nodes)
   📱 Lab 14: Applications (800 nodes)

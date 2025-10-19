@@ -695,7 +695,7 @@ LIMIT 15
 
 ## Next Steps
 
-You're now ready for **Day 2 - Lab 6: Customer Analytics & Segmentation**, where you'll:
+You're now ready for **Session 2 - Lab 6: Customer Analytics & Segmentation**, where you'll:
 - Implement advanced customer lifetime value calculations and behavioral segmentation
 - Add Commission and MarketingCampaign entities for comprehensive business tracking
 - Build sophisticated customer journey analytics and retention modeling

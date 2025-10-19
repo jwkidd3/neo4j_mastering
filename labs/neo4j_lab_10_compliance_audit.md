@@ -1063,7 +1063,7 @@ CREATE (violation:ComplianceViolation {
   
   // Incident details
   affected_entity: "Claim CLM-AUTO-002345",
-  violation_description: "Claim acknowledgment sent on day 17, exceeding 15-day requirement",
+  violation_description: "Claim acknowledgment sent on session 17, exceeding 15-day requirement",
   actual_value: "17 days",
   required_value: "15 days",
   variance: "2 days over limit",

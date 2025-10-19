@@ -2532,7 +2532,7 @@ print("Ready for Lab 13: Insurance API Development!")
 
 ## Next Steps
 
-You're now ready for **Day 3 - Lab 13: Insurance API Development**, where you'll:
+You're now ready for **Session 3 - Lab 13: Insurance API Development**, where you'll:
 - Build RESTful APIs using FastAPI framework with Neo4j integration
 - Implement authentication, authorization, and security middleware for production systems
 - Create comprehensive API documentation with OpenAPI and interactive testing interfaces

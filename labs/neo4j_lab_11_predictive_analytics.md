@@ -1042,7 +1042,7 @@ RETURN "Predictive Analytics System Validation" AS status,
 
 ## Next Steps
 
-You're now ready for **Day 3 - Lab 12: Python Integration & Service Architecture**, where you'll:
+You're now ready for **Session 3 - Lab 12: Python Integration & Service Architecture**, where you'll:
 - Build Python applications with Neo4j driver integration and proper architecture patterns
 - Implement service layers with error handling and data mapping for insurance operations
 - Create automated testing frameworks for graph operations and business logic

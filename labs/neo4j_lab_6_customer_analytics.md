@@ -4,7 +4,7 @@
 **Duration:** 45 minutes  
 **Objective:** Implement sophisticated customer lifetime value calculations, behavioral segmentation, and churn prediction modeling using graph-based analytics
 
-Starting Day 2, you'll now leverage the analytics foundation from Day 1 to build advanced customer intelligence systems that drive marketing strategies, retention programs, and revenue optimization through sophisticated behavioral analysis and predictive modeling.
+Starting Session 2, you'll now leverage the analytics foundation from Session 1 to build advanced customer intelligence systems that drive marketing strategies, retention programs, and revenue optimization through sophisticated behavioral analysis and predictive modeling.
 
 ---
 
