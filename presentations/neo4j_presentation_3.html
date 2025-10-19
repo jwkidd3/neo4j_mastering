@@ -856,6 +856,76 @@
                 </div>
             </section>
 
+            <!-- Docker Containerization Concepts -->
+            <section>
+                <h2>Docker Containerization for Neo4j Applications</h2>
+                <div class="enterprise-highlight">
+                    <h3>Why Containerization for Insurance Applications?</h3>
+                    <ul>
+                        <li><strong>Consistency:</strong> Same environment in development, testing, and production eliminates "works on my machine" issues</li>
+                        <li><strong>Isolation:</strong> Applications run in isolated containers with their own dependencies and configurations</li>
+                        <li><strong>Portability:</strong> Deploy anywhere - local machines, cloud providers, on-premises data centers</li>
+                        <li><strong>Scalability:</strong> Quickly spin up multiple instances to handle increased load during peak periods</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Docker Core Concepts</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Container Architecture</h3>
+                        <ul>
+                            <li><strong>Images:</strong> Read-only templates containing application code, runtime, libraries, and dependencies</li>
+                            <li><strong>Containers:</strong> Running instances of images with isolated filesystem, network, and process space</li>
+                            <li><strong>Volumes:</strong> Persistent data storage that survives container restarts and updates</li>
+                            <li><strong>Networks:</strong> Virtual networks enabling secure container-to-container communication</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Insurance Application Stack</h3>
+                        <ul>
+                            <li><strong>Neo4j Container:</strong> Graph database with data persistence via volumes</li>
+                            <li><strong>FastAPI Container:</strong> Python API service with application logic</li>
+                            <li><strong>Redis Container:</strong> Session storage and caching layer</li>
+                            <li><strong>Nginx Container:</strong> Reverse proxy and static file serving</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Docker Compose for Multi-Container Applications</h2>
+                <div class="algorithm-showcase">
+                    <h3>Orchestrating Insurance Platform Services</h3>
+                    <ul>
+                        <li><strong>Service Definition:</strong> Define all application components (Neo4j, API, cache, proxy) in single configuration file</li>
+                        <li><strong>Environment Variables:</strong> Configure database credentials, API keys, and feature flags per environment</li>
+                        <li><strong>Volume Management:</strong> Persist Neo4j data, application logs, and configuration files across container restarts</li>
+                        <li><strong>Network Configuration:</strong> Automatic service discovery and secure inter-service communication</li>
+                        <li><strong>Health Checks:</strong> Monitor container health and automatically restart failed services</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Docker Best Practices for Production</h2>
+                <div class="business-value">
+                    <h3>Enterprise Container Guidelines</h3>
+                    <ul>
+                        <li><strong>Image Optimization:</strong> Use multi-stage builds to minimize image size and reduce attack surface</li>
+                        <li><strong>Security Scanning:</strong> Regularly scan images for vulnerabilities and update base images</li>
+                        <li><strong>Resource Limits:</strong> Set CPU and memory limits to prevent resource exhaustion</li>
+                        <li><strong>Logging Strategy:</strong> Centralize container logs for monitoring and troubleshooting</li>
+                        <li><strong>Version Tagging:</strong> Use semantic versioning for images to enable rollbacks and tracking</li>
+                    </ul>
+                </div>
+                <div class="fraud-detection">
+                    <h3>Container Security</h3>
+                    <p>Run containers as non-root users, use read-only filesystems where possible, and implement network segmentation to minimize security risks.</p>
+                </div>
+            </section>
+
             <!-- Slide 31: Lab 14 Introduction -->
             <section>
                 <div class="lab-intro">

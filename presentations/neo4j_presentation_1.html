@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neo4j Day 1 - Graph Database Fundamentals & Enterprise Architecture</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/white.min.css">
+    <style>
+        /* Custom styling for professional appearance */
+        .reveal .slides {
+            text-align: left;
+        }
+        
+        .reveal h1, .reveal h2, .reveal h3 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .title-slide {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .session-header {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .lab-intro {
+            background: #e8f5e8;
+            border-left: 5px solid #27ae60;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .lab-duration {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .enterprise-highlight {
+            background: #e3f2fd;
+            border-left: 5px solid #2196f3;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .code-example {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75em;
+            margin: 10px 0;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        .reveal .slides section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .reveal ul, .reveal ol {
+            margin-left: 20px;
+            font-size: 0.9em;
+        }
+
+        .reveal li {
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .two-column {
+            display: flex;
+            gap: 30px;
+        }
+
+        .column {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .highlight-box {
+            background: #fff8e1;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .two-column {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .code-example {
+                font-size: 0.7em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- Title Slide -->
+            <section class="title-slide">
+                <h1>Neo4j Day 1</h1>
+                <h2>Graph Database Fundamentals & Enterprise Architecture</h2>
+            </section>
+
+            <!-- Day 1 Learning Outcomes -->
+            <section>
+                <h2>Day 1 Learning Outcomes</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Technical Mastery</h3>
+                        <ul>
+                            <li>Deploy Neo4j Enterprise in Docker environments with production-grade configuration</li>
+                            <li>Master fundamental Cypher query patterns using MWR methodology</li>
+                            <li>Design enterprise graph data models for complex business scenarios</li>
+                            <li>Implement production-grade database connections and security</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Business Applications</h3>
+                        <ul>
+                            <li>Build comprehensive insurance domain models with real-world complexity</li>
+                            <li>Create customer 360-degree views with relationship mapping</li>
+                            <li>Implement claims processing workflows and financial transactions</li>
+                            <li>Design enterprise data integration strategies for large-scale systems</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Database Evolution Overview -->
+            <section>
+                <h2>Database Evolution - Day 1 Progression</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Lab 1: Foundation</h3>
+                        <p>10 nodes, 15 relationships</p>
+                        <small>Basic insurance entities with enterprise metadata</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Lab 2: Network Expansion</h3>
+                        <p>25 nodes, 40 relationships</p>
+                        <small>Customer networks with family and referral connections</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Lab 3: Claims & Financial</h3>
+                        <p>60 nodes, 85 relationships</p>
+                        <small>Complete claims workflows and financial transactions</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Lab 4: Production Scale</h3>
+                        <p>150 nodes, 200 relationships</p>
+                        <small>Bulk data import with validation and quality control</small>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Day 1 Final Achievement</h2>
+                <div class="stat-box" style="margin-top: 20px;">
+                    <h3>Lab 5: Business Intelligence</h3>
+                    <p>200 nodes, 300 relationships</p>
+                    <small>Enterprise analytics with KPIs, customer 360 views, and regulatory reporting</small>
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Production-Ready Capabilities</h3>
+                    <ul>
+                        <li>Multi-database architecture for enterprise isolation</li>
+                        <li>Comprehensive audit trails and data lineage tracking</li>
+                        <li>Performance optimization with indexing and query tuning</li>
+                        <li>Security hardening and role-based access control foundations</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Morning Session Header -->
+            <section class="session-header">
+                <h1>Morning Session</h1>
+                <h2>Enterprise Architecture & Graph Fundamentals</h2>
+                <p>Building the Foundation</p>
+            </section>
+
+            <!-- Why Graph Databases in Enterprise -->
+            <section>
+                <h2>Modern Business Data Challenges</h2>
+                <div class="enterprise-highlight">
+                    <h3>The Connected Data Revolution</h3>
+                    <ul>
+                        <li><strong>Relationship Explosion:</strong> Customer interactions span multiple channels, devices, and touchpoints creating complex webs of connections</li>
+                        <li><strong>Real-time Expectations:</strong> Businesses need instant fraud detection, personalized recommendations, and risk assessment</li>
+                        <li><strong>Data Volume Growth:</strong> IoT sensors, social networks, and digital transactions generate billions of interconnected data points</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Traditional Database Limitations</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Relational Database Challenges</h3>
+                        <ul>
+                            <li><strong>JOIN Performance:</strong> Complex multi-table joins degrade exponentially with relationship depth</li>
+                            <li><strong>Schema Rigidity:</strong> Adding new relationship types requires schema migrations and downtime</li>
+                            <li><strong>Query Complexity:</strong> 6+ table joins become maintenance nightmares</li>
+                            <li><strong>Relationship Overhead:</strong> Foreign keys and junction tables obscure business logic</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Graph Database Advantages</h3>
+                        <ul>
+                            <li><strong>Constant-time Traversals:</strong> O(1) relationship navigation regardless of database size</li>
+                            <li><strong>Natural Modeling:</strong> Direct representation of business relationships</li>
+                            <li><strong>Schema Flexibility:</strong> Add new node types and relationships without downtime</li>
+                            <li><strong>Intuitive Queries:</strong> ASCII art syntax mirrors business process diagrams</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Enterprise Performance Requirements</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Real-time Fraud Detection</h3>
+                        <p>&lt;50ms response time</p>
+                        <small>Process millions of transactions with instant pattern analysis</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Personalized Recommendations</h3>
+                        <p>&lt;100ms response time</p>
+                        <small>Analyze relationships across millions of products and customers</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Risk Assessment</h3>
+                        <p>Multi-hop analysis</p>
+                        <small>6+ degree relationship analysis for comprehensive risk modeling</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Customer 360 Views</h3>
+                        <p>Complete relationship mapping</p>
+                        <small>Cross-channel, cross-product, cross-time analysis</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Neo4j Enterprise Architecture -->
+            <section>
+                <h2>Neo4j Enterprise Architecture Benefits</h2>
+                <div class="enterprise-highlight">
+                    <h3>Hybrid Architecture Strategy</h3>
+                    <ul>
+                        <li><strong>Specialized Analytics Layer:</strong> Neo4j enhances existing systems without requiring replacement of operational databases</li>
+                        <li><strong>Operational Continuity:</strong> Existing OLTP systems continue handling day-to-day transactions and business operations</li>
+                        <li><strong>Enhanced Capabilities:</strong> Add advanced analytics, recommendations, and relationship analysis without disruption</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Event-Driven Data Synchronization</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Real-time Data Integration</h3>
+                        <ul>
+                            <li><strong>Change Data Capture (CDC):</strong> Automatic detection and streaming of source system changes</li>
+                            <li><strong>Apache Kafka Integration:</strong> Reliable, scalable message streaming platform for enterprise data flows</li>
+                            <li><strong>Event Sourcing Architecture:</strong> Complete audit trail of all data modifications with replay capabilities</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Data Consistency Models</h3>
+                        <ul>
+                            <li><strong>Eventual Consistency:</strong> Acceptable latency for analytics workloads while maintaining data integrity</li>
+                            <li><strong>Conflict Resolution:</strong> Automated handling of concurrent updates and data conflicts</li>
+                            <li><strong>Idempotent Processing:</strong> Safe reprocessing of events for fault tolerance</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Enterprise Security and Compliance</h2>
+                <div class="enterprise-highlight">
+                    <h3>Production-Grade Security Framework</h3>
+                    <ul>
+                        <li><strong>Role-Based Access Control (RBAC):</strong> Fine-grained permissions at node, relationship, and property levels</li>
+                        <li><strong>Data Classification and Protection:</strong> Automated sensitive data identification with encryption at rest and in transit</li>
+                        <li><strong>Comprehensive Audit Logging:</strong> Complete tracking of data access, modifications, and query execution</li>
+                        <li><strong>Regulatory Compliance:</strong> GDPR, HIPAA, SOX compliance with automated data anonymization and retention policies</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Real-World Success Stories -->
+            <section>
+                <h2>Amazon: Recommendation Engine Excellence</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Scale Achievement</h3>
+                        <p>150M+ active users</p>
+                        <small>Global customer base with personalized experiences</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Performance Excellence</h3>
+                        <p>&lt;100ms response time</p>
+                        <small>Real-time recommendation generation at scale</small>
+                    </div>
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Measurable Business Impact</h3>
+                    <ul>
+                        <li><strong>Revenue Generation:</strong> 35% of Amazon's total revenue directly attributed to recommendation engine effectiveness</li>
+                        <li><strong>Customer Engagement:</strong> Personalized product discovery increases average session duration by 40%</li>
+                        <li><strong>Operational Efficiency:</strong> Automated cross-sell and upsell opportunities reduce manual marketing costs</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>LinkedIn: Professional Network Intelligence</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Network Complexity</h3>
+                        <p>900M+ professionals</p>
+                        <small>Global professional relationship mapping</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Relationship Volume</h3>
+                        <p>Billions of connections</p>
+                        <small>Multi-degree professional network analysis</small>
+                    </div>
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Graph-Powered Business Features</h3>
+                    <ul>
+                        <li><strong>"People You May Know":</strong> 2nd and 3rd degree network analysis for connection recommendations with 45% acceptance rate</li>
+                        <li><strong>Skills and Endorsements:</strong> Professional capability mapping with network validation and credibility scoring</li>
+                        <li><strong>Career Path Analysis:</strong> Job recommendations based on network patterns and professional progression modeling</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>JPMorgan Chase: Financial Crime Prevention</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Transaction Scale</h3>
+                        <p>1B+ daily transactions</p>
+                        <small>Global financial operations monitoring</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Detection Speed</h3>
+                        <p>&lt;50ms analysis time</p>
+                        <small>Real-time fraud pattern recognition</small>
+                    </div>
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Advanced Financial Crime Detection</h3>
+                    <ul>
+                        <li><strong>Network Pattern Recognition:</strong> Identify money laundering rings and suspicious transaction networks in real-time</li>
+                        <li><strong>Multi-dimensional Risk Scoring:</strong> Combine transaction patterns, relationship analysis, and behavioral modeling</li>
+                        <li><strong>Regulatory Compliance:</strong> Anti-money laundering (AML) and Know Your Customer (KYC) with automated reporting</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Additional Enterprise Success Stories</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Walmart</h3>
+                        <p>Supply Chain Optimization</p>
+                        <small>Global logistics with 15% cost reduction through relationship analysis</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Airbnb</h3>
+                        <p>Trust & Safety Platform</p>
+                        <small>User verification reducing fraud by 60% through network analysis</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Volvo Cars</h3>
+                        <p>Master Data Management</p>
+                        <small>Product lifecycle optimization with 25% faster time-to-market</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>UBS Investment Bank</h3>
+                        <p>Regulatory Compliance</p>
+                        <small>Know Your Customer (KYC) analysis with 90% automation</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Docker Production Deployment -->
+            <section>
+                <h2>Docker Enterprise Deployment Strategy</h2>
+                <div class="enterprise-highlight">
+                    <h3>Containerization Production Benefits</h3>
+                    <ul>
+                        <li><strong>Enterprise Scalability:</strong> Kubernetes orchestration for automatic scaling based on workload demands</li>
+                        <li><strong>Environment Consistency:</strong> Identical deployment across development, testing, staging, and production environments</li>
+                        <li><strong>Resource Management:</strong> Precise CPU, memory, and storage allocation with monitoring and alerting</li>
+                        <li><strong>Service Integration:</strong> Seamless microservices architecture with API gateway and service mesh integration</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Neo4j Enterprise Features in Docker</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Core Enterprise Capabilities</h3>
+                        <ul>
+                            <li><strong>Multi-database Support:</strong> Tenant isolation for enterprise customers and departments</li>
+                            <li><strong>Advanced Security:</strong> Role-based access control with LDAP/Active Directory integration</li>
+                            <li><strong>High Availability:</strong> Causal clustering with automatic failover and data replication</li>
+                            <li><strong>Enterprise Plugins:</strong> APOC procedures and Graph Data Science library included</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Operational Excellence</h3>
+                        <ul>
+                            <li><strong>Backup and Recovery:</strong> Point-in-time backup with automated retention policies</li>
+                            <li><strong>Performance Monitoring:</strong> Real-time metrics, query profiling, and capacity planning</li>
+                            <li><strong>Query Optimization:</strong> Automatic query plan analysis and index recommendations</li>
+                            <li><strong>Enterprise Support:</strong> 24/7 support with SLA guarantees and dedicated customer success</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Today's Pre-configured Lab Environment</h2>
+                <div class="highlight-box">
+                    <h3>Production-Ready Setup</h3>
+                    <ul>
+                        <li><strong>Neo4j Version:</strong> Enterprise 2025.06.0 with latest security patches and performance optimizations</li>
+                        <li><strong>Container Configuration:</strong> Named "neo4j" with optimized memory settings for analytics workloads</li>
+                        <li><strong>Enterprise Features:</strong> APOC procedures, Graph Data Science library, and Bloom visualization platform</li>
+                        <li><strong>Development Integration:</strong> Neo4j Desktop, Browser, and Bloom with seamless connectivity</li>
+                    </ul>
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Performance Optimization</h3>
+                    <ul>
+                        <li>Memory optimization for insurance domain analytics workloads</li>
+                        <li>Security hardening following enterprise best practices</li>
+                        <li>Comprehensive monitoring and logging configuration for production visibility</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Lab 1 Introduction -->
+            <section>
+            <!-- CREATE Statement Fundamentals -->
+            <section>
+                <h2>Cypher CREATE Statement - Building Your Graph</h2>
+                <div class="highlight-box">
+                    <h3>CREATE: The Foundation of Graph Building</h3>
+                    <p>Before we query data, we need to create it. The CREATE statement is your primary tool for adding nodes and relationships to the graph.</p>
+                </div>
+            </section>
+
+            <section>
+                <h2>Creating Nodes with CREATE</h2>
+                <div class="code-example">
+                    <strong>Basic Node Creation Syntax:</strong><br>
+                    // Create a simple node<br>
+                    CREATE (n)<br>
+                    RETURN n<br><br>
+
+                    // Create a node with a label<br>
+                    CREATE (c:Customer)<br>
+                    RETURN c<br><br>
+
+                    // Create a node with label and properties<br>
+                    CREATE (c:Customer {<br>
+                    &nbsp;&nbsp;customerNumber: 'C001',<br>
+                    &nbsp;&nbsp;name: 'John Smith',<br>
+                    &nbsp;&nbsp;age: 35,<br>
+                    &nbsp;&nbsp;riskTier: 'Low'<br>
+                    })<br>
+                    RETURN c
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Node Creation Best Practices</h3>
+                    <ul>
+                        <li><strong>Always Use Labels:</strong> Labels enable efficient indexing and querying</li>
+                        <li><strong>Include Unique Identifiers:</strong> Use properties like customerNumber, policyNumber for reliable identification</li>
+                        <li><strong>Set All Required Properties:</strong> Create complete nodes from the start to avoid incomplete data</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Creating Relationships with CREATE</h2>
+                <div class="code-example">
+                    <strong>Relationship Creation Patterns:</strong><br>
+                    // Create nodes and relationship in one statement<br>
+                    CREATE (c:Customer {name: 'John Smith'})<br>
+                    CREATE (p:Policy {policyNumber: 'POL123'})<br>
+                    CREATE (c)-[:HOLDS_POLICY {since: date('2024-01-01')}]->(p)<br>
+                    RETURN c, p<br><br>
+
+                    // Create relationship with all components together<br>
+                    CREATE (customer:Customer {name: 'Sarah Jones'})<br>
+                    &nbsp;&nbsp;-[:HOLDS_POLICY {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;startDate: date('2024-01-01'),<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;status: 'Active'<br>
+                    &nbsp;&nbsp;}]-><br>
+                    (policy:Policy {<br>
+                    &nbsp;&nbsp;policyNumber: 'POL456',<br>
+                    &nbsp;&nbsp;premium: 1200<br>
+                    })
+                </div>
+            </section>
+
+            <section>
+                <h2>Insurance Domain CREATE Examples</h2>
+                <div class="code-example">
+                    <strong>Creating a Complete Customer-Agent-Policy Network:</strong><br>
+                    // Create all entities and relationships<br>
+                    CREATE (agent:Agent {<br>
+                    &nbsp;&nbsp;agentId: 'A001',<br>
+                    &nbsp;&nbsp;name: 'Sarah Johnson',<br>
+                    &nbsp;&nbsp;territory: 'North'<br>
+                    })<br>
+                    CREATE (customer:Customer {<br>
+                    &nbsp;&nbsp;customerNumber: 'C001',<br>
+                    &nbsp;&nbsp;name: 'John Smith',<br>
+                    &nbsp;&nbsp;age: 35<br>
+                    })<br>
+                    CREATE (policy:Policy {<br>
+                    &nbsp;&nbsp;policyNumber: 'POL123',<br>
+                    &nbsp;&nbsp;productType: 'Auto',<br>
+                    &nbsp;&nbsp;premium: 1200<br>
+                    })<br>
+                    CREATE (agent)-[:SERVICES {assignedDate: date()}]->(customer)<br>
+                    CREATE (customer)-[:HOLDS_POLICY {since: date()}]->(policy)<br>
+                    RETURN agent, customer, policy
+                </div>
+                <div class="highlight-box">
+                    <p><strong>Lab 1 Focus:</strong> You'll use these CREATE patterns to build the foundational insurance entity network</p>
+                </div>
+            </section>
+
+                <div class="lab-intro">
+                    <h2>🔧 Lab Introduction: Neo4j Enterprise Setup</h2>
+                    <div class="lab-duration">
+                        Duration: 45 minutes
+                    </div>
+                    <p><strong>Objective:</strong> Students will connect to pre-configured Neo4j Enterprise 2025.06.0 in Docker and build foundational insurance entities</p>
+                    <p><strong>What You'll Build:</strong> Enterprise insurance foundation with customers, agents, policies, and products including production-grade metadata</p>
+                    <p><strong>Database Evolution:</strong> Start → 10 nodes, 15 relationships with enterprise compliance patterns</p>
+                </div>
+            </section>
+
+            <!-- Graph Theory Fundamentals -->
+            <section>
+                <h2>Graph Theory Foundation Concepts</h2>
+                <div class="enterprise-highlight">
+                    <h3>Core Graph Components Explained</h3>
+                    <ul>
+                        <li><strong>Nodes (Vertices):</strong> Business entities representing customers, policies, agents, products, claims, and any conceptual object</li>
+                        <li><strong>Relationships (Edges):</strong> Named connections with semantic meaning like HOLDS_POLICY, SERVICES, CLAIMS, or REFERS</li>
+                        <li><strong>Properties:</strong> Key-value attributes providing rich context - names, dates, amounts, statuses, and business metadata</li>
+                        <li><strong>Labels:</strong> Node categorization for efficient querying, indexing, and business logic organization</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Property Graph Model Architecture</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Advanced Node Features</h3>
+                        <ul>
+                            <li><strong>Multiple Labels:</strong> Single customer can be :Customer:Individual:HighValue for flexible categorization</li>
+                            <li><strong>Schema-Free Properties:</strong> Different customers can have different property sets without schema constraints</li>
+                            <li><strong>Dynamic Evolution:</strong> Add new labels and properties without database downtime or migrations</li>
+                            <li><strong>Property Types:</strong> Strings, numbers, booleans, dates, arrays, and spatial data types</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Relationship Sophistication</h3>
+                        <ul>
+                            <li><strong>Typed Relationships:</strong> Semantic meaning through descriptive relationship types</li>
+                            <li><strong>Directional by Design:</strong> Clear source and target nodes with business logic direction</li>
+                            <li><strong>Rich Metadata:</strong> Relationship properties for start dates, end dates, amounts, and statuses</li>
+                            <li><strong>Relationship Uniqueness:</strong> Multiple relationships of different types between same nodes</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Insurance Domain Graph Model Examples</h2>
+                <div class="code-example">
+                    <strong>Complex Node Examples:</strong><br>
+                    (:Customer:Individual:HighValue {customerId: "C001", name: "John Smith", age: 35, <br>
+                    &nbsp;&nbsp;riskTier: "Low", lifetimeValue: 50000, joinDate: "2020-01-15"})<br><br>
+                    (:Policy:Auto {policyNumber: "POL123", premium: 1200, effectiveDate: "2024-01-01", <br>
+                    &nbsp;&nbsp;status: "Active", deductible: 500, coverage: ["Collision", "Comprehensive"]})<br><br>
+                    (:Agent:Employee:Senior {agentId: "A001", name: "Sarah Johnson", territory: "North", <br>
+                    &nbsp;&nbsp;hireDate: "2018-03-01", performance: 4.8, certifications: ["P&C", "Life"]})
+                </div>
+                <div class="code-example">
+                    <strong>Rich Relationship Examples:</strong><br>
+                    (customer)-[:HOLDS_POLICY {startDate: "2024-01-01", status: "Active", <br>
+                    &nbsp;&nbsp;paymentMethod: "Auto", discounts: ["Multi-Policy", "Safe Driver"]}]->(policy)<br><br>
+                    (agent)-[:SERVICES {assignedDate: "2023-12-15", performance: 4.8, <br>
+                    &nbsp;&nbsp;relationship: "Primary", contactFrequency: "Monthly"}]->(customer)
+                </div>
+            </section>
+
+            <!-- Cypher Query Language -->
+            <section>
+                <h2>Cypher Query Language Philosophy</h2>
+                <div class="highlight-box">
+                    <h3>MWR Memory Aid - Your Query Foundation</h3>
+                    <ul>
+                        <li><strong>M</strong>ATCH - Find patterns in the graph (equivalent to FROM in SQL but for relationships)</li>
+                        <li><strong>W</strong>HERE - Filter based on conditions (identical concept to SQL WHERE clause)</li>
+                        <li><strong>R</strong>ETURN - Specify what data to return (similar to SELECT in SQL)</li>
+                    </ul>
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Cypher Design Philosophy</h3>
+                    <ul>
+                        <li><strong>Declarative Language:</strong> Describe what you want to achieve, not how to achieve it</li>
+                        <li><strong>ASCII Art Syntax:</strong> Visual pattern representation that mirrors actual graph structure</li>
+                        <li><strong>SQL-inspired Keywords:</strong> Familiar syntax with graph-specific enhancements for relationship traversal</li>
+                        <li><strong>Business-Friendly:</strong> Readable queries that non-technical stakeholders can understand</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Basic Cypher Pattern Structure</h2>
+                <div class="code-example">
+                    <strong>Foundation Insurance Query:</strong><br>
+                    MATCH (customer:Customer)-[:HOLDS_POLICY]->(policy:Policy)<br>
+                    WHERE customer.age > 30 AND policy.status = 'Active'<br>
+                    RETURN customer.name, policy.number, policy.premium<br>
+                    ORDER BY policy.premium DESC
+                </div>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Query Structure Breakdown</h3>
+                        <ul>
+                            <li><strong>MATCH:</strong> Find customers connected to policies through HOLDS_POLICY relationship</li>
+                            <li><strong>WHERE:</strong> Filter customers over 30 with active policies only</li>
+                            <li><strong>RETURN:</strong> Show customer name, policy number, and premium amount</li>
+                            <li><strong>ORDER BY:</strong> Sort results by premium amount in descending order</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Pattern Elements Explained</h3>
+                        <ul>
+                            <li><strong>(customer:Customer):</strong> Node variable with Customer label</li>
+                            <li><strong>[:HOLDS_POLICY]:</strong> Typed relationship without variable assignment</li>
+                            <li><strong>-></strong> Direction indicator showing relationship flow</li>
+                            <li><strong>(policy:Policy):</strong> Target node with Policy label and variable</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Advanced Cypher Pattern Capabilities</h2>
+                <div class="code-example">
+                    <strong>Multi-hop Insurance Intelligence:</strong><br>
+                    MATCH (customer:Customer)-[:HOLDS_POLICY]->(policy:Policy)-[:BASED_ON]->(product:Product)<br>
+                    WHERE product.category = "Auto Insurance" <br>
+                    AND policy.premium > 1000<br>
+                    AND customer.riskTier = "Low"<br>
+                    RETURN customer.name, policy.premium, product.name, customer.lifetimeValue<br>
+                    ORDER BY customer.lifetimeValue DESC<br>
+                    LIMIT 10
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Enterprise Query Patterns</h3>
+                    <ul>
+                        <li><strong>Path Expressions:</strong> Multi-hop relationship traversal for complex business logic</li>
+                        <li><strong>Complex Filtering:</strong> Multiple WHERE conditions with AND/OR logic for precise data selection</li>
+                        <li><strong>Business Intelligence:</strong> Result ordering, pagination, and aggregation for operational reporting</li>
+                        <li><strong>Performance Optimization:</strong> LIMIT clauses and index-friendly patterns for production workloads</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- ASCII Art Patterns -->
+            <section>
+                <h2>ASCII Art Pattern Syntax Mastery</h2>
+                <div class="enterprise-highlight">
+                    <h3>Visual Graph Pattern Philosophy</h3>
+                    <p>Cypher's ASCII art syntax makes graph patterns intuitive and mirrors business process diagrams</p>
+                </div>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Foundation Elements</h3>
+                        <div class="code-example">
+                            (n)                    // Any node<br>
+                            (n:Label)             // Labeled node<br>
+                            (n:Label {prop: val}) // Node with properties<br>
+                            [r]                   // Any relationship<br>
+                            [r:TYPE]              // Typed relationship<br>
+                            [r:TYPE {prop: val}]  // Relationship with properties
+                        </div>
+                    </div>
+                    <div class="column">
+                        <h3>Advanced Pattern Constructs</h3>
+                        <div class="code-example">
+                            (a)-[:TYPE*2]-(b)        // Exactly 2 hops<br>
+                            (a)-[:TYPE*1..3]-(b)     // 1 to 3 hops<br>
+                            (a)-[:TYPE*]-(b)         // Any number of hops<br>
+                            (a)-[:TYPE1|TYPE2]-(b)   // Multiple relationship types<br>
+                            (a)-[:TYPE]->()<-[:TYPE2]-(b) // Diamond patterns
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Insurance Domain ASCII Art Patterns</h2>
+                <div class="code-example">
+                    <strong>Basic Insurance Entity Patterns:</strong><br>
+                    (c:Customer:Individual)              // Individual customer with multiple labels<br>
+                    (p:Policy:Auto)                      // Auto insurance policy<br>
+                    (a:Agent:Employee)                   // Employee agent<br>
+                    (prod:Product:Insurance)             // Insurance product<br>
+                    (claim:Claim:Auto)                   // Auto insurance claim
+                </div>
+                <div class="code-example">
+                    <strong>Business Relationship Patterns:</strong><br>
+                    (c)-[:HOLDS_POLICY {since: "2024-01-01"}]->(p)           // Customer policy ownership<br>
+                    (a)-[:SERVICES {territory: "North"}]->(c)                // Agent customer service<br>
+                    (p)-[:BASED_ON {version: "2024.1"}]->(prod)             // Policy product basis<br>
+                    (c)-[:REFERS {bonus: 100}]->(other:Customer)            // Customer referral program
+                </div>
+                <div class="code-example">
+                    <strong>Complex Business Process Patterns:</strong><br>
+                    (c)-[:HOLDS_POLICY]->(p)-[:HAS_CLAIM]->(claim:Claim)-[:INVOLVES]->(vehicle:Vehicle)<br>
+                    (agent)-[:SERVICES]->(c)-[:LIVES_IN]->(address:Address)-[:LOCATED_IN]->(city:City)
+                </div>
+            </section>
+
+            <!-- Graph vs Relational -->
+            <section>
+                <h2>Relational Database Approach Limitations</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Traditional SQL Challenges</h3>
+                        <ul>
+                            <li><strong>Multiple Table Dependencies:</strong> Customer, policy, agent, product tables requiring complex foreign key management</li>
+                            <li><strong>JOIN Performance Degradation:</strong> O(n log n) complexity that worsens with data growth and relationship depth</li>
+                            <li><strong>Schema Migration Complexity:</strong> Adding new relationship types requires downtime and careful dependency management</li>
+                            <li><strong>Query Maintenance Overhead:</strong> Multi-table joins become difficult to optimize and debug</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <div class="code-example">
+                            <strong>Complex SQL Example:</strong><br>
+                            SELECT c.name, p.number, prod.name, <br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.name, claim.amount<br>
+                            FROM customers c<br>
+                            JOIN policies p ON c.id = p.customer_id<br>
+                            JOIN products prod ON p.product_id = prod.id<br>
+                            JOIN agents a ON c.agent_id = a.id<br>
+                            JOIN claims claim ON p.id = claim.policy_id<br>
+                            WHERE c.age > 30 AND p.status = 'Active'<br>
+                            AND claim.status = 'Open'
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Graph Database Approach Advantages</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Natural Business Modeling</h3>
+                        <ul>
+                            <li><strong>Intuitive Structure:</strong> Direct representation of business relationships without artificial constructs</li>
+                            <li><strong>Constant-time Performance:</strong> O(1) relationship traversals regardless of total database size</li>
+                            <li><strong>Schema Evolution:</strong> Add new node types and relationships without downtime or complex migrations</li>
+                            <li><strong>Query Readability:</strong> Business stakeholders can understand and validate query logic</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <div class="code-example">
+                            <strong>Equivalent Cypher Query:</strong><br>
+                            MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-[:BASED_ON]->(prod:Product),<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(a:Agent)-[:SERVICES]->(c),<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(p)-[:HAS_CLAIM]->(claim:Claim)<br>
+                            WHERE c.age > 30 AND p.status = 'Active'<br>
+                            &nbsp;&nbsp;AND claim.status = 'Open'<br>
+                            RETURN c.name, p.number, prod.name, <br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.name, claim.amount
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Performance and Scalability Comparison</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Relational JOINs</h3>
+                        <p>O(n log n) complexity</p>
+                        <small>Performance degrades exponentially with data growth and relationship depth</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Graph Traversals</h3>
+                        <p>O(1) complexity</p>
+                        <small>Constant time performance regardless of total database size</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Deep Relationship Queries</h3>
+                        <p>6+ table JOINs problematic</p>
+                        <small>Query plans become unpredictable and maintenance intensive</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Multi-hop Graph Patterns</h3>
+                        <p>Linear traversal time</p>
+                        <small>Efficient performance regardless of relationship path length</small>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Technology Selection Guidelines</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Choose Graph Databases For:</h3>
+                        <ul>
+                            <li><strong>Highly Connected Data:</strong> Social networks, recommendation systems, fraud detection</li>
+                            <li><strong>Real-time Analytics:</strong> Instant pattern recognition and relationship analysis</li>
+                            <li><strong>Complex Relationship Queries:</strong> 3+ degree relationship analysis and network effects</li>
+                            <li><strong>Knowledge Graphs:</strong> Semantic analysis, AI/ML feature extraction</li>
+                            <li><strong>Supply Chain Analysis:</strong> Multi-tier supplier relationships and logistics optimization</li>
+                            <li><strong>Identity and Access Management:</strong> Role-based permissions with inheritance</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Keep Relational Databases For:</h3>
+                        <ul>
+                            <li><strong>ACID Transactional Systems:</strong> Financial ledgers, inventory management, order processing</li>
+                            <li><strong>Structured Reporting:</strong> Financial reports, regulatory compliance, data warehousing</li>
+                            <li><strong>Mature Application Integration:</strong> Existing systems with deep SQL dependencies</li>
+                            <li><strong>Simple Data Models:</strong> Straightforward entity relationships without complex networks</li>
+                            <li><strong>Batch Processing:</strong> ETL operations, data archiving, and historical analysis</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lab 2 Introduction -->
+            <section>
+            <!-- String Operations and Aggregations for Lab 2 -->
+            <section>
+                <h2>Cypher String Operations</h2>
+                <div class="code-example">
+                    <strong>String Concatenation and Manipulation:</strong><br>
+                    // Concatenate strings with +<br>
+                    MATCH (a:Agent)<br>
+                    RETURN a.first_name + " " + a.last_name AS full_name<br><br>
+
+                    // String functions<br>
+                    MATCH (c:Customer)<br>
+                    RETURN toUpper(c.name) AS upper_name,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;toLower(c.email) AS lower_email,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;trim(c.phone) AS clean_phone
+                </div>
+            </section>
+
+            <section>
+                <h2>Essential Aggregation Functions</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Basic Aggregations</h3>
+                        <div class="code-example">
+                            // Count items<br>
+                            MATCH (c:Customer)<br>
+                            RETURN count(c) AS total_customers<br><br>
+
+                            // Count with filtering<br>
+                            MATCH (c:Customer)<br>
+                            WHERE c.age > 30<br>
+                            RETURN count(c) AS customers_over_30<br><br>
+
+                            // Distinct counting<br>
+                            MATCH (c:Customer)<br>
+                            RETURN count(DISTINCT c.risk_tier) AS unique_tiers
+                        </div>
+                    </div>
+                    <div class="column">
+                        <h3>collect() Function</h3>
+                        <div class="code-example">
+                            // Collect into lists<br>
+                            MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)<br>
+                            RETURN c.name AS customer,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;collect(p.policyNumber) AS policies,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count(p) AS policy_count<br><br>
+
+                            // Collect with property access<br>
+                            MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)<br>
+                            WITH c, collect(p.product_type) AS products<br>
+                            RETURN c.name, products,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size(products) AS product_count
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>DISTINCT and Filtering Results</h2>
+                <div class="code-example">
+                    <strong>Using DISTINCT for Unique Values:</strong><br>
+                    // Get unique risk tiers<br>
+                    MATCH (c:Customer)<br>
+                    RETURN DISTINCT c.risk_tier AS tier<br>
+                    ORDER BY tier<br><br>
+
+                    // Distinct count within aggregation<br>
+                    MATCH (a:Agent)-[:SERVICES]->(c:Customer)<br>
+                    RETURN a.name AS agent,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count(DISTINCT c) AS unique_customers,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count(c) AS total_interactions
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Aggregation Best Practices</h3>
+                    <ul>
+                        <li><strong>Use DISTINCT Carefully:</strong> Adds computational overhead, use only when needed</li>
+                        <li><strong>Group Implicitly:</strong> Non-aggregated fields in RETURN become grouping keys</li>
+                        <li><strong>collect() for Lists:</strong> Powerful for gathering related items into arrays</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Sorting and Limiting Results</h2>
+                <div class="code-example">
+                    <strong>ORDER BY and LIMIT for Result Control:</strong><br>
+                    // Sort by single field<br>
+                    MATCH (p:Policy)<br>
+                    RETURN p.policyNumber, p.premium<br>
+                    ORDER BY p.premium DESC<br>
+                    LIMIT 10<br><br>
+
+                    // Sort by multiple fields<br>
+                    MATCH (c:Customer)<br>
+                    RETURN c.risk_tier, c.name, c.lifetime_value<br>
+                    ORDER BY c.risk_tier, c.lifetime_value DESC<br><br>
+
+                    // Sorting with aggregations<br>
+                    MATCH (a:Agent)-[:SERVICES]->(c:Customer)<br>
+                    RETURN a.name, count(c) AS customer_count<br>
+                    ORDER BY customer_count DESC<br>
+                    LIMIT 5
+                </div>
+                <div class="highlight-box">
+                    <p><strong>Lab 2 Application:</strong> You'll use these patterns to analyze customer networks and agent performance</p>
+                </div>
+            </section>
+
+                <div class="lab-intro">
+                    <h2>🔧 Lab Introduction: Cypher Query Fundamentals</h2>
+                    <div class="lab-duration">
+                        Duration: 45 minutes
+                    </div>
+                    <p><strong>Objective:</strong> Students will expand their insurance network using advanced Cypher patterns and the MWR methodology</p>
+                    <p><strong>What You'll Build:</strong> Extended customer networks with family relationships, referrals, and multi-policy scenarios</p>
+                    <p><strong>Database Evolution:</strong> 10 nodes → 25 nodes, 15 relationships → 40 relationships with complex business patterns</p>
+                </div>
+            </section>
+
+            <!-- Neo4j Bloom -->
+            <section>
+                <h2>Neo4j Bloom: Enterprise Graph Visualization</h2>
+                <div class="enterprise-highlight">
+                    <h3>Professional Graph Exploration Platform</h3>
+                    <ul>
+                        <li><strong>Business User Empowerment:</strong> No-code graph analysis enabling non-technical stakeholders to explore data independently</li>
+                        <li><strong>Interactive Discovery:</strong> Drag-and-drop interface with real-time relationship exploration and pattern discovery</li>
+                        <li><strong>Enterprise Integration:</strong> Seamless connectivity with Neo4j Desktop, remote databases, and production instances</li>
+                        <li><strong>Advanced Visualization:</strong> Customizable node styling, relationship visualization, and perspective management</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Bloom Advanced Exploration Capabilities</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Interactive Interface Features</h3>
+                        <ul>
+                            <li><strong>Intuitive Manipulation:</strong> Drag-and-drop nodes and relationships with natural graph navigation</li>
+                            <li><strong>Dynamic Filtering:</strong> Real-time data exploration with property-based filtering and search</li>
+                            <li><strong>Natural Language Search:</strong> Business-friendly queries without requiring Cypher knowledge</li>
+                            <li><strong>Perspective Management:</strong> Save and share different views of the same underlying data</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Visual Customization Options</h3>
+                        <ul>
+                            <li><strong>Property-Based Styling:</strong> Node colors, sizes, and icons dynamically based on property values</li>
+                            <li><strong>Layout Algorithms:</strong> Force-directed, hierarchical, circular, and grid layouts for different use cases</li>
+                            <li><strong>Information Panels:</strong> Detailed property inspection and relationship analysis tools</li>
+                            <li><strong>Export and Sharing:</strong> PNG, PDF export with interactive perspective sharing across teams</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Bloom Business Intelligence and Analytics</h2>
+                <div class="enterprise-highlight">
+                    <h3>Pattern-Based Business Discovery</h3>
+                    <ul>
+                        <li><strong>Relationship Strength Visualization:</strong> Visual indicators showing connection importance and frequency</li>
+                        <li><strong>Automatic Network Clustering:</strong> Machine learning-powered grouping of related entities and communities</li>
+                        <li><strong>Anomaly Detection:</strong> Visual identification of unusual patterns, outliers, and suspicious relationships</li>
+                        <li><strong>Temporal Analysis:</strong> Time-based relationship evolution and trend analysis capabilities</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Bloom Enterprise Deployment</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Licensing and Installation</h3>
+                        <ul>
+                            <li><strong>Enterprise Edition Inclusion:</strong> Automatically included with Neo4j Enterprise subscriptions</li>
+                            <li><strong>Standalone Application:</strong> Dedicated Bloom desktop application with enterprise features</li>
+                            <li><strong>License Configuration:</strong> Enterprise license file enables advanced features and multi-user access</li>
+                            <li><strong>Multi-user Deployment:</strong> Team-based perspective sharing and collaborative analysis</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Integration Workflow</h3>
+                        <ul>
+                            <li><strong>Neo4j Desktop Integration:</strong> One-click connection to local and remote database instances</li>
+                            <li><strong>Production Connectivity:</strong> Secure connections to enterprise cluster deployments</li>
+                            <li><strong>Perspective Sharing:</strong> Save and distribute custom views across business teams</li>
+                            <li><strong>Security Integration:</strong> Role-based access control with enterprise authentication systems</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Insurance Industry Bloom Use Cases</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Claims Fraud Investigation</h3>
+                        <p>Visual pattern detection</p>
+                        <small>Relationship analysis for suspicious claim networks and staged accidents</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Customer 360 Visualization</h3>
+                        <p>Complete relationship mapping</p>
+                        <small>Family connections, agent relationships, and cross-product holdings</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Risk Assessment</h3>
+                        <p>Geographic clustering analysis</p>
+                        <small>Territory-based exposure concentration and natural disaster risk modeling</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Agent Performance</h3>
+                        <p>Network visualization</p>
+                        <small>Territory management, customer relationships, and productivity optimization</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- WITH Clause for Query Chaining -->
+            <section>
+                <h2>WITH Clause - Query Chaining and Data Transformation</h2>
+                <div class="enterprise-highlight">
+                    <h3>The WITH Clause: Cypher's Pipeline Operator</h3>
+                    <ul>
+                        <li><strong>Query Chaining:</strong> Connect multiple query steps together, passing results from one step to the next</li>
+                        <li><strong>Data Transformation:</strong> Filter, aggregate, and transform data between query stages</li>
+                        <li><strong>Variable Scope:</strong> Control which variables are available in subsequent query parts</li>
+                        <li><strong>Performance Optimization:</strong> Reduce intermediate result sets before expensive operations</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>WITH Clause Syntax and Examples</h2>
+                <div class="code-example">
+                    <strong>Basic WITH Usage:</strong><br>
+                    // Find high-value customers and their policies<br>
+                    MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)<br>
+                    WITH c, count(p) AS policy_count, sum(p.premium) AS total_premium<br>
+                    WHERE total_premium > 5000<br>
+                    RETURN c.name, policy_count, total_premium<br>
+                    ORDER BY total_premium DESC<br><br>
+
+                    <strong>Multi-Stage Query with WITH:</strong><br>
+                    // Find customers with multiple claims and calculate risk<br>
+                    MATCH (c:Customer)-[:FILED_CLAIM]->(claim:Claim)<br>
+                    WITH c, count(claim) AS claim_count<br>
+                    WHERE claim_count >= 3<br>
+                    MATCH (c)-[:HOLDS_POLICY]->(p:Policy)<br>
+                    WITH c, claim_count, avg(p.premium) AS avg_premium<br>
+                    RETURN c.name, claim_count, avg_premium, <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CASE <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN claim_count > 5 THEN 'High Risk'<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN claim_count > 3 THEN 'Medium Risk'<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE 'Normal'<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END AS risk_category
+                </div>
+            </section>
+
+            <section>
+                <h2>MERGE - Create or Match Patterns</h2>
+                <div class="enterprise-highlight">
+                    <h3>MERGE vs CREATE: Ensuring Data Uniqueness</h3>
+                    <ul>
+                        <li><strong>CREATE:</strong> Always creates new nodes/relationships (can create duplicates)</li>
+                        <li><strong>MERGE:</strong> Matches existing patterns or creates them if they don't exist (ensures uniqueness)</li>
+                        <li><strong>Idempotent Operations:</strong> Safe to run multiple times without creating duplicates</li>
+                        <li><strong>ON CREATE / ON MATCH:</strong> Conditional property setting based on whether pattern was created or matched</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>MERGE Syntax and Best Practices</h2>
+                <div class="code-example">
+                    <strong>Basic MERGE Pattern:</strong><br>
+                    // Ensure customer exists (create if not)<br>
+                    MERGE (c:Customer {customer_number: 'C001'})<br>
+                    RETURN c<br><br>
+
+                    <strong>MERGE with ON CREATE:</strong><br>
+                    MERGE (c:Customer {customer_number: 'C001'})<br>
+                    ON CREATE SET c.created = datetime(), <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.name = 'John Smith',<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.status = 'Active'<br>
+                    RETURN c<br><br>
+
+                    <strong>MERGE with ON CREATE and ON MATCH:</strong><br>
+                    MERGE (c:Customer {customer_number: 'C001'})<br>
+                    ON CREATE SET c.created = datetime(), <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.first_seen = datetime(),<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.access_count = 1<br>
+                    ON MATCH SET c.last_seen = datetime(),<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.access_count = c.access_count + 1<br>
+                    RETURN c<br><br>
+
+                    <strong>MERGE Relationships:</strong><br>
+                    MATCH (c:Customer {customer_number: 'C001'})<br>
+                    MATCH (p:Policy {policy_number: 'POL001'})<br>
+                    MERGE (c)-[r:HOLDS_POLICY]->(p)<br>
+                    ON CREATE SET r.created = datetime()<br>
+                    RETURN c, r, p
+                </div>
+            </section>
+
+            <section>
+                <h2>WITH and MERGE in Production Data Pipelines</h2>
+                <div class="code-example">
+                    <strong>Insurance Data Import Pattern:</strong><br>
+                    // Import customer and policy data safely<br>
+                    LOAD CSV WITH HEADERS FROM 'file:///customers.csv' AS row<br>
+                    MERGE (c:Customer {customer_number: row.customer_id})<br>
+                    ON CREATE SET c.name = row.name, <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.created = datetime()<br>
+                    ON MATCH SET c.last_updated = datetime()<br>
+                    WITH c, row<br>
+                    MERGE (p:Policy {policy_number: row.policy_id})<br>
+                    ON CREATE SET p.premium = toFloat(row.premium),<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p.type = row.policy_type<br>
+                    MERGE (c)-[r:HOLDS_POLICY]->(p)<br>
+                    ON CREATE SET r.effective_date = date(row.start_date)<br>
+                    RETURN count(c) AS customers_processed
+                </div>
+            </section>
+
+            <!-- Afternoon Session Header -->
+            <section class="session-header">
+                <h1>Afternoon Session</h1>
+                <h2>Claims Processing & Enterprise Integration</h2>
+                <p>Building Production Systems</p>
+            </section>
+
+            <!-- Lab 3 Introduction -->
+            <section>
+                <div class="lab-intro">
+                    <h2>🔧 Lab Introduction: Insurance Claims & Financial Systems</h2>
+                    <div class="lab-duration">
+                        Duration: 45 minutes
+                    </div>
+                    <p><strong>Objective:</strong> Students will add comprehensive claims processing and financial transaction capabilities to their insurance network</p>
+                    <p><strong>What You'll Build:</strong> Complete claims lifecycle, financial transactions, adjuster assignments, and vendor networks</p>
+                    <p><strong>Database Evolution:</strong> 25 nodes → 60 nodes, 40 relationships → 85 relationships with end-to-end business workflows</p>
+                </div>
+            </section>
+
+            <!-- Enterprise Data Integration -->
+            <section>
+                <h2>Enterprise Data Integration Challenges</h2>
+                <div class="enterprise-highlight">
+                    <h3>Production Data Import Requirements</h3>
+                    <ul>
+                        <li><strong>Volume and Scale:</strong> Import millions of customer records, policies, and claims with consistent performance</li>
+                        <li><strong>Data Quality Management:</strong> Comprehensive validation, cleaning, error handling, and data quarantine procedures</li>
+                        <li><strong>Referential Integrity:</strong> Maintain business rule consistency and relationship validity during bulk operations</li>
+                        <li><strong>Performance Optimization:</strong> Memory management, transaction batching, and resource utilization optimization</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>LOAD CSV Enterprise Implementation</h2>
+                <div class="code-example">
+                    <strong>Production-Grade CSV Import Pattern:</strong><br>
+                    :auto USING PERIODIC COMMIT 1000<br>
+                    LOAD CSV WITH HEADERS FROM 'file:///customers.csv' AS row<br>
+                    WITH row WHERE row.customerId IS NOT NULL AND row.email IS NOT NULL<br>
+                    MERGE (c:Customer {customerId: row.customerId})<br>
+                    ON CREATE SET c.created = datetime(), c.source = 'CSV_IMPORT'<br>
+                    SET c.name = row.name,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;c.email = row.email,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;c.age = toInteger(row.age),<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;c.lastUpdated = datetime()
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Enterprise Enhancement Features</h3>
+                    <ul>
+                        <li><strong>PERIODIC COMMIT:</strong> Automatic memory management for datasets exceeding available heap space</li>
+                        <li><strong>Data Transformation:</strong> Type conversion, null handling, and business rule application during import</li>
+                        <li><strong>Conditional Processing:</strong> CASE statements and conditional SET operations for complex business logic</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Data Validation and Quality Assurance</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Pre-Import Validation Strategy</h3>
+                        <ul>
+                            <li><strong>Constraint Implementation:</strong> Create unique constraints and indexes before data import for performance</li>
+                            <li><strong>Data Profiling Analysis:</strong> Statistical analysis of source data including null rates and value distributions</li>
+                            <li><strong>Format Validation:</strong> Email regex, phone number formatting, date parsing, and postal code validation</li>
+                            <li><strong>Referential Integrity Checks:</strong> Foreign key relationship validation and orphaned record detection</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Error Handling and Recovery</h3>
+                        <ul>
+                            <li><strong>Atomic Transaction Management:</strong> All-or-nothing import operations with automatic rollback on errors</li>
+                            <li><strong>Comprehensive Error Logging:</strong> Detailed failure tracking with line numbers, error types, and data values</li>
+                            <li><strong>Partial Recovery Strategies:</strong> Continue processing valid records while isolating problematic data</li>
+                            <li><strong>Data Quarantine Systems:</strong> Temporary storage for records requiring manual review and correction</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Incremental Updates with MERGE Operations</h2>
+                <div class="code-example">
+                    <strong>Advanced MERGE for Business Logic:</strong><br>
+                    LOAD CSV WITH HEADERS FROM 'file:///policy_updates.csv' AS row<br>
+                    MERGE (p:Policy {policyNumber: row.policy_number})<br>
+                    ON CREATE SET p.createdDate = datetime(),<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p.status = 'New',<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p.version = 1<br>
+                    ON MATCH SET p.premium = toFloat(row.premium),<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p.lastUpdated = datetime(),<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p.version = p.version + 1<br>
+                    WITH p, row<br>
+                    MERGE (c:Customer {customerId: row.customer_id})<br>
+                    MERGE (c)-[:HOLDS_POLICY {since: coalesce(row.effective_date, date())}]->(p)
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>Delta Processing Benefits</h3>
+                    <ul>
+                        <li><strong>Efficient Change Management:</strong> Process only modified records reducing processing time and resource usage</li>
+                        <li><strong>Audit Trail Creation:</strong> Automatic versioning and change tracking for regulatory compliance</li>
+                        <li><strong>Reduced System Load:</strong> Minimize impact on production systems during business hours</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Advanced Production Import Patterns</h2>
+                <div class="code-example">
+                    <strong>Enterprise-Grade Import with Business Logic:</strong><br>
+                    :auto USING PERIODIC COMMIT 500<br>
+                    LOAD CSV WITH HEADERS FROM 'file:///claims_data.csv' AS row<br>
+                    WITH row WHERE row.claim_id IS NOT NULL<br>
+                    CALL {<br>
+                    &nbsp;&nbsp;WITH row<br>
+                    &nbsp;&nbsp;MERGE (claim:Claim {claimId: row.claim_id})<br>
+                    &nbsp;&nbsp;SET claim.amount = toFloat(row.amount),<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;claim.status = row.status,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;claim.updated = datetime()<br>
+                    &nbsp;&nbsp;WITH claim, row<br>
+                    &nbsp;&nbsp;MATCH (policy:Policy {policyNumber: row.policy_number})<br>
+                    &nbsp;&nbsp;MERGE (policy)-[:HAS_CLAIM {filedDate: date(row.filed_date)}]->(claim)<br>
+                    } IN TRANSACTIONS OF 100 ROWS<br>
+                    RETURN count(*) as processed_claims
+                </div>
+            </section>
+
+            <section>
+                <h2>Import Monitoring and Performance Optimization</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Real-time Import Monitoring</h3>
+                        <ul>
+                            <li><strong>Progress Tracking:</strong> Real-time import status with ETA calculations and throughput metrics</li>
+                            <li><strong>Resource Monitoring:</strong> Heap memory usage, page cache efficiency, and disk I/O monitoring</li>
+                            <li><strong>Transaction Metrics:</strong> Commit frequency, transaction duration, and deadlock detection</li>
+                            <li><strong>Error Rate Tracking:</strong> Failed record percentages with automatic alerting thresholds</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Performance Tuning Strategies</h3>
+                        <ul>
+                            <li><strong>Batch Size Optimization:</strong> PERIODIC COMMIT tuning based on available memory and data complexity</li>
+                            <li><strong>Index Strategy:</strong> Pre-import index creation vs. post-import optimization trade-offs</li>
+                            <li><strong>Constraint Timing:</strong> Optimal constraint creation workflow for performance and data integrity</li>
+                            <li><strong>Parallel Processing:</strong> Multi-threaded import strategies for large dataset handling</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lab 4 Introduction -->
+            <section>
+                <div class="lab-intro">
+                    <h2>🔧 Lab Introduction: Bulk Data Import & Validation</h2>
+                    <div class="lab-duration">
+                        Duration: 45 minutes
+                    </div>
+                    <p><strong>Objective:</strong> Students will implement large-scale data import with comprehensive validation and quality control systems</p>
+                    <p><strong>What You'll Build:</strong> Production-scale customer import (100+ customers), policy bulk creation, and enterprise validation patterns</p>
+                    <p><strong>Database Evolution:</strong> 60 nodes → 150 nodes, 85 relationships → 200 relationships with comprehensive insurance portfolio</p>
+                </div>
+            </section>
+
+            <!-- Enterprise System Integration -->
+            <section>
+                <h2>Hybrid Enterprise Architecture Strategy</h2>
+                <div class="enterprise-highlight">
+                    <h3>Neo4j as Specialized Analytics Layer</h3>
+                    <ul>
+                        <li><strong>Complementary Enhancement:</strong> Neo4j augments existing transactional systems without requiring costly replacement</li>
+                        <li><strong>Operational Continuity:</strong> Existing OLTP systems continue handling daily transactions, inventory, and financial operations</li>
+                        <li><strong>Specialized Workload Optimization:</strong> Graph database handles relationship analysis, recommendations, and network intelligence</li>
+                        <li><strong>Gradual Integration Path:</strong> Phased implementation reduces risk and allows for iterative business value delivery</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Real-time Data Synchronization Architecture</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Event-Driven Integration Patterns</h3>
+                        <ul>
+                            <li><strong>Change Data Capture (CDC):</strong> Automatic detection and streaming of source system modifications</li>
+                            <li><strong>Apache Kafka Ecosystem:</strong> Reliable, fault-tolerant message streaming with exactly-once processing</li>
+                            <li><strong>Event Sourcing Architecture:</strong> Complete audit trail with event replay capabilities for compliance</li>
+                            <li><strong>Stream Processing:</strong> Real-time data transformation, enrichment, and routing to appropriate systems</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Data Consistency and Reliability</h3>
+                        <ul>
+                            <li><strong>Eventual Consistency Model:</strong> Acceptable latency for analytics workloads while maintaining data integrity</li>
+                            <li><strong>Automated Conflict Resolution:</strong> Business rule-based handling of concurrent updates and data conflicts</li>
+                            <li><strong>Idempotent Processing:</strong> Safe reprocessing of duplicate events ensuring data consistency</li>
+                            <li><strong>Ordering Guarantees:</strong> Maintain event sequence integrity for business process accuracy</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Enterprise Data Governance Framework</h2>
+                <div class="enterprise-highlight">
+                    <h3>Comprehensive Security and Compliance</h3>
+                    <ul>
+                        <li><strong>Role-Based Access Control:</strong> Fine-grained permissions at node, relationship, and property levels with inheritance</li>
+                        <li><strong>Data Classification System:</strong> Automated sensitive data identification with appropriate protection measures</li>
+                        <li><strong>Encryption Standards:</strong> AES-256 encryption at rest and TLS 1.3 for data in transit</li>
+                        <li><strong>Comprehensive Audit Logging:</strong> Complete tracking of data access, modifications, and query execution with immutable logs</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Regulatory Compliance Requirements</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>GDPR Compliance</h3>
+                        <p>Data privacy and protection</p>
+                        <small>Right to be forgotten with automated data anonymization and consent management</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>SOX Compliance</h3>
+                        <p>Financial data integrity</p>
+                        <small>Audit trail requirements with immutable logging and access controls</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>HIPAA Compliance</h3>
+                        <p>Healthcare data protection</p>
+                        <small>Patient data security with encryption and access monitoring</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>ISO 27001</h3>
+                        <p>Information security management</p>
+                        <small>Risk assessment frameworks with continuous security monitoring</small>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Phased Implementation Strategy</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Implementation Phases</h3>
+                        <ul>
+                            <li><strong>Phase 1:</strong> Read-only analytics and reporting with historical data analysis</li>
+                            <li><strong>Phase 2:</strong> Real-time synchronization implementation with CDC integration</li>
+                            <li><strong>Phase 3:</strong> Advanced analytics and machine learning feature integration</li>
+                            <li><strong>Phase 4:</strong> Production workload migration with performance optimization</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Risk Mitigation Strategies</h3>
+                        <ul>
+                            <li><strong>Pilot Programs:</strong> Small-scale validation with limited user groups before full deployment</li>
+                            <li><strong>Comprehensive Rollback Plans:</strong> Quick recovery procedures to previous state if issues arise</li>
+                            <li><strong>Continuous Monitoring:</strong> Real-time system health assessment with automated alerting</li>
+                            <li><strong>User Education:</strong> Comprehensive training programs and ongoing support systems</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Operational Excellence and Monitoring</h2>
+                <div class="enterprise-highlight">
+                    <h3>Production Monitoring and Alerting</h3>
+                    <ul>
+                        <li><strong>Synchronization Health Monitoring:</strong> Real-time lag detection with automated alerting and escalation procedures</li>
+                        <li><strong>Data Quality Metrics:</strong> Automated validation scoring with trend analysis and anomaly detection</li>
+                        <li><strong>Performance Dashboards:</strong> Query performance monitoring, resource utilization, and capacity planning</li>
+                        <li><strong>Business Value Tracking:</strong> Analytics accuracy measurement and business impact quantification</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Lab 5 Introduction -->
+            <section>
+            <!-- Advanced Analytics Concepts for Lab 5 -->
+            <section>
+                <h2>OPTIONAL MATCH - Handling Missing Data</h2>
+                <div class="highlight-box">
+                    <h3>The Power of OPTIONAL MATCH</h3>
+                    <p>OPTIONAL MATCH is like a LEFT JOIN in SQL - it returns null for missing patterns instead of filtering out the entire row</p>
+                </div>
+                <div class="code-example">
+                    <strong>OPTIONAL MATCH Syntax:</strong><br>
+                    // Find customers, include claims if they exist<br>
+                    MATCH (c:Customer)<br>
+                    OPTIONAL MATCH (c)-[:FILED_CLAIM]->(claim:Claim)<br>
+                    RETURN c.name, count(claim) AS claim_count<br><br>
+
+                    // Multiple OPTIONAL MATCH patterns<br>
+                    MATCH (c:Customer)<br>
+                    OPTIONAL MATCH (c)-[:HOLDS_POLICY]->(p:Policy)<br>
+                    OPTIONAL MATCH (c)-[:FILED_CLAIM]->(claim:Claim)<br>
+                    RETURN c.customer_number AS customer,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count(p) AS policy_count,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count(claim) AS claim_count
+                </div>
+            </section>
+
+            <section>
+                <h2>OPTIONAL MATCH vs MATCH</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>MATCH Behavior</h3>
+                        <div class="code-example">
+                            // Only returns customers WITH policies<br>
+                            MATCH (c:Customer)<br>
+                            MATCH (c)-[:HOLDS_POLICY]->(p:Policy)<br>
+                            RETURN c.name, count(p) AS policies<br><br>
+
+                            <strong>Result:</strong> Only customers who have at least one policy
+                        </div>
+                    </div>
+                    <div class="column">
+                        <h3>OPTIONAL MATCH Behavior</h3>
+                        <div class="code-example">
+                            // Returns ALL customers<br>
+                            MATCH (c:Customer)<br>
+                            OPTIONAL MATCH (c)-[:HOLDS_POLICY]->(p:Policy)<br>
+                            RETURN c.name, count(p) AS policies<br><br>
+
+                            <strong>Result:</strong> All customers, showing 0 for those without policies
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>COALESCE - Null Value Handling</h2>
+                <div class="code-example">
+                    <strong>COALESCE for Default Values:</strong><br>
+                    // Provide default value for null amounts<br>
+                    MATCH (c:Customer)<br>
+                    OPTIONAL MATCH (c)-[:FILED_CLAIM]->(claim:Claim)<br>
+                    WITH c, sum(claim.claim_amount) AS total_claims<br>
+                    RETURN c.customer_number,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COALESCE(total_claims, 0.0) AS total_claim_amount<br><br>
+
+                    // Multiple fallback values<br>
+                    MATCH (c:Customer)<br>
+                    RETURN c.name,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COALESCE(c.email, c.phone, 'No contact') AS contact
+                </div>
+                <div class="enterprise-highlight">
+                    <h3>COALESCE Best Practices</h3>
+                    <ul>
+                        <li><strong>Prevent Null Errors:</strong> Use COALESCE in calculations to avoid null arithmetic</li>
+                        <li><strong>Provide Defaults:</strong> Set meaningful default values for missing data</li>
+                        <li><strong>Chain Fallbacks:</strong> List multiple properties in order of preference</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>CASE Expressions - Conditional Logic</h2>
+                <div class="code-example">
+                    <strong>CASE Syntax for Segmentation:</strong><br>
+                    // Segment customers by lifetime value<br>
+                    MATCH (cp:CustomerProfile)<br>
+                    RETURN cp.customer_number,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cp.lifetime_value,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CASE<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN cp.lifetime_value > 15000 THEN "Premium"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN cp.lifetime_value > 10000 THEN "High-Value"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN cp.lifetime_value > 5000 THEN "Standard"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE "Basic"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END AS value_segment<br><br>
+
+                    // CASE with boolean conditions<br>
+                    MATCH (c:Customer)<br>
+                    RETURN c.name,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CASE<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN c.age < 25 THEN "Young Adult"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN c.age < 45 THEN "Middle Age"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN c.age < 65 THEN "Pre-Retirement"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE "Senior"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END AS age_group
+                </div>
+            </section>
+
+            <section>
+                <h2>Duration and Date Calculations</h2>
+                <div class="code-example">
+                    <strong>duration.between() for Time Calculations:</strong><br>
+                    // Calculate customer age<br>
+                    MATCH (c:Customer)<br>
+                    WHERE c.date_of_birth IS NOT NULL<br>
+                    WITH c,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;duration.between(c.date_of_birth, date()).years AS age<br>
+                    RETURN c.customer_number, c.name, age<br>
+                    ORDER BY age DESC<br><br>
+
+                    // Calculate policy duration<br>
+                    MATCH (p:Policy)<br>
+                    WHERE p.effective_date IS NOT NULL<br>
+                    WITH p,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;duration.between(p.effective_date, date()) AS policy_duration<br>
+                    RETURN p.policy_number,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;policy_duration.years AS years,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;policy_duration.months AS months,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;policy_duration.days AS days
+                </div>
+            </section>
+
+            <section>
+                <h2>Comprehensive Aggregation Functions</h2>
+                <div class="code-example">
+                    <strong>All Essential Aggregations:</strong><br>
+                    // Statistical aggregations on policies<br>
+                    MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)<br>
+                    RETURN count(c) AS total_customers,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count(p) AS total_policies,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sum(p.annual_premium) AS total_premium,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;avg(p.annual_premium) AS avg_premium,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;min(p.annual_premium) AS min_premium,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;max(p.annual_premium) AS max_premium,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stDev(p.annual_premium) AS premium_std_dev<br><br>
+
+                    // Aggregations with grouping<br>
+                    MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)<br>
+                    RETURN c.risk_tier,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count(p) AS policy_count,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;avg(p.annual_premium) AS avg_premium,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sum(p.annual_premium) AS total_premium<br>
+                    ORDER BY total_premium DESC
+                </div>
+            </section>
+
+            <section>
+                <h2>Advanced Aggregation Patterns</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Nested Aggregations with WITH</h3>
+                        <div class="code-example">
+                            // Calculate and then aggregate<br>
+                            MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)<br>
+                            WITH c, count(p) AS policy_count<br>
+                            RETURN avg(policy_count) AS avg_policies,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;max(policy_count) AS max_policies
+                        </div>
+                    </div>
+                    <div class="column">
+                        <h3>Conditional Aggregations</h3>
+                        <div class="code-example">
+                            // Count with conditions<br>
+                            MATCH (c:Customer)<br>
+                            OPTIONAL MATCH (c)-[:FILED_CLAIM]->(claim:Claim)<br>
+                            RETURN c.name,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count(claim) AS claim_count,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sum(CASE WHEN claim.status = 'Approved'<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;THEN claim.amount ELSE 0 END) AS approved_amount
+                        </div>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <p><strong>Lab 5 Application:</strong> You'll use these advanced patterns to create customer 360 views and business intelligence dashboards</p>
+                </div>
+            </section>
+
+                <div class="lab-intro">
+                    <h2>🔧 Lab Introduction: Advanced Analytics Foundation</h2>
+                    <div class="lab-duration">
+                        Duration: 45 minutes
+                    </div>
+                    <p><strong>Objective:</strong> Students will implement sophisticated business intelligence, KPI tracking, and regulatory reporting capabilities</p>
+                    <p><strong>What You'll Build:</strong> Customer 360 views, premium analytics, risk assessment, agent performance tracking, and compliance dashboards</p>
+                    <p><strong>Database Evolution:</strong> 150 nodes → 200 nodes, 200 relationships → 300 relationships with comprehensive BI capabilities</p>
+                </div>
+            </section>
+
+            <!-- Day 1 Summary and Achievement -->
+            <section>
+                <h2>Day 1 Technical Accomplishments</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Enterprise Environment</h3>
+                        <p>Neo4j Enterprise 2025.06.0</p>
+                        <small>Production-grade Docker deployment with security hardening</small>
+                    </div>
+                    <div class="stat-box">
+                    <div class="stat-box">
+                        <h3>Graph Modeling Mastery</h3>
+                        <p>5 Progressive Labs</p>
+                        <small>Insurance domain model from foundation to enterprise analytics</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Cypher Proficiency</h3>
+                        <p>Complete Query Language</p>
+                        <small>CREATE, MATCH, MERGE, aggregations, and advanced patterns</small>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Production Skills</h3>
+                        <p>Enterprise Integration</p>
+                        <small>Bulk import, validation, and data quality management</small>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Day 1 Business Value Delivered</h2>
+                <div class="enterprise-highlight">
+                    <h3>Capabilities Built Today</h3>
+                    <ul>
+                        <li><strong>Foundation:</strong> Created comprehensive insurance entity network with customers, agents, policies, and products</li>
+                        <li><strong>Relationships:</strong> Modeled complex business relationships including family networks and referral patterns</li>
+                        <li><strong>Claims Processing:</strong> Implemented end-to-end claims lifecycle with financial transactions</li>
+                        <li><strong>Scale Operations:</strong> Demonstrated production-grade bulk import with 150+ nodes and quality validation</li>
+                        <li><strong>Business Intelligence:</strong> Built customer 360 views, KPI tracking, and regulatory reporting foundation</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Cypher Skills Mastered - Day 1</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Core Operations</h3>
+                        <ul>
+                            <li>CREATE - Node and relationship creation</li>
+                            <li>MATCH - Pattern matching and graph traversal</li>
+                            <li>WHERE - Filtering and conditions</li>
+                            <li>RETURN - Result projection and formatting</li>
+                            <li>MERGE - Upsert operations</li>
+                            <li>SET - Property updates</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Advanced Patterns</h3>
+                        <ul>
+                            <li>OPTIONAL MATCH - Handling missing data</li>
+                            <li>WITH - Query chaining and aggregation</li>
+                            <li>CASE - Conditional logic</li>
+                            <li>COALESCE - Null handling</li>
+                            <li>collect(), count(), sum(), avg() - Aggregations</li>
+                            <li>duration.between() - Date calculations</li>
+                            <li>ORDER BY, LIMIT, DISTINCT - Result control</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Day 2 Preview - Advanced Analytics & Python Integration</h2>
+                <div class="highlight-box">
+                    <h3>Tomorrow's Journey</h3>
+                    <ul>
+                        <li><strong>Customer Intelligence:</strong> LTV models, behavioral segmentation, and journey prediction</li>
+                        <li><strong>Graph Algorithms:</strong> Community detection, PageRank, and network analysis</li>
+                        <li><strong>Python Integration:</strong> neo4j-driver, data science workflows, and automation</li>
+                        <li><strong>Advanced Patterns:</strong> Shortest path, recommendation engines, and fraud detection</li>
+                    </ul>
+                </div>
+            </section>
+
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            controls: true,
+            progress: true,
+            center: false,
+            transition: 'slide',
+            width: 1200,
+            height: 800,
+            margin: 0.1,
+            minScale: 0.2,
+            maxScale: 2.0
+        });
+    </script>
+</body>
+</html>

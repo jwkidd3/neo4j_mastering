@@ -381,6 +381,75 @@
                 </div>
             </section>
 
+            <!-- Advanced Aggregation Functions for Lab 6 -->
+            <section>
+                <h2>Advanced Aggregation Functions</h2>
+                <div class="enterprise-highlight">
+                    <h3>Essential Analytics Functions</h3>
+                    <p>Before Lab 6, you need to master these aggregation functions for customer analytics</p>
+                </div>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>sum() - Total Calculations</h4>
+                        <pre><code>// Calculate total commission earned
+MATCH (a:Agent)-[:EARNED_COMMISSION]->(c:Commission)
+RETURN a.agent_id,
+       sum(c.commission_amount) AS total_earned
+
+// Total premium by risk tier
+MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)
+RETURN c.risk_tier,
+       sum(p.annual_premium) AS total_premium
+ORDER BY total_premium DESC</code></pre>
+                    </div>
+                    <div class="column">
+                        <h4>avg() - Average Calculations</h4>
+                        <pre><code>// Average commission per agent
+MATCH (a:Agent)-[:EARNED_COMMISSION]->(c:Commission)
+RETURN a.agent_id,
+       avg(c.commission_amount) AS avg_commission,
+       count(c) AS commission_count
+
+// Average policy premium by segment
+MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)
+RETURN c.customer_segment,
+       avg(p.annual_premium) AS avg_premium</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Commission Analytics Patterns</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Commission Aggregation</h4>
+                        <pre><code>// Complete commission analysis
+MATCH (a:Agent)-[:EARNED_COMMISSION]->(c:Commission)
+RETURN a.agent_id AS agent,
+       count(c) AS total_commissions,
+       sum(c.commission_amount) AS total_earned,
+       avg(c.commission_amount) AS avg_commission,
+       min(c.commission_amount) AS min_commission,
+       max(c.commission_amount) AS max_commission
+ORDER BY total_earned DESC</code></pre>
+                    </div>
+                    <div class="column">
+                        <h4>round() for Clean Output</h4>
+                        <pre><code>// Round financial values
+MATCH (a:Agent)-[:EARNED_COMMISSION]->(c:Commission)
+WITH a,
+     sum(c.commission_amount) AS total,
+     avg(c.commission_amount) AS average
+RETURN a.agent_id,
+       round(total * 100) / 100 AS total_rounded,
+       round(average * 100) / 100 AS avg_rounded</code></pre>
+                    </div>
+                </div>
+                <div class="enterprise-highlight">
+                    <p><strong>Lab 6 Application:</strong> You'll use these patterns to calculate lifetime value, behavioral metrics, and commission analytics</p>
+                </div>
+            </section>
+
             <!-- Lab 6 Introduction -->
             <section>
                 <div class="lab-intro">
@@ -466,6 +535,88 @@
                 </div>
             </section>
 
+            <!-- Graph Path Functions for Lab 7 -->
+            <section>
+                <h2>Graph Path Functions - shortestPath()</h2>
+                <div class="enterprise-highlight">
+                    <h3>Finding Shortest Paths in Neo4j</h3>
+                    <p>The shortestPath() function finds the shortest path between two nodes</p>
+                </div>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Basic shortestPath Syntax</h4>
+                        <pre><code>// Find shortest path between two customers
+MATCH (c1:Customer {customer_number: 'C001'}),
+      (c2:Customer {customer_number: 'C050'})
+MATCH path = shortestPath(
+  (c1)-[*..5]-(c2)
+)
+RETURN path, length(path) AS hops
+
+// Shortest path with relationship type
+MATCH (c1:Customer), (c2:Customer)
+WHERE c1.customer_number = 'C001'
+  AND c2.customer_number = 'C100'
+MATCH path = shortestPath(
+  (c1)-[:REFERS*]-(c2)
+)
+RETURN path</code></pre>
+                    </div>
+                    <div class="column">
+                        <h4>Path Length and Analysis</h4>
+                        <pre><code>// Analyze connection distances
+MATCH (c1:Customer), (c2:Customer)
+WHERE c1 <> c2
+MATCH path = shortestPath((c1)-[*..5]-(c2))
+WITH length(path) AS distance,
+     count(*) AS pair_count
+RETURN distance, pair_count
+ORDER BY distance
+
+// Find all paths of specific length
+MATCH (c1:Customer)-[*3]-(c2:Customer)
+WHERE c1 <> c2
+RETURN count(DISTINCT [c1, c2]) AS paths</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Variable-Length Path Patterns</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Variable-Length Syntax</h4>
+                        <pre><code>// Exactly 3 hops
+MATCH (c1)-[*3]-(c2)
+
+// 1 to 3 hops (min..max)
+MATCH (c1)-[*1..3]-(c2)
+
+// Up to 5 hops
+MATCH (c1)-[*..5]-(c2)
+
+// At least 2 hops
+MATCH (c1)-[*2..]-(c2)</code></pre>
+                    </div>
+                    <div class="column">
+                        <h4>Network Analysis Patterns</h4>
+                        <pre><code>// Find referral networks
+MATCH (c:Customer)-[:REFERS*1..3]->(referred:Customer)
+RETURN c.customer_number AS referrer,
+       count(DISTINCT referred) AS network_size
+
+// Degree centrality calculation
+MATCH (c:Customer)-[r]-()
+WITH c, count(r) AS degree
+RETURN avg(degree) AS avg_centrality,
+       max(degree) AS max_centrality</code></pre>
+                    </div>
+                </div>
+                <div class="enterprise-highlight">
+                    <p><strong>Lab 7 Application:</strong> You'll use these patterns for network analysis, centrality calculations, and community detection</p>
+                </div>
+            </section>
+
             <!-- Lab 7 Introduction -->
             <section>
                 <div class="lab-intro">
@@ -532,6 +683,78 @@
                         <li><strong>Capacity Planning:</strong> Growth trend analysis and resource scaling recommendations</li>
                         <li><strong>Health Dashboards:</strong> Real-time system status and business metrics visualization</li>
                     </ul>
+                </div>
+            </section>
+
+            <!-- Database Schema Commands for Lab 8 -->
+            <section>
+                <h2>SHOW Commands - Database Inspection</h2>
+                <div class="enterprise-highlight">
+                    <h3>Schema Management Commands</h3>
+                    <p>Essential commands for inspecting and managing database schema</p>
+                </div>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>SHOW INDEXES</h4>
+                        <pre><code>// List all indexes in database
+SHOW INDEXES
+
+// View index details
+SHOW INDEXES
+YIELD name, type, entityType, labelsOrTypes, properties
+
+// Check specific index
+SHOW INDEXES
+WHERE name = 'customer_number_index'</code></pre>
+                    </div>
+                    <div class="column">
+                        <h4>SHOW CONSTRAINTS</h4>
+                        <pre><code>// List all constraints
+SHOW CONSTRAINTS
+
+// View constraint details
+SHOW CONSTRAINTS
+YIELD name, type, entityType, labelsOrTypes, properties
+
+// Filter constraints by type
+SHOW CONSTRAINTS
+WHERE type = 'UNIQUENESS'</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Performance Analysis Commands</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>EXPLAIN - Query Planning</h4>
+                        <pre><code>// View query execution plan (no execution)
+EXPLAIN
+MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)
+WHERE c.customer_number = 'C001'
+RETURN c, p
+
+// Analyze without running
+EXPLAIN
+MATCH (c:Customer)
+WHERE c.age > 30
+RETURN count(c)</code></pre>
+                    </div>
+                    <div class="column">
+                        <h4>PROFILE - Actual Performance</h4>
+                        <pre><code>// Execute and show metrics
+PROFILE
+MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)
+RETURN count(*)
+
+// Analyze actual execution
+PROFILE
+MATCH (c:Customer {customer_number: 'C001'})
+RETURN c</code></pre>
+                    </div>
+                </div>
+                <div class="enterprise-highlight">
+                    <p><strong>Lab 8 Application:</strong> You'll use SHOW, EXPLAIN, and PROFILE to optimize query performance and verify index usage</p>
                 </div>
             </section>
 
@@ -698,6 +921,87 @@
                 </div>
             </section>
 
+            <!-- Temporal Functions for Lab 10 -->
+            <section>
+                <h2>Date and Duration Functions</h2>
+                <div class="enterprise-highlight">
+                    <h3>Temporal Data Management</h3>
+                    <p>Essential functions for compliance reporting and audit trails</p>
+                </div>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>date() Function</h4>
+                        <pre><code>// Current date
+RETURN date() AS today
+
+// Create specific date
+RETURN date('2024-01-15') AS specific_date
+
+// Date from components
+RETURN date({year: 2024, month: 1, day: 15}) AS built_date
+
+// Date arithmetic
+RETURN date() - duration({days: 30}) AS thirty_days_ago</code></pre>
+                    </div>
+                    <div class="column">
+                        <h4>duration() Function</h4>
+                        <pre><code>// Create durations
+RETURN duration({days: 365}) AS one_year
+RETURN duration({months: 6}) AS six_months
+RETURN duration({years: 1, months: 6}) AS complex
+
+// Duration between dates
+MATCH (p:Policy)
+RETURN p.policy_number,
+       duration.between(
+         p.effective_date,
+         date()
+       ).days AS days_active</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Compliance Temporal Queries</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Time-Based Filtering</h4>
+                        <pre><code>// Policies effective in last year
+MATCH (p:Policy)
+WHERE p.effective_date >= date() - duration({days: 365})
+RETURN count(p) AS recent_policies
+
+// Audit trail time windows
+MATCH (n)
+WHERE n.created_at >= date() - duration({months: 3})
+  AND n.created_at <= date()
+RETURN count(n) AS recent_changes</code></pre>
+                    </div>
+                    <div class="column">
+                        <h4>Version Tracking with Dates</h4>
+                        <pre><code>// Track entity versions by date
+MATCH (n)
+WHERE n.version IS NOT NULL
+  AND n.updated_at IS NOT NULL
+WITH n.entity_type AS type,
+     n.version AS version,
+     n.updated_at AS updated
+RETURN type, version, updated
+ORDER BY updated DESC
+
+// Audit compliance reporting
+MATCH (n)
+WHERE n.created_at IS NOT NULL
+RETURN n.created_by AS source,
+       date(n.created_at) AS date,
+       count(n) AS entities_created</code></pre>
+                    </div>
+                </div>
+                <div class="enterprise-highlight">
+                    <p><strong>Lab 10 Application:</strong> You'll use date() and duration() for compliance reporting, audit trails, and regulatory analysis</p>
+                </div>
+            </section>
+
             <!-- Lab 10 Introduction -->
             <section>
                 <div class="lab-intro">
@@ -779,6 +1083,104 @@
                         <li><strong>Model Performance Monitoring:</strong> Continuous validation of prediction accuracy and model drift detection</li>
                         <li><strong>Feedback Loop Integration:</strong> Incorporating business outcomes back into model training for continuous improvement</li>
                     </ul>
+                </div>
+            </section>
+
+            <!-- ML Concepts for Lab 11 -->
+            <section>
+                <h2>Machine Learning Feature Engineering</h2>
+                <div class="enterprise-highlight">
+                    <h3>Preparing Data for Predictive Models</h3>
+                    <p>Feature engineering transforms raw graph data into ML-ready features</p>
+                </div>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Feature Extraction Patterns</h4>
+                        <pre><code>// Extract customer features for ML
+MATCH (c:Customer)
+OPTIONAL MATCH (c)-[:HOLDS_POLICY]->(p:Policy)
+OPTIONAL MATCH (c)-[:FILED_CLAIM]->(claim:Claim)
+WITH c,
+     count(DISTINCT p) AS policy_count,
+     sum(p.annual_premium) AS total_premium,
+     count(DISTINCT claim) AS claim_count,
+     sum(claim.claim_amount) AS total_claims,
+     duration.between(c.join_date, date()).years AS tenure_years
+RETURN c.customer_number,
+       policy_count,
+       total_premium,
+       claim_count,
+       total_claims,
+       tenure_years,
+       c.credit_score</code></pre>
+                    </div>
+                    <div class="column">
+                        <h4>Behavioral Features</h4>
+                        <pre><code>// Network-based features
+MATCH (c:Customer)
+OPTIONAL MATCH (c)-[:REFERS]->(referred:Customer)
+OPTIONAL MATCH (c)<-[:REFERS]-(referrer:Customer)
+OPTIONAL MATCH (c)-[r]-()
+WITH c,
+     count(DISTINCT referred) AS referral_count,
+     count(DISTINCT referrer) AS referred_by_count,
+     count(r) AS total_connections
+RETURN c.customer_number,
+       referral_count,
+       referred_by_count,
+       total_connections AS network_degree</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Model Confidence and Prediction Scoring</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Confidence Metrics</h4>
+                        <pre><code>// Model confidence scoring
+MATCH (c:Customer)-[:HAS_PREDICTION]->(pm:PredictiveModel)
+RETURN c.customer_number,
+       pm.churn_probability,
+       pm.model_confidence,
+       CASE
+         WHEN pm.model_confidence > 0.8 THEN 'High Confidence'
+         WHEN pm.model_confidence > 0.6 THEN 'Medium Confidence'
+         ELSE 'Low Confidence'
+       END AS confidence_tier
+
+// Filter by confidence threshold
+MATCH (c:Customer)-[:HAS_PREDICTION]->(pm:PredictiveModel)
+WHERE pm.model_confidence > 0.7
+  AND pm.churn_probability > 0.5
+RETURN c.customer_number,
+       pm.churn_probability,
+       pm.retention_actions</code></pre>
+                    </div>
+                    <div class="column">
+                        <h4>Prediction Quality Assessment</h4>
+                        <pre><code>// Assess prediction quality
+MATCH (pm:PredictiveModel)
+WITH avg(pm.model_confidence) AS avg_confidence,
+     count(pm) AS total_predictions,
+     sum(CASE WHEN pm.model_confidence > 0.7
+         THEN 1 ELSE 0 END) AS high_confidence_count
+RETURN avg_confidence,
+       total_predictions,
+       high_confidence_count,
+       round(high_confidence_count * 100.0
+             / total_predictions) AS high_confidence_pct
+
+// Model performance by segment
+MATCH (c:Customer)-[:HAS_PREDICTION]->(pm:PredictiveModel)
+RETURN c.customer_segment,
+       avg(pm.model_confidence) AS avg_confidence,
+       count(pm) AS prediction_count
+ORDER BY avg_confidence DESC</code></pre>
+                    </div>
+                </div>
+                <div class="enterprise-highlight">
+                    <p><strong>Lab 11 Application:</strong> You'll engineer features from graph data and evaluate model confidence for production ML systems</p>
                 </div>
             </section>
 
