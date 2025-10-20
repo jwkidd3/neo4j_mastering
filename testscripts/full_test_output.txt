@@ -1,0 +1,589 @@
+================================================================================
+NEO4J MASTERING COURSE - COMPREHENSIVE TEST SUITE
+================================================================================
+Start Time: 2025-10-20 10:38:12
+================================================================================
+
+================================================================================
+Running Lab 01 Tests (1/17): test_lab_01_setup.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 16 items
+
+test_lab_01_setup.py::TestLab01::test_database_connection PASSED         [  6%]
+test_lab_01_setup.py::TestLab01::test_node_count PASSED                  [ 12%]
+test_lab_01_setup.py::TestLab01::test_relationship_count PASSED          [ 18%]
+test_lab_01_setup.py::TestLab01::test_customer_nodes_exist PASSED        [ 25%]
+test_lab_01_setup.py::TestLab01::test_specific_customer_sarah PASSED     [ 31%]
+test_lab_01_setup.py::TestLab01::test_specific_customer_michael PASSED   [ 37%]
+test_lab_01_setup.py::TestLab01::test_specific_customer_emma PASSED      [ 43%]
+test_lab_01_setup.py::TestLab01::test_policy_nodes_exist PASSED          [ 50%]
+test_lab_01_setup.py::TestLab01::test_agent_nodes_exist PASSED           [ 56%]
+test_lab_01_setup.py::TestLab01::test_product_nodes_exist PASSED         [ 62%]
+test_lab_01_setup.py::TestLab01::test_holds_policy_relationship PASSED   [ 68%]
+test_lab_01_setup.py::TestLab01::test_services_relationship PASSED       [ 75%]
+test_lab_01_setup.py::TestLab01::test_based_on_relationship PASSED       [ 81%]
+test_lab_01_setup.py::TestLab01::test_customer_properties PASSED         [ 87%]
+test_lab_01_setup.py::TestLab01::test_policy_properties PASSED           [ 93%]
+test_lab_01_setup.py::TestLab01::test_lab1_summary PASSED                [100%]
+
+============================== 16 passed in 0.06s ==============================
+
+✓ Lab 01: PASSED
+
+================================================================================
+Running Lab 02 Tests (2/17): test_lab_02_cypher_fundamentals.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 30 items
+
+test_lab_02_cypher_fundamentals.py::TestLab02::test_node_count_increase PASSED [  3%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_relationship_count_increase PASSED [  6%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_branch_nodes_added PASSED [ 10%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_department_nodes_added PASSED [ 13%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_austin_branch_exists PASSED [ 16%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_dallas_branch_exists PASSED [ 20%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_houston_branch_exists PASSED [ 23%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_sales_department_exists PASSED [ 26%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_claims_department_exists PASSED [ 30%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_underwriting_department_exists PASSED [ 33%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_works_at_relationship PASSED [ 36%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_member_of_relationship PASSED [ 40%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_mwr_pattern_basic_match PASSED [ 43%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_mwr_with_relationships PASSED [ 46%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_branch_properties PASSED [ 50%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_department_properties PASSED [ 53%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_agent_branch_connection PASSED [ 56%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_string_concatenation PASSED [ 60%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_where_multiple_conditions PASSED [ 63%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_relationship_property_access PASSED [ 66%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_order_by_sorting PASSED [ 70%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_array_property_handling PASSED [ 73%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_date_comparison PASSED [ 76%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_pattern_matching_multiple_hops PASSED [ 80%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_count_aggregation PASSED [ 83%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_return_with_alias PASSED [ 86%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_node_property_filter_in_match PASSED [ 90%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_limit_results PASSED [ 93%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_operation_distinct_results PASSED [ 96%]
+test_lab_02_cypher_fundamentals.py::TestLab02::test_lab2_summary PASSED  [100%]
+
+============================== 30 passed in 0.08s ==============================
+
+✓ Lab 02: PASSED
+
+================================================================================
+Running Lab 03 Tests (3/17): test_lab_03_claims_financial.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 33 items
+
+test_lab_03_claims_financial.py::TestLab03::test_node_count_increase PASSED [  3%]
+test_lab_03_claims_financial.py::TestLab03::test_relationship_count_increase PASSED [  6%]
+test_lab_03_claims_financial.py::TestLab03::test_vehicle_assets_added PASSED [  9%]
+test_lab_03_claims_financial.py::TestLab03::test_property_assets_added PASSED [ 12%]
+test_lab_03_claims_financial.py::TestLab03::test_claim_nodes_added PASSED [ 15%]
+test_lab_03_claims_financial.py::TestLab03::test_repair_shop_nodes_added PASSED [ 18%]
+test_lab_03_claims_financial.py::TestLab03::test_payment_nodes_added PASSED [ 21%]
+test_lab_03_claims_financial.py::TestLab03::test_invoice_nodes_added PASSED [ 24%]
+test_lab_03_claims_financial.py::TestLab03::test_covers_relationship PASSED [ 27%]
+test_lab_03_claims_financial.py::TestLab03::test_filed_claim_relationship PASSED [ 30%]
+test_lab_03_claims_financial.py::TestLab03::test_involves_asset_relationship PASSED [ 33%]
+test_lab_03_claims_financial.py::TestLab03::test_assigned_to_relationship PASSED [ 36%]
+test_lab_03_claims_financial.py::TestLab03::test_made_payment_relationship PASSED [ 39%]
+test_lab_03_claims_financial.py::TestLab03::test_applied_to_relationship PASSED [ 42%]
+test_lab_03_claims_financial.py::TestLab03::test_specific_claim_exists PASSED [ 45%]
+test_lab_03_claims_financial.py::TestLab03::test_claim_properties PASSED [ 48%]
+test_lab_03_claims_financial.py::TestLab03::test_vehicle_properties PASSED [ 51%]
+test_lab_03_claims_financial.py::TestLab03::test_claims_workflow PASSED  [ 54%]
+test_lab_03_claims_financial.py::TestLab03::test_financial_workflow PASSED [ 57%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_claims_status_aggregation PASSED [ 60%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_multi_hop_claims_workflow PASSED [ 63%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_financial_payment_aggregation PASSED [ 66%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_vendor_performance_analysis PASSED [ 69%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_relationship_property_filtering PASSED [ 72%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_date_based_filtering PASSED [ 75%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_asset_coverage_details PASSED [ 78%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_optional_match_settlements PASSED [ 81%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_payment_application_tracking PASSED [ 84%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_claim_investigation_filtering PASSED [ 87%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_complete_workflow_visualization PASSED [ 90%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_financial_reconciliation PASSED [ 93%]
+test_lab_03_claims_financial.py::TestLab03::test_operation_asset_valuation_analysis PASSED [ 96%]
+test_lab_03_claims_financial.py::TestLab03::test_lab3_summary PASSED     [100%]
+
+============================== 33 passed in 0.09s ==============================
+
+✓ Lab 03: PASSED
+
+================================================================================
+Running Lab 04 Tests (4/17): test_lab_04_bulk_import.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 32 items
+
+test_lab_04_bulk_import.py::TestLab04::test_node_count_increase PASSED   [  3%]
+test_lab_04_bulk_import.py::TestLab04::test_relationship_count_increase PASSED [  6%]
+test_lab_04_bulk_import.py::TestLab04::test_customer_count_after_bulk_import PASSED [  9%]
+test_lab_04_bulk_import.py::TestLab04::test_policy_count_after_bulk_import PASSED [ 12%]
+test_lab_04_bulk_import.py::TestLab04::test_agent_expansion PASSED       [ 15%]
+test_lab_04_bulk_import.py::TestLab04::test_vehicle_expansion PASSED     [ 18%]
+test_lab_04_bulk_import.py::TestLab04::test_constraints_created PASSED   [ 21%]
+test_lab_04_bulk_import.py::TestLab04::test_customer_number_constraint PASSED [ 25%]
+test_lab_04_bulk_import.py::TestLab04::test_policy_number_constraint PASSED [ 28%]
+test_lab_04_bulk_import.py::TestLab04::test_vin_constraint PASSED        [ 31%]
+test_lab_04_bulk_import.py::TestLab04::test_indexes_created PASSED       [ 34%]
+test_lab_04_bulk_import.py::TestLab04::test_bulk_imported_customers_exist PASSED [ 37%]
+test_lab_04_bulk_import.py::TestLab04::test_territory_assignment PASSED  [ 40%]
+test_lab_04_bulk_import.py::TestLab04::test_agent_workload_distribution PASSED [ 43%]
+test_lab_04_bulk_import.py::TestLab04::test_data_quality_no_orphaned_policies PASSED [ 46%]
+test_lab_04_bulk_import.py::TestLab04::test_data_quality_customer_credit_scores PASSED [ 50%]
+test_lab_04_bulk_import.py::TestLab04::test_geographic_distribution PASSED [ 53%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_unwind_bulk_processing PASSED [ 56%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_merge_on_create_on_match PASSED [ 59%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_string_manipulation PASSED [ 62%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_type_conversions PASSED [ 65%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_case_statement_logic PASSED [ 68%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_date_duration_calculations PASSED [ 71%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_not_exists_filtering PASSED [ 75%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_conditional_relationships PASSED [ 78%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_bulk_property_updates PASSED [ 81%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_data_validation_queries PASSED [ 84%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_referential_integrity_checks PASSED [ 87%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_territory_based_aggregation PASSED [ 90%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_bulk_data_statistics PASSED [ 93%]
+test_lab_04_bulk_import.py::TestLab04::test_operation_policy_vehicle_linkage PASSED [ 96%]
+test_lab_04_bulk_import.py::TestLab04::test_lab4_summary PASSED          [100%]
+
+============================== 32 passed in 0.11s ==============================
+
+✓ Lab 04: PASSED
+
+================================================================================
+Running Lab 05 Tests (5/17): test_lab_05_advanced_analytics.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 28 items
+
+test_lab_05_advanced_analytics.py::TestLab05::test_node_count_day1_complete PASSED [  3%]
+test_lab_05_advanced_analytics.py::TestLab05::test_relationship_count_day1_complete PASSED [  7%]
+test_lab_05_advanced_analytics.py::TestLab05::test_risk_assessment_nodes PASSED [ 10%]
+test_lab_05_advanced_analytics.py::TestLab05::test_customer_profile_nodes PASSED [ 14%]
+test_lab_05_advanced_analytics.py::TestLab05::test_cross_sell_opportunity_nodes PASSED [ 17%]
+test_lab_05_advanced_analytics.py::TestLab05::test_predictive_model_nodes PASSED [ 21%]
+test_lab_05_advanced_analytics.py::TestLab05::test_business_kpi_nodes PASSED [ 25%]
+test_lab_05_advanced_analytics.py::TestLab05::test_has_risk_assessment_relationship PASSED [ 28%]
+test_lab_05_advanced_analytics.py::TestLab05::test_has_profile_relationship PASSED [ 32%]
+test_lab_05_advanced_analytics.py::TestLab05::test_has_prediction_relationship PASSED [ 35%]
+test_lab_05_advanced_analytics.py::TestLab05::test_has_opportunity_relationship PASSED [ 39%]
+test_lab_05_advanced_analytics.py::TestLab05::test_risk_assessment_properties PASSED [ 42%]
+test_lab_05_advanced_analytics.py::TestLab05::test_customer_profile_completeness PASSED [ 46%]
+test_lab_05_advanced_analytics.py::TestLab05::test_predictive_model_metrics PASSED [ 50%]
+test_lab_05_advanced_analytics.py::TestLab05::test_customer_360_view PASSED [ 53%]
+test_lab_05_advanced_analytics.py::TestLab05::test_customer_segmentation PASSED [ 57%]
+test_lab_05_advanced_analytics.py::TestLab05::test_cross_sell_recommendations PASSED [ 60%]
+test_lab_05_advanced_analytics.py::TestLab05::test_business_kpi_metrics PASSED [ 64%]
+test_lab_05_advanced_analytics.py::TestLab05::test_risk_profitability_correlation PASSED [ 67%]
+test_lab_05_advanced_analytics.py::TestLab05::test_operation_risk_score_calculation PASSED [ 71%]
+test_lab_05_advanced_analytics.py::TestLab05::test_operation_optional_match_pattern PASSED [ 75%]
+test_lab_05_advanced_analytics.py::TestLab05::test_operation_duration_calculations PASSED [ 78%]
+test_lab_05_advanced_analytics.py::TestLab05::test_operation_case_segmentation PASSED [ 82%]
+test_lab_05_advanced_analytics.py::TestLab05::test_operation_coalesce_null_handling PASSED [ 85%]
+test_lab_05_advanced_analytics.py::TestLab05::test_operation_aggregate_functions PASSED [ 89%]
+test_lab_05_advanced_analytics.py::TestLab05::test_operation_collect_aggregation PASSED [ 92%]
+test_lab_05_advanced_analytics.py::TestLab05::test_operation_distinct_counting PASSED [ 96%]
+test_lab_05_advanced_analytics.py::TestLab05::test_lab5_day1_summary PASSED [100%]
+
+============================== 28 passed in 0.06s ==============================
+
+✓ Lab 05: PASSED
+
+================================================================================
+Running Lab 06 Tests (6/17): test_lab_06_customer_analytics.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 18 items
+
+test_lab_06_customer_analytics.py::TestLab06::test_node_count_increase PASSED [  5%]
+test_lab_06_customer_analytics.py::TestLab06::test_relationship_count_increase PASSED [ 11%]
+test_lab_06_customer_analytics.py::TestLab06::test_lifetime_value_model_nodes PASSED [ 16%]
+test_lab_06_customer_analytics.py::TestLab06::test_commission_nodes PASSED [ 22%]
+test_lab_06_customer_analytics.py::TestLab06::test_behavioral_segment_nodes PASSED [ 27%]
+test_lab_06_customer_analytics.py::TestLab06::test_marketing_campaign_nodes PASSED [ 33%]
+test_lab_06_customer_analytics.py::TestLab06::test_customer_journey_nodes PASSED [ 38%]
+test_lab_06_customer_analytics.py::TestLab06::test_ltv_calculations PASSED [ 44%]
+test_lab_06_customer_analytics.py::TestLab06::test_behavioral_segmentation PASSED [ 50%]
+test_lab_06_customer_analytics.py::TestLab06::test_marketing_campaign_targeting PASSED [ 55%]
+test_lab_06_customer_analytics.py::TestLab06::test_customer_journey_predictions PASSED [ 61%]
+test_lab_06_customer_analytics.py::TestLab06::test_commission_tracking PASSED [ 66%]
+test_lab_06_customer_analytics.py::TestLab06::test_operation_ltv_calculations PASSED [ 72%]
+test_lab_06_customer_analytics.py::TestLab06::test_operation_segmentation_analysis PASSED [ 77%]
+test_lab_06_customer_analytics.py::TestLab06::test_operation_campaign_targeting PASSED [ 83%]
+test_lab_06_customer_analytics.py::TestLab06::test_operation_journey_path_prediction PASSED [ 88%]
+test_lab_06_customer_analytics.py::TestLab06::test_operation_commission_aggregation PASSED [ 94%]
+test_lab_06_customer_analytics.py::TestLab06::test_lab6_summary PASSED   [100%]
+
+============================== 18 passed in 0.06s ==============================
+
+✓ Lab 06: PASSED
+
+================================================================================
+Running Lab 07 Tests (7/17): test_lab_07_graph_algorithms.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 14 items
+
+test_lab_07_graph_algorithms.py::TestLab07::test_node_count_increase PASSED [  7%]
+test_lab_07_graph_algorithms.py::TestLab07::test_relationship_count_increase PASSED [ 14%]
+test_lab_07_graph_algorithms.py::TestLab07::test_gds_library_available SKIPPED [ 21%]
+test_lab_07_graph_algorithms.py::TestLab07::test_graph_projections_can_be_created PASSED [ 28%]
+test_lab_07_graph_algorithms.py::TestLab07::test_centrality_analysis_data PASSED [ 35%]
+test_lab_07_graph_algorithms.py::TestLab07::test_community_detection_data PASSED [ 42%]
+test_lab_07_graph_algorithms.py::TestLab07::test_pathfinding_data PASSED [ 50%]
+test_lab_07_graph_algorithms.py::TestLab07::test_customer_network_density PASSED [ 57%]
+test_lab_07_graph_algorithms.py::TestLab07::test_agent_network_structure PASSED [ 64%]
+test_lab_07_graph_algorithms.py::TestLab07::test_policy_network_structure PASSED [ 71%]
+test_lab_07_graph_algorithms.py::TestLab07::test_operation_network_analysis PASSED [ 78%]
+test_lab_07_graph_algorithms.py::TestLab07::test_operation_shortest_path PASSED [ 85%]
+test_lab_07_graph_algorithms.py::TestLab07::test_operation_degree_centrality PASSED [ 92%]
+test_lab_07_graph_algorithms.py::TestLab07::test_lab7_summary PASSED     [100%]
+
+======================== 13 passed, 1 skipped in 0.07s =========================
+
+✓ Lab 07: PASSED
+
+================================================================================
+Running Lab 08 Tests (8/17): test_lab_08_performance.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 14 items
+
+test_lab_08_performance.py::TestLab08::test_node_count_increase PASSED   [  7%]
+test_lab_08_performance.py::TestLab08::test_relationship_count_increase PASSED [ 14%]
+test_lab_08_performance.py::TestLab08::test_indexes_exist PASSED         [ 21%]
+test_lab_08_performance.py::TestLab08::test_constraints_exist PASSED     [ 28%]
+test_lab_08_performance.py::TestLab08::test_customer_index_exists PASSED [ 35%]
+test_lab_08_performance.py::TestLab08::test_policy_index_exists PASSED   [ 42%]
+test_lab_08_performance.py::TestLab08::test_query_performance_baseline PASSED [ 50%]
+test_lab_08_performance.py::TestLab08::test_indexed_query_performance PASSED [ 57%]
+test_lab_08_performance.py::TestLab08::test_aggregation_performance PASSED [ 64%]
+test_lab_08_performance.py::TestLab08::test_database_statistics PASSED   [ 71%]
+test_lab_08_performance.py::TestLab08::test_operation_profile_query PASSED [ 78%]
+test_lab_08_performance.py::TestLab08::test_operation_explain_query PASSED [ 85%]
+test_lab_08_performance.py::TestLab08::test_operation_index_usage_verification PASSED [ 92%]
+test_lab_08_performance.py::TestLab08::test_lab8_summary PASSED          [100%]
+
+============================== 14 passed in 0.05s ==============================
+
+✓ Lab 08: PASSED
+
+================================================================================
+Running Lab 09 Tests (9/17): test_lab_09_fraud_detection.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 14 items
+
+test_lab_09_fraud_detection.py::TestLab09::test_node_count_increase PASSED [  7%]
+test_lab_09_fraud_detection.py::TestLab09::test_relationship_count_increase PASSED [ 14%]
+test_lab_09_fraud_detection.py::TestLab09::test_investigator_nodes PASSED [ 21%]
+test_lab_09_fraud_detection.py::TestLab09::test_fraud_investigation_nodes PASSED [ 28%]
+test_lab_09_fraud_detection.py::TestLab09::test_fraud_alert_nodes PASSED [ 35%]
+test_lab_09_fraud_detection.py::TestLab09::test_fraud_scores_on_claims PASSED [ 42%]
+test_lab_09_fraud_detection.py::TestLab09::test_suspicious_patterns PASSED [ 50%]
+test_lab_09_fraud_detection.py::TestLab09::test_fraud_investigation_workflow PASSED [ 57%]
+test_lab_09_fraud_detection.py::TestLab09::test_claim_network_analysis PASSED [ 64%]
+test_lab_09_fraud_detection.py::TestLab09::test_shared_information_detection PASSED [ 71%]
+test_lab_09_fraud_detection.py::TestLab09::test_operation_fraud_pattern_detection PASSED [ 78%]
+test_lab_09_fraud_detection.py::TestLab09::test_operation_anomaly_identification PASSED [ 85%]
+test_lab_09_fraud_detection.py::TestLab09::test_operation_network_fraud_analysis PASSED [ 92%]
+test_lab_09_fraud_detection.py::TestLab09::test_lab9_summary PASSED      [100%]
+
+============================== 14 passed in 0.08s ==============================
+
+✓ Lab 09: PASSED
+
+================================================================================
+Running Lab 10 Tests (10/17): test_lab_10_compliance.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 14 items
+
+test_lab_10_compliance.py::TestLab10::test_node_count_increase PASSED    [  7%]
+test_lab_10_compliance.py::TestLab10::test_relationship_count_increase PASSED [ 14%]
+test_lab_10_compliance.py::TestLab10::test_audit_trail_nodes PASSED      [ 21%]
+test_lab_10_compliance.py::TestLab10::test_compliance_record_nodes PASSED [ 28%]
+test_lab_10_compliance.py::TestLab10::test_regulatory_report_nodes PASSED [ 35%]
+test_lab_10_compliance.py::TestLab10::test_audit_trail_tracking PASSED   [ 42%]
+test_lab_10_compliance.py::TestLab10::test_version_tracking PASSED       [ 50%]
+test_lab_10_compliance.py::TestLab10::test_data_lineage PASSED           [ 57%]
+test_lab_10_compliance.py::TestLab10::test_compliance_reporting_capability PASSED [ 64%]
+test_lab_10_compliance.py::TestLab10::test_regulatory_query_performance PASSED [ 71%]
+test_lab_10_compliance.py::TestLab10::test_operation_audit_trail_queries PASSED [ 78%]
+test_lab_10_compliance.py::TestLab10::test_operation_version_history PASSED [ 85%]
+test_lab_10_compliance.py::TestLab10::test_operation_compliance_reporting PASSED [ 92%]
+test_lab_10_compliance.py::TestLab10::test_lab10_summary PASSED          [100%]
+
+============================== 14 passed in 0.03s ==============================
+
+✓ Lab 10: PASSED
+
+================================================================================
+Running Lab 11 Tests (11/17): test_lab_11_predictive.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 15 items
+
+test_lab_11_predictive.py::TestLab11::test_node_count_day2_complete PASSED [  6%]
+test_lab_11_predictive.py::TestLab11::test_relationship_count_day2_complete PASSED [ 13%]
+test_lab_11_predictive.py::TestLab11::test_ml_model_nodes PASSED         [ 20%]
+test_lab_11_predictive.py::TestLab11::test_prediction_result_nodes PASSED [ 26%]
+test_lab_11_predictive.py::TestLab11::test_feature_engineering_data PASSED [ 33%]
+test_lab_11_predictive.py::TestLab11::test_churn_prediction_data PASSED  [ 40%]
+test_lab_11_predictive.py::TestLab11::test_ltv_prediction_data PASSED    [ 46%]
+test_lab_11_predictive.py::TestLab11::test_cross_sell_scoring PASSED     [ 53%]
+test_lab_11_predictive.py::TestLab11::test_model_performance_metrics PASSED [ 60%]
+test_lab_11_predictive.py::TestLab11::test_prediction_actionability PASSED [ 66%]
+test_lab_11_predictive.py::TestLab11::test_predictive_analytics_pipeline PASSED [ 73%]
+test_lab_11_predictive.py::TestLab11::test_operation_churn_prediction PASSED [ 80%]
+test_lab_11_predictive.py::TestLab11::test_operation_ltv_forecasting PASSED [ 86%]
+test_lab_11_predictive.py::TestLab11::test_operation_cross_sell_recommendations PASSED [ 93%]
+test_lab_11_predictive.py::TestLab11::test_lab11_day2_summary PASSED     [100%]
+
+============================== 15 passed in 0.06s ==============================
+
+✓ Lab 11: PASSED
+
+================================================================================
+Running Lab 12 Tests (12/17): test_lab_12_python_driver.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 12 items
+
+test_lab_12_python_driver.py::TestLab12::test_python_driver_connection PASSED [  8%]
+test_lab_12_python_driver.py::TestLab12::test_session_creation PASSED    [ 16%]
+test_lab_12_python_driver.py::TestLab12::test_simple_query_execution PASSED [ 25%]
+test_lab_12_python_driver.py::TestLab12::test_parameterized_query PASSED [ 33%]
+test_lab_12_python_driver.py::TestLab12::test_customer_retrieval_via_python PASSED [ 41%]
+test_lab_12_python_driver.py::TestLab12::test_policy_retrieval_via_python PASSED [ 50%]
+test_lab_12_python_driver.py::TestLab12::test_relationship_traversal_via_python PASSED [ 58%]
+test_lab_12_python_driver.py::TestLab12::test_aggregation_via_python PASSED [ 66%]
+test_lab_12_python_driver.py::TestLab12::test_transaction_execution PASSED [ 75%]
+test_lab_12_python_driver.py::TestLab12::test_error_handling PASSED      [ 83%]
+test_lab_12_python_driver.py::TestLab12::test_operation_parameterized_queries PASSED [ 91%]
+test_lab_12_python_driver.py::TestLab12::test_lab12_summary PASSED       [100%]
+
+============================== 12 passed in 0.06s ==============================
+
+✓ Lab 12: PASSED
+
+================================================================================
+Running Lab 13 Tests (13/17): test_lab_13_api_development.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 8 items
+
+test_lab_13_api_development.py::TestLab13::test_data_available_for_apis PASSED [ 12%]
+test_lab_13_api_development.py::TestLab13::test_customer_lookup_endpoint_data PASSED [ 25%]
+test_lab_13_api_development.py::TestLab13::test_policy_search_endpoint_data PASSED [ 37%]
+test_lab_13_api_development.py::TestLab13::test_claims_submission_endpoint_data PASSED [ 50%]
+test_lab_13_api_development.py::TestLab13::test_customer_360_endpoint_data PASSED [ 62%]
+test_lab_13_api_development.py::TestLab13::test_agent_dashboard_endpoint_data PASSED [ 75%]
+test_lab_13_api_development.py::TestLab13::test_operation_dashboard_aggregations PASSED [ 87%]
+test_lab_13_api_development.py::TestLab13::test_lab13_summary PASSED     [100%]
+
+============================== 8 passed in 0.03s ===============================
+
+✓ Lab 13: PASSED
+
+================================================================================
+Running Lab 14 Tests (14/17): test_lab_14_production.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 8 items
+
+test_lab_14_production.py::TestLab14::test_constraints_for_production PASSED [ 12%]
+test_lab_14_production.py::TestLab14::test_indexes_for_production PASSED [ 25%]
+test_lab_14_production.py::TestLab14::test_database_health PASSED        [ 37%]
+test_lab_14_production.py::TestLab14::test_data_integrity PASSED         [ 50%]
+test_lab_14_production.py::TestLab14::test_query_performance_baselines PASSED [ 62%]
+test_lab_14_production.py::TestLab14::test_audit_trail_compliance PASSED [ 75%]
+test_lab_14_production.py::TestLab14::test_operation_integrity_validation PASSED [ 87%]
+test_lab_14_production.py::TestLab14::test_lab14_summary PASSED          [100%]
+
+============================== 8 passed in 0.05s ===============================
+
+✓ Lab 14: PASSED
+
+================================================================================
+Running Lab 15 Tests (15/17): test_lab_15_integration.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 8 items
+
+test_lab_15_integration.py::TestLab15::test_end_to_end_customer_journey PASSED [ 12%]
+test_lab_15_integration.py::TestLab15::test_multi_channel_integration PASSED [ 25%]
+test_lab_15_integration.py::TestLab15::test_advanced_analytics_available PASSED [ 37%]
+test_lab_15_integration.py::TestLab15::test_business_intelligence_complete PASSED [ 50%]
+test_lab_15_integration.py::TestLab15::test_fraud_detection_operational PASSED [ 62%]
+test_lab_15_integration.py::TestLab15::test_platform_scale PASSED        [ 75%]
+test_lab_15_integration.py::TestLab15::test_operation_platform_analytics PASSED [ 87%]
+test_lab_15_integration.py::TestLab15::test_lab15_summary PASSED         [100%]
+
+============================== 8 passed in 0.05s ===============================
+
+✓ Lab 15: PASSED
+
+================================================================================
+Running Lab 16 Tests (16/17): test_lab_16_multiline.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 6 items
+
+test_lab_16_multiline.py::TestLab16::test_multiple_product_types PASSED  [ 16%]
+test_lab_16_multiline.py::TestLab16::test_cross_product_customers PASSED [ 33%]
+test_lab_16_multiline.py::TestLab16::test_multi_line_portfolio_analysis PASSED [ 50%]
+test_lab_16_multiline.py::TestLab16::test_product_bundling_opportunities PASSED [ 66%]
+test_lab_16_multiline.py::TestLab16::test_operation_cross_product_analysis PASSED [ 83%]
+test_lab_16_multiline.py::TestLab16::test_lab16_summary PASSED           [100%]
+
+============================== 6 passed in 0.04s ===============================
+
+✓ Lab 16: PASSED
+
+================================================================================
+Running Lab 17 Tests (17/17): test_lab_17_innovation.py
+================================================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-8.0.0, pluggy-1.6.0 -- /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts/.venv/bin/python3.13
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.3', 'Platform': 'macOS-15.7.1-arm64-arm-64bit-Mach-O', 'Packages': {'pytest': '8.0.0', 'pluggy': '1.6.0'}, 'Plugins': {'timeout': '2.2.0', 'html': '4.1.1', 'json-report': '1.5.0', 'metadata': '3.1.1'}}
+rootdir: /Users/jwkidd3/classes_in_development/neo4j_mastering/testscripts
+plugins: timeout-2.2.0, html-4.1.1, json-report-1.5.0, metadata-3.1.1
+collecting ... collected 7 items
+
+test_lab_17_innovation.py::TestLab17::test_final_node_count_course_complete PASSED [ 14%]
+test_lab_17_innovation.py::TestLab17::test_final_relationship_count_course_complete PASSED [ 28%]
+test_lab_17_innovation.py::TestLab17::test_all_core_entities_present PASSED [ 42%]
+test_lab_17_innovation.py::TestLab17::test_analytics_entities_present PASSED [ 57%]
+test_lab_17_innovation.py::TestLab17::test_advanced_features_accessible PASSED [ 71%]
+test_lab_17_innovation.py::TestLab17::test_complete_platform_integration PASSED [ 85%]
+test_lab_17_innovation.py::TestLab17::test_lab17_course_completion_summary PASSED [100%]
+
+============================== 7 passed in 0.09s ===============================
+
+✓ Lab 17: PASSED
+
+================================================================================
+COMPREHENSIVE TEST SUITE SUMMARY
+================================================================================
+Total Duration: 3.88 seconds (0.06 minutes)
+Total Labs Tested: 17
+Labs Passed: 17
+Labs Failed: 0
+Success Rate: 100.0%
+================================================================================
+
+Lab-by-Lab Results:
+--------------------------------------------------------------------------------
+  Lab 01: ✓ PASS   (0.28s)
+  Lab 02: ✓ PASS   (0.23s)
+  Lab 03: ✓ PASS   (0.24s)
+  Lab 04: ✓ PASS   (0.27s)
+  Lab 05: ✓ PASS   (0.23s)
+  Lab 06: ✓ PASS   (0.22s)
+  Lab 07: ✓ PASS   (0.23s)
+  Lab 08: ✓ PASS   (0.21s)
+  Lab 09: ✓ PASS   (0.24s)
+  Lab 10: ✓ PASS   (0.20s)
+  Lab 11: ✓ PASS   (0.22s)
+  Lab 12: ✓ PASS   (0.22s)
+  Lab 13: ✓ PASS   (0.20s)
+  Lab 14: ✓ PASS   (0.21s)
+  Lab 15: ✓ PASS   (0.21s)
+  Lab 16: ✓ PASS   (0.20s)
+  Lab 17: ✓ PASS   (0.25s)
+================================================================================
+
+✓✓✓ SUCCESS: ALL LABS PASSED VALIDATION ✓✓✓
+The Neo4j Mastering Course is ready for delivery!
+================================================================================
