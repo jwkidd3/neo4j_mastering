@@ -67,20 +67,20 @@ CREATE (ltv:LifetimeValueModel {
   payment_consistency: profile.payment_consistency,
   
   // Calculated LTV components
-  base_annual_value: profile.total_annual_premium * profitability_score,
+  base_annual_value: profile.total_annual_premium * profile.profitability_score,
   risk_adjusted_value: profile.total_annual_premium * (profile.current_risk_score / 10.0),
   behavioral_adjusted_value: profile.total_annual_premium * claims_adjustment * tenure_bonus,
-  
+
   // Final LTV calculation
   predicted_annual_retention: round(retention_probability * 100) / 100,
-  predicted_lifetime_years: 
+  predicted_lifetime_years:
     CASE WHEN retention_probability > 0.8 THEN 8.0
          WHEN retention_probability > 0.6 THEN 6.0
          WHEN retention_probability > 0.4 THEN 4.0
          ELSE 2.0 END,
-         
+
   calculated_ltv: round(
-    (profile.total_annual_premium * profitability_score * claims_adjustment * tenure_bonus * 
+    (profile.total_annual_premium * profile.profitability_score * claims_adjustment * tenure_bonus * 
      CASE WHEN retention_probability > 0.8 THEN 8.0
           WHEN retention_probability > 0.6 THEN 6.0
           WHEN retention_probability > 0.4 THEN 4.0

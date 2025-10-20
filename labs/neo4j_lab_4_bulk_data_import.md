@@ -10,37 +10,12 @@ Building on Lab 3's business processes, you'll now learn how to efficiently impo
 
 ## Part 1: Data Validation and Constraints (10 minutes)
 
-### Step 1: Implement Database Constraints
-Before importing bulk data, let's establish data quality constraints:
+### Step 1: Verify Database Constraints
+Before importing bulk data, let's verify that data quality constraints exist:
 
 ```cypher
-// Create uniqueness constraints for business identifiers
-CREATE CONSTRAINT customer_number_unique IF NOT EXISTS
-FOR (c:Customer) REQUIRE c.customer_number IS UNIQUE
-```
-
-```cypher
-// Create constraint for policy numbers
-CREATE CONSTRAINT policy_number_unique IF NOT EXISTS  
-FOR (p:Policy) REQUIRE p.policy_number IS UNIQUE
-```
-
-```cypher
-// Create constraint for claim numbers
-CREATE CONSTRAINT claim_number_unique IF NOT EXISTS
-FOR (cl:Claim) REQUIRE cl.claim_number IS UNIQUE
-```
-
-```cypher
-// Create constraint for agent IDs
-CREATE CONSTRAINT agent_id_unique IF NOT EXISTS
-FOR (a:Agent) REQUIRE a.agent_id IS UNIQUE
-```
-
-```cypher
-// Create constraint for VIN numbers
-CREATE CONSTRAINT vin_unique IF NOT EXISTS
-FOR (v:Vehicle) REQUIRE v.vin IS UNIQUE
+// Verify uniqueness constraints for business identifiers
+SHOW CONSTRAINTS WHERE type = 'UNIQUENESS'
 ```
 
 ### Step 2: Create Performance Indexes
@@ -246,10 +221,10 @@ ON CREATE SET
   vehicle.mileage = 5000 + toInteger(rand() * 80000),
   vehicle.safety_rating = 4 + toInteger(rand() * 2),
   vehicle.anti_theft_devices = ["Alarm"],
-  vehicle.license_plate = 
-    toString(toInteger(rand() * 9) + 1) + 
-    char(65 + toInteger(rand() * 26)) + 
-    char(65 + toInteger(rand() * 26)) + "-" +
+  vehicle.license_plate =
+    toString(toInteger(rand() * 9) + 1) +
+    ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"][toInteger(rand() * 26)] +
+    ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"][toInteger(rand() * 26)] + "-" +
     toString(toInteger(rand() * 9000) + 1000),
   vehicle.registration_state = "TX",
   vehicle.created_at = datetime(),

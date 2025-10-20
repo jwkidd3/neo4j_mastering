@@ -370,20 +370,17 @@ CREATE (emma_auto:Policy:Active {
 ```
 
 ### Step 14: Create Insurance Relationships
+
+#### Part A: Customer-Policy Relationships
 ```cypher
-// Create comprehensive insurance relationships
+// Create Customer-Policy relationships
 MATCH (sarah:Customer {customer_number: "CUST-001234"})
 MATCH (michael:Customer {customer_number: "CUST-001235"})
 MATCH (emma:Customer {customer_number: "CUST-001236"})
 MATCH (sarah_auto:Policy {policy_number: "POL-AUTO-001234"})
 MATCH (michael_home:Policy {policy_number: "POL-HOME-001235"})
 MATCH (emma_auto:Policy {policy_number: "POL-AUTO-001236"})
-MATCH (auto_product:Product {product_code: "AUTO-STD"})
-MATCH (home_product:Product {product_code: "HOME-STD"})
-MATCH (agent1:Agent {agent_id: "AGT-001"})
-MATCH (agent2:Agent {agent_id: "AGT-002"})
 
-// Customer-Policy relationships
 CREATE (sarah)-[:HOLDS_POLICY {
   relationship_start: date("2024-01-01"),
   policyholder_type: "Primary",
@@ -401,8 +398,17 @@ CREATE (emma)-[:HOLDS_POLICY {
   policyholder_type: "Primary",
   created_at: datetime()
 }]->(emma_auto)
+```
 
-// Policy-Product relationships
+#### Part B: Policy-Product Relationships
+```cypher
+// Create Policy-Product relationships
+MATCH (sarah_auto:Policy {policy_number: "POL-AUTO-001234"})
+MATCH (michael_home:Policy {policy_number: "POL-HOME-001235"})
+MATCH (emma_auto:Policy {policy_number: "POL-AUTO-001236"})
+MATCH (auto_product:Product {product_code: "AUTO-STD"})
+MATCH (home_product:Product {product_code: "HOME-STD"})
+
 CREATE (sarah_auto)-[:BASED_ON {
   underwriting_date: date("2023-12-15"),
   risk_assessment: "Standard",
@@ -420,8 +426,17 @@ CREATE (emma_auto)-[:BASED_ON {
   risk_assessment: "Preferred",
   created_at: datetime()
 }]->(auto_product)
+```
 
-// Agent-Customer relationships
+#### Part C: Agent and Referral Relationships
+```cypher
+// Create Agent-Customer and referral relationships
+MATCH (sarah:Customer {customer_number: "CUST-001234"})
+MATCH (michael:Customer {customer_number: "CUST-001235"})
+MATCH (emma:Customer {customer_number: "CUST-001236"})
+MATCH (agent1:Agent {agent_id: "AGT-001"})
+MATCH (agent2:Agent {agent_id: "AGT-002"})
+
 CREATE (agent1)-[:SERVICES {
   relationship_start: date("2020-01-15"),
   service_quality: "Excellent",
@@ -443,7 +458,6 @@ CREATE (agent2)-[:SERVICES {
   created_at: datetime()
 }]->(emma)
 
-// Customer referral relationships (insurance networks)
 CREATE (sarah)-[:REFERRED {
   referral_date: date("2021-10-15"),
   referral_bonus: 50.00,

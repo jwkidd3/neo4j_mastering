@@ -115,37 +115,12 @@ CREATE (claims_compliance:ComplianceRequirement {
   effective_date: date("2020-01-01"),
   review_frequency: "Annual",
   
-  // Specific requirements
-  requirements: [
-    {
-      rule: "Acknowledgment Timeframe",
-      description: "Must acknowledge receipt of claim within 15 calendar days",
-      measurement: "Days from claim receipt to acknowledgment",
-      threshold: 15,
-      unit: "days"
-    },
-    {
-      rule: "Investigation Completion",
-      description: "Complete investigation within reasonable time based on complexity",
-      measurement: "Days from claim filing to investigation completion",
-      threshold: 30,
-      unit: "days"
-    },
-    {
-      rule: "Payment Processing",
-      description: "Process payment within 5 business days of settlement agreement",
-      measurement: "Business days from agreement to payment",
-      threshold: 5,
-      unit: "business_days"
-    },
-    {
-      rule: "Communication Standards",
-      description: "Maintain regular communication with claimants",
-      measurement: "Days between status updates",
-      threshold: 30,
-      unit: "days"
-    }
-  ],
+  // Specific requirements (as JSON string - Neo4j 5.x doesn't support nested maps)
+  requirements_json: '{"acknowledgment": {"rule": "Acknowledgment Timeframe", "description": "Must acknowledge receipt of claim within 15 calendar days", "measurement": "Days from claim receipt to acknowledgment", "threshold": 15, "unit": "days"}, "investigation": {"rule": "Investigation Completion", "description": "Complete investigation within reasonable time based on complexity", "measurement": "Days from claim filing to investigation completion", "threshold": 30, "unit": "days"}, "payment": {"rule": "Payment Processing", "description": "Process payment within 5 business days of settlement agreement", "measurement": "Business days from agreement to payment", "threshold": 5, "unit": "business_days"}, "communication": {"rule": "Communication Standards", "description": "Maintain regular communication with claimants", "measurement": "Days between status updates", "threshold": 30, "unit": "days"}}',
+  acknowledgment_threshold_days: 15,
+  investigation_threshold_days: 30,
+  payment_threshold_business_days: 5,
+  communication_threshold_days: 30,
   
   // Monitoring and enforcement
   monitoring_frequency: "Monthly",
@@ -174,37 +149,13 @@ CREATE (privacy_compliance:ComplianceRequirement {
   compliance_level: "Mandatory",
   effective_date: date("2021-01-01"),
   review_frequency: "Annual",
-  
-  requirements: [
-    {
-      rule: "Privacy Notice Distribution",
-      description: "Provide privacy notice at policy inception and annually",
-      measurement: "Percentage of customers receiving notices",
-      threshold: 100,
-      unit: "percentage"
-    },
-    {
-      rule: "Data Access Controls",
-      description: "Restrict access to customer information based on business need",
-      measurement: "Unauthorized access incidents",
-      threshold: 0,
-      unit: "incidents"
-    },
-    {
-      rule: "Information Sharing Consent",
-      description: "Obtain consent before sharing non-public personal information",
-      measurement: "Percentage of sharing with documented consent",
-      threshold: 100,
-      unit: "percentage"
-    },
-    {
-      rule: "Data Breach Notification",
-      description: "Notify affected customers within 72 hours of breach discovery",
-      measurement: "Hours from discovery to notification",
-      threshold: 72,
-      unit: "hours"
-    }
-  ],
+
+  // Requirements as JSON string (Neo4j 5.x doesn't support nested maps)
+  requirements_json: '{"privacy_notice": {"rule": "Privacy Notice Distribution", "description": "Provide privacy notice at policy inception and annually", "measurement": "Percentage of customers receiving notices", "threshold": 100, "unit": "percentage"}, "access_controls": {"rule": "Data Access Controls", "description": "Restrict access to customer information based on business need", "measurement": "Unauthorized access incidents", "threshold": 0, "unit": "incidents"}, "sharing_consent": {"rule": "Information Sharing Consent", "description": "Obtain consent before sharing non-public personal information", "measurement": "Percentage of sharing with documented consent", "threshold": 100, "unit": "percentage"}, "breach_notification": {"rule": "Data Breach Notification", "description": "Notify affected customers within 72 hours of breach discovery", "measurement": "Hours from discovery to notification", "threshold": 72, "unit": "hours"}}',
+  privacy_notice_threshold_pct: 100,
+  access_control_threshold_incidents: 0,
+  sharing_consent_threshold_pct: 100,
+  breach_notification_threshold_hours: 72,
   
   monitoring_frequency: "Continuous",
   violation_penalties: [
@@ -252,21 +203,14 @@ CREATE (claims_assessment:ComplianceAssessment {
   non_compliant_items: total_claims - compliant_acknowledgments,
   compliance_rate: round((compliant_acknowledgments * 100.0 / total_claims) * 10) / 10,
   
-  // Detailed findings
-  findings: [
-    {
-      metric: "Acknowledgment Timeframe",
-      target: 15,
-      actual: round(avg_acknowledgment_days * 10) / 10,
-      status: CASE WHEN avg_acknowledgment_days <= 15 THEN "Compliant" ELSE "Non-Compliant" END
-    },
-    {
-      metric: "Investigation Duration", 
-      target: 30,
-      actual: round(COALESCE(avg_investigation_days, 0) * 10) / 10,
-      status: CASE WHEN COALESCE(avg_investigation_days, 0) <= 30 THEN "Compliant" ELSE "Non-Compliant" END
-    }
-  ],
+  // Detailed findings as JSON string (Neo4j 5.x doesn't support nested maps)
+  findings_json: '{"acknowledgment": {"metric": "Acknowledgment Timeframe", "target": 15}, "investigation": {"metric": "Investigation Duration", "target": 30}}',
+  acknowledgment_target: 15,
+  acknowledgment_actual: round(avg_acknowledgment_days * 10) / 10,
+  acknowledgment_status: CASE WHEN avg_acknowledgment_days <= 15 THEN "Compliant" ELSE "Non-Compliant" END,
+  investigation_target: 30,
+  investigation_actual: round(COALESCE(avg_investigation_days, 0) * 10) / 10,
+  investigation_status: CASE WHEN COALESCE(avg_investigation_days, 0) <= 30 THEN "Compliant" ELSE "Non-Compliant" END,
   
   // Risk assessment
   compliance_risk: 
@@ -441,7 +385,7 @@ RETURN count(change_log) AS change_logs_created
 ```cypher
 // Create data lineage for customer-policy relationships
 MATCH (customer:Customer)-[:HOLDS_POLICY]->(policy:Policy)
-WHERE exists(policy.last_compliance_check)
+WHERE policy.last_compliance_check IS NOT NULL
 
 CREATE (lineage:DataLineage {
   id: randomUUID(),
@@ -523,11 +467,12 @@ CREATE (monitor:ComplianceMonitor {
   // Monitoring configuration
   monitoring_frequency: "Daily",
   monitoring_scope: "All Claims Processing Activities",
-  alert_thresholds: [
-    {metric: "Claims Acknowledgment", threshold: 15, unit: "days", severity: "High"},
-    {metric: "Investigation Duration", threshold: 30, unit: "days", severity: "Medium"},
-    {metric: "Payment Processing", threshold: 5, unit: "business_days", severity: "High"}
-  ],
+
+  // Alert thresholds as JSON string (Neo4j 5.x doesn't support nested maps)
+  alert_thresholds_json: '{"claims_ack": {"metric": "Claims Acknowledgment", "threshold": 15, "unit": "days", "severity": "High"}, "investigation": {"metric": "Investigation Duration", "threshold": 30, "unit": "days", "severity": "Medium"}, "payment": {"metric": "Payment Processing", "threshold": 5, "unit": "business_days", "severity": "High"}}',
+  claims_ack_threshold: 15,
+  investigation_threshold: 30,
+  payment_threshold: 5,
   
   // Current monitoring results
   last_monitoring_run: datetime(),
@@ -591,34 +536,9 @@ CREATE (privacy_policy:PrivacyPolicy {
     "Communication records"
   ],
   
-  // Privacy principles
-  privacy_principles: [
-    {
-      principle: "Data Minimization",
-      description: "Collect only information necessary for business purposes",
-      implementation: "Automated data collection controls and approval workflows"
-    },
-    {
-      principle: "Purpose Limitation", 
-      description: "Use personal information only for stated purposes",
-      implementation: "Access controls based on job function and business need"
-    },
-    {
-      principle: "Accuracy",
-      description: "Maintain accurate and up-to-date personal information",
-      implementation: "Regular data quality checks and customer update processes"
-    },
-    {
-      principle: "Storage Limitation",
-      description: "Retain personal information only as long as necessary",
-      implementation: "Automated data retention and deletion policies"
-    },
-    {
-      principle: "Security",
-      description: "Protect personal information with appropriate technical and organizational measures",
-      implementation: "Encryption, access controls, security monitoring"
-    }
-  ],
+  // Privacy principles as JSON string (Neo4j 5.x doesn't support nested maps)
+  privacy_principles_json: '{"minimization": {"principle": "Data Minimization", "description": "Collect only information necessary for business purposes", "implementation": "Automated data collection controls and approval workflows"}, "purpose_limitation": {"principle": "Purpose Limitation", "description": "Use personal information only for stated purposes", "implementation": "Access controls based on job function and business need"}, "accuracy": {"principle": "Accuracy", "description": "Maintain accurate and up-to-date personal information", "implementation": "Regular data quality checks and customer update processes"}, "storage_limitation": {"principle": "Storage Limitation", "description": "Retain personal information only as long as necessary", "implementation": "Automated data retention and deletion policies"}, "security": {"principle": "Security", "description": "Protect personal information with appropriate technical and organizational measures", "implementation": "Encryption, access controls, security monitoring"}}',
+  privacy_principles_summary: ["Data Minimization", "Purpose Limitation", "Accuracy", "Storage Limitation", "Security"],
   
   // Data subject rights
   data_subject_rights: [
@@ -708,6 +628,7 @@ CREATE (rights_request:DataSubjectRightsRequest {
   created_by: "data_rights_system",
   version: 1
 })
+WITH rights_request
 
 // Connect to customer record
 MATCH (customer:Customer {customer_number: "CUST-001236"})
@@ -730,39 +651,10 @@ CREATE (retention_policy:DataRetentionPolicy {
   policy_version: "1.3",
   effective_date: date("2024-01-01"),
   
-  // Retention schedules by data type
-  retention_schedules: [
-    {
-      data_type: "Customer Personal Information",
-      retention_period: "Life of relationship + 7 years",
-      legal_basis: "Texas Insurance Code Section 38.001",
-      disposal_method: "Secure deletion with certificate"
-    },
-    {
-      data_type: "Policy Records",
-      retention_period: "Policy termination + 7 years", 
-      legal_basis: "NAIC Record Retention Guidelines",
-      disposal_method: "Secure deletion with certificate"
-    },
-    {
-      data_type: "Claims Files",
-      retention_period: "Claim closure + 10 years",
-      legal_basis: "Statute of limitations requirements",
-      disposal_method: "Secure deletion with certificate"
-    },
-    {
-      data_type: "Financial Records",
-      retention_period: "7 years from transaction date",
-      legal_basis: "Federal tax record requirements",
-      disposal_method: "Secure deletion with certificate"
-    },
-    {
-      data_type: "Audit Trails",
-      retention_period: "7 years from creation",
-      legal_basis: "SOX compliance requirements",
-      disposal_method: "Secure archival then deletion"
-    }
-  ],
+  // Retention schedules as JSON string (Neo4j 5.x doesn't support nested maps)
+  retention_schedules_json: '{"customer": {"data_type": "Customer Personal Information", "retention_period": "Life of relationship + 7 years", "legal_basis": "Texas Insurance Code Section 38.001", "disposal_method": "Secure deletion with certificate"}, "policy": {"data_type": "Policy Records", "retention_period": "Policy termination + 7 years", "legal_basis": "NAIC Record Retention Guidelines", "disposal_method": "Secure deletion with certificate"}, "claims": {"data_type": "Claims Files", "retention_period": "Claim closure + 10 years", "legal_basis": "Statute of limitations requirements", "disposal_method": "Secure deletion with certificate"}, "financial": {"data_type": "Financial Records", "retention_period": "7 years from transaction date", "legal_basis": "Federal tax record requirements", "disposal_method": "Secure deletion with certificate"}, "audit": {"data_type": "Audit Trails", "retention_period": "7 years from creation", "legal_basis": "SOX compliance requirements", "disposal_method": "Secure archival then deletion"}}',
+  retention_data_types: ["Customer Personal Information", "Policy Records", "Claims Files", "Financial Records", "Audit Trails"],
+  retention_periods: ["Life of relationship + 7 years", "Policy termination + 7 years", "Claim closure + 10 years", "7 years from transaction date", "7 years from creation"],
   
   // Automated processes
   automated_review_frequency: "Monthly",
@@ -781,6 +673,7 @@ CREATE (retention_policy:DataRetentionPolicy {
   created_by: "records_management_system",
   version: 1
 })
+WITH retention_policy
 
 // Create retention tracking for specific records
 MATCH (claim:Claim)
@@ -851,40 +744,13 @@ CREATE (regulatory_report:RegulatoryReport {
   regulator_contact: "Market Conduct Division",
   submission_method: "Electronic Filing System",
   
-  // Report sections and data
-  report_sections: [
-    {
-      section: "Claims Processing Metrics",
-      data_source: "Claims database",
-      metrics: [
-        "Total claims received: 156",
-        "Average acknowledgment time: 12.3 days",
-        "Average processing time: 28.7 days",
-        "Claims denied: 23 (14.7%)",
-        "Customer complaints: 8"
-      ]
-    },
-    {
-      section: "Consumer Protection Measures", 
-      data_source: "Customer service records",
-      metrics: [
-        "Privacy notices distributed: 1,247",
-        "Data subject requests received: 3",
-        "Data breaches reported: 0",
-        "Compliance violations: 1"
-      ]
-    },
-    {
-      section: "Financial Solvency Indicators",
-      data_source: "Financial systems",
-      metrics: [
-        "Gross premiums written: $12.4M",
-        "Claims reserves: $3.2M", 
-        "Regulatory capital ratio: 185%",
-        "Risk-based capital: $45.2M"
-      ]
-    }
-  ],
+  // Report sections as JSON string (Neo4j 5.x doesn't support nested maps)
+  report_sections_json: '{"claims_metrics": {"section": "Claims Processing Metrics", "data_source": "Claims database", "total_claims": 156, "avg_ack_days": 12.3, "avg_proc_days": 28.7, "claims_denied": 23, "denial_pct": 14.7, "complaints": 8}, "consumer_protection": {"section": "Consumer Protection Measures", "data_source": "Customer service records", "privacy_notices": 1247, "data_requests": 3, "data_breaches": 0, "violations": 1}, "financial_solvency": {"section": "Financial Solvency Indicators", "data_source": "Financial systems", "premiums_written_millions": 12.4, "claims_reserves_millions": 3.2, "capital_ratio_pct": 185, "rbc_millions": 45.2}}',
+  total_claims_received: 156,
+  avg_acknowledgment_days: 12.3,
+  avg_processing_days: 28.7,
+  claims_denied_count: 23,
+  privacy_notices_distributed: 1247,
   
   // Compliance status
   overall_compliance_rating: "Satisfactory",
@@ -933,106 +799,36 @@ CREATE (compliance_dashboard:ComplianceDashboard {
   moderate_issues: 3,
   minor_issues: 8,
   
-  // Regulatory compliance by area
-  compliance_by_area: [
-    {
-      area: "Claims Processing",
-      score: 87.2,
-      status: "Compliant",
-      last_assessment: date("2024-07-15"),
-      next_assessment: date("2024-10-15")
-    },
-    {
-      area: "Privacy Protection",
-      score: 92.1,
-      status: "Compliant",
-      last_assessment: date("2024-07-01"),
-      next_assessment: date("2024-10-01")
-    },
-    {
-      area: "Financial Reporting",
-      score: 95.3,
-      status: "Compliant", 
-      last_assessment: date("2024-06-30"),
-      next_assessment: date("2024-09-30")
-    },
-    {
-      area: "Market Conduct",
-      score: 85.7,
-      status: "Needs Attention",
-      last_assessment: date("2024-07-20"),
-      next_assessment: date("2024-08-20")
-    }
-  ],
+  // Compliance by area as JSON string (Neo4j 5.x doesn't support nested maps)
+  compliance_by_area_json: '{"claims": {"area": "Claims Processing", "score": 87.2, "status": "Compliant", "last_assessment": "2024-07-15", "next_assessment": "2024-10-15"}, "privacy": {"area": "Privacy Protection", "score": 92.1, "status": "Compliant", "last_assessment": "2024-07-01", "next_assessment": "2024-10-01"}, "financial": {"area": "Financial Reporting", "score": 95.3, "status": "Compliant", "last_assessment": "2024-06-30", "next_assessment": "2024-09-30"}, "market_conduct": {"area": "Market Conduct", "score": 85.7, "status": "Needs Attention", "last_assessment": "2024-07-20", "next_assessment": "2024-08-20"}}',
+  claims_score: 87.2,
+  privacy_score: 92.1,
+  financial_score: 95.3,
+  market_conduct_score: 85.7,
   
-  // Key performance indicators
-  kpis: [
-    {
-      metric: "Claims Acknowledgment Compliance",
-      current_value: 94.2,
-      target_value: 95.0,
-      unit: "percentage",
-      trend: "Improving"
-    },
-    {
-      metric: "Privacy Notice Distribution",
-      current_value: 99.8,
-      target_value: 100.0,
-      unit: "percentage", 
-      trend: "Stable"
-    },
-    {
-      metric: "Regulatory Examination Score",
-      current_value: 88.5,
-      target_value: 90.0,
-      unit: "score",
-      trend: "Stable"
-    },
-    {
-      metric: "Compliance Training Completion",
-      current_value: 96.3,
-      target_value: 95.0,
-      unit: "percentage",
-      trend: "Exceeding"
-    }
+  // KPIs as JSON string (Neo4j 5.x doesn't support nested maps)
+  kpis_json: '{"claims_ack": {"metric": "Claims Acknowledgment Compliance", "current": 94.2, "target": 95.0, "unit": "percentage", "trend": "Improving"}, "privacy_notice": {"metric": "Privacy Notice Distribution", "current": 99.8, "target": 100.0, "unit": "percentage", "trend": "Stable"}, "reg_exam": {"metric": "Regulatory Examination Score", "current": 88.5, "target": 90.0, "unit": "score", "trend": "Stable"}, "training": {"metric": "Compliance Training Completion", "current": 96.3, "target": 95.0, "unit": "percentage", "trend": "Exceeding"}}',
+  kpi_claims_ack_current: 94.2,
+  kpi_privacy_notice_current: 99.8,
+  kpi_reg_exam_current: 88.5,
+  kpi_training_current: 96.3,
+
+  // Risk indicators as JSON string (Neo4j 5.x doesn't support nested maps)
+  risk_indicators_json: '{"regulatory": {"indicator": "Regulatory Changes", "level": "Medium", "description": "New privacy regulations pending implementation"}, "audit": {"indicator": "Audit Findings", "level": "Low", "description": "Minor process improvements identified"}, "staff": {"indicator": "Staff Turnover", "level": "Low", "description": "Compliance staff retention remains high"}}',
+  risk_regulatory_level: "Medium",
+  risk_audit_level: "Low",
+  risk_staff_level: "Low",
+
+  // Upcoming deadlines as simple arrays
+  upcoming_deadlines_descriptions: [
+    "Privacy Impact Assessment Update (15 days)",
+    "Quarterly Regulatory Report (30 days)",
+    "Claims Process Audit (45 days)"
   ],
-  
-  // Risk indicators
-  risk_indicators: [
-    {
-      indicator: "Regulatory Changes",
-      risk_level: "Medium",
-      description: "New privacy regulations pending implementation"
-    },
-    {
-      indicator: "Audit Findings",
-      risk_level: "Low", 
-      description: "Minor process improvements identified"
-    },
-    {
-      indicator: "Staff Turnover",
-      risk_level: "Low",
-      description: "Compliance staff retention remains high"
-    }
-  ],
-  
-  // Upcoming deadlines
-  upcoming_deadlines: [
-    {
-      deadline: date() + duration({days: 15}),
-      requirement: "Privacy Impact Assessment Update",
-      responsible_party: "Privacy Office"
-    },
-    {
-      deadline: date() + duration({days: 30}),
-      requirement: "Quarterly Regulatory Report",
-      responsible_party: "Compliance Team"
-    },
-    {
-      deadline: date() + duration({days: 45}),
-      requirement: "Claims Process Audit",
-      responsible_party: "Internal Audit"
-    }
+  upcoming_deadlines_responsible: [
+    "Privacy Office",
+    "Compliance Team",
+    "Internal Audit"
   ],
   
   dashboard_owner: "Chief Compliance Officer",
@@ -1116,6 +912,7 @@ CREATE (violation:ComplianceViolation {
   created_by: "compliance_violation_system",
   version: 1
 })
+WITH violation
 
 // Connect violation to relevant claim
 MATCH (claim:Claim {claim_number: "CLM-AUTO-002345"})
@@ -1137,37 +934,12 @@ CREATE (training_program:ComplianceTraining {
   program_name: "Annual Compliance Training Program",
   program_year: 2024,
   
-  // Training modules
-  training_modules: [
-    {
-      module: "Insurance Regulatory Fundamentals",
-      duration: "2 hours",
-      format: "Online",
-      mandatory: true,
-      completion_deadline: date("2024-12-31")
-    },
-    {
-      module: "Privacy Protection and Data Security",
-      duration: "1.5 hours", 
-      format: "Online",
-      mandatory: true,
-      completion_deadline: date("2024-12-31")
-    },
-    {
-      module: "Claims Processing Compliance",
-      duration: "2.5 hours",
-      format: "Classroom",
-      mandatory: true,
-      completion_deadline: date("2024-11-30")
-    },
-    {
-      module: "Fraud Detection and Prevention",
-      duration: "2 hours",
-      format: "Online",
-      mandatory: false,
-      completion_deadline: date("2024-12-31")
-    }
-  ],
+  // Training modules as JSON string (Neo4j 5.x doesn't support nested maps)
+  training_modules_json: '{"regulatory": {"module": "Insurance Regulatory Fundamentals", "duration": "2 hours", "format": "Online", "mandatory": true, "completion_deadline": "2024-12-31"}, "privacy": {"module": "Privacy Protection and Data Security", "duration": "1.5 hours", "format": "Online", "mandatory": true, "completion_deadline": "2024-12-31"}, "claims": {"module": "Claims Processing Compliance", "duration": "2.5 hours", "format": "Classroom", "mandatory": true, "completion_deadline": "2024-11-30"}, "fraud": {"module": "Fraud Detection and Prevention", "duration": "2 hours", "format": "Online", "mandatory": false, "completion_deadline": "2024-12-31"}}',
+  training_module_names: ["Insurance Regulatory Fundamentals", "Privacy Protection and Data Security", "Claims Processing Compliance", "Fraud Detection and Prevention"],
+  training_module_durations: ["2 hours", "1.5 hours", "2.5 hours", "2 hours"],
+  training_module_formats: ["Online", "Online", "Classroom", "Online"],
+  training_module_mandatory: [true, true, true, false],
   
   // Completion tracking
   total_eligible_employees: 85,
@@ -1197,6 +969,7 @@ CREATE (training_program:ComplianceTraining {
   created_by: "training_management_system",
   version: 1
 })
+WITH training_program
 
 // Create individual training records for agents
 MATCH (agent:Agent)
@@ -1304,6 +1077,7 @@ CREATE (compliance_summary:ComplianceMetricsSummary {
   created_by: "compliance_summary_system",
   version: 1
 })
+WITH compliance_summary
 
 // Validate overall compliance infrastructure
 MATCH (req:ComplianceRequirement)

@@ -21,26 +21,30 @@ OPTIONAL MATCH (customer)-[:FILED_CLAIM]->(claims:Claim)
 OPTIONAL MATCH (customer)-[:MADE_PAYMENT]->(payments:Payment)
 OPTIONAL MATCH (customer)-[:HAS_PROFILE]->(profile:CustomerProfile)
 
-WITH customer, 
+WITH customer,
      collect(policies) AS customer_policies,
      collect(claims) AS customer_claims,
      collect(payments) AS customer_payments,
      profile,
-     
+
      // Calculate behavioral features
      size(collect(policies)) AS policy_count,
      avg(policies.annual_premium) AS avg_premium,
-     count(claims) AS claims_count,
-     
-     // Payment behavior analysis
-     CASE WHEN size(collect(payments)) > 0 
-          THEN avg([p IN collect(payments) WHERE p.payment_method IS NOT NULL | 
-               CASE p.payment_method 
-                 WHEN "Auto Pay" THEN 5
-                 WHEN "Online" THEN 4
-                 WHEN "Phone" THEN 3
-                 WHEN "Mail" THEN 2
-                 ELSE 1 END])
+     count(claims) AS claims_count
+
+WITH customer, customer_policies, customer_claims, customer_payments, profile, policy_count, avg_premium, claims_count,
+     // Payment behavior analysis - split nested aggregate
+     [p IN customer_payments WHERE p.payment_method IS NOT NULL |
+          CASE p.payment_method
+            WHEN "Auto Pay" THEN 5
+            WHEN "Online" THEN 4
+            WHEN "Phone" THEN 3
+            WHEN "Mail" THEN 2
+            ELSE 1 END] AS payment_scores
+
+WITH customer, customer_policies, customer_claims, customer_payments, profile, policy_count, avg_premium, claims_count,
+     CASE WHEN size(payment_scores) > 0
+          THEN avg(payment_scores)
           ELSE 2.5 END AS payment_convenience_score
 
 CREATE (churn_prediction:ChurnPrediction {
@@ -55,19 +59,19 @@ CREATE (churn_prediction:ChurnPrediction {
   customer_tenure_days: duration.between(customer.created_date, date()).days,
   credit_score: COALESCE(customer.credit_score, 650),
   
-  // Policy features  
+  // Policy features
   total_policies: policy_count,
-  total_annual_premium: COALESCE(sum([p IN customer_policies | p.annual_premium]), 0),
+  total_annual_premium: COALESCE(reduce(s = 0, p IN customer_policies | s + p.annual_premium), 0),
   avg_policy_premium: COALESCE(avg_premium, 0),
   policy_diversity: size(apoc.coll.toSet([p IN customer_policies | p.policy_type])),
   
   // Claims behavior
   total_claims: claims_count,
-  claims_frequency: CASE WHEN customer.customer_tenure_days > 0 
+  claims_frequency: CASE WHEN customer.customer_tenure_days > 0
                    THEN (claims_count * 365.0) / duration.between(customer.created_date, date()).days
                    ELSE 0 END,
-  avg_claim_amount: CASE WHEN claims_count > 0 
-                   THEN avg([c IN customer_claims | c.claim_amount])
+  avg_claim_amount: CASE WHEN claims_count > 0
+                   THEN reduce(s = 0.0, c IN customer_claims | s + c.claim_amount) / size(customer_claims)
                    ELSE 0 END,
   
   // Payment behavior
@@ -335,16 +339,22 @@ OPTIONAL MATCH (customer)-[:HOLDS_POLICY]->(policies:Policy)
 OPTIONAL MATCH (customer)-[:FILED_CLAIM]->(historical_claims:Claim)
 OPTIONAL MATCH (customer)-[:LOCATED_IN]->(location:Location)
 
-WITH customer, 
+WITH customer,
      collect(policies) AS customer_policies,
      collect(historical_claims) AS past_claims,
      location,
-     
+
      // Calculate customer risk factors
      count(policies) AS policy_count,
-     COALESCE(avg([p IN collect(policies) | p.deductible]), 500) AS avg_deductible,
-     count(historical_claims) AS historical_claims_count,
-     COALESCE(avg([c IN collect(historical_claims) | c.claim_amount]), 0) AS avg_historical_claim
+     count(historical_claims) AS historical_claims_count
+
+WITH customer, customer_policies, past_claims, location, policy_count, historical_claims_count,
+     [p IN customer_policies | p.deductible] AS deductibles,
+     [c IN past_claims | c.claim_amount] AS historical_claim_amounts
+
+WITH customer, customer_policies, past_claims, location, policy_count, historical_claims_count,
+     COALESCE(avg(deductibles), 500) AS avg_deductible,
+     COALESCE(avg(historical_claim_amounts), 0) AS avg_historical_claim
 
 CREATE (claims_prediction:ClaimsPrediction {
   id: randomUUID(),
@@ -363,7 +373,7 @@ CREATE (claims_prediction:ClaimsPrediction {
   total_policies: policy_count,
   avg_policy_deductible: avg_deductible,
   policy_types: [p IN customer_policies | p.policy_type],
-  total_coverage_limit: sum([p IN customer_policies | COALESCE(p.coverage_limit, 50000)]),
+  total_coverage_limit: reduce(s = 0, p IN customer_policies | s + COALESCE(p.coverage_limit, 50000)),
   
   // Historical claims features  
   historical_claims_count: historical_claims_count,
@@ -485,14 +495,19 @@ OPTIONAL MATCH (customer)-[:HOLDS_POLICY]->(policies:Policy)
 OPTIONAL MATCH (customer)-[:FILED_CLAIM]->(recent_claims:Claim)
 WHERE recent_claims.claim_date >= date() - duration({months: 6})
 
-WITH customer, churn, claims, 
+WITH customer, churn, claims,
      collect(policies) AS customer_policies,
      collect(recent_claims) AS recent_claims,
-     
+
      // Calculate portfolio metrics
      count(policies) AS total_policies,
-     sum([p IN collect(policies) | p.annual_premium]) AS total_premium,
      count(recent_claims) AS recent_claims_count
+
+WITH customer, churn, claims, customer_policies, recent_claims, total_policies, recent_claims_count,
+     [p IN customer_policies | p.annual_premium] AS premiums
+
+WITH customer, churn, claims, customer_policies, recent_claims, total_policies, recent_claims_count,
+     sum(premiums) AS total_premium
 
 CREATE (risk_assessment:DynamicRiskAssessment {
   id: randomUUID(),
@@ -699,84 +714,91 @@ CREATE (ml_dashboard:MLPerformanceDashboard {
     "Claims Prediction v2.8", 
     "Dynamic Risk Assessment v1.5"
   ],
+
+  // Churn model performance - stored as JSON string for nested data
+  churn_model_metrics_json: '{"total_predictions":1250,"high_risk_customers":87,"medium_risk_customers":234,"retention_interventions_triggered":187,"successful_retentions":127,"prevention_success_rate":0.68,"model_accuracy_last_month":0.81,"false_positive_rate":0.12,"business_value_generated":1250000.00}',
+
+  // Flattened churn model properties
+  churn_total_predictions: 1250,
+  churn_high_risk_customers: 87,
+  churn_medium_risk_customers: 234,
+  churn_retention_interventions_triggered: 187,
+  churn_successful_retentions: 127,
+  churn_prevention_success_rate: 0.68,
+  churn_model_accuracy_last_month: 0.81,
+  churn_false_positive_rate: 0.12,
+  churn_business_value_generated: 1250000.00,
+
+  // Claims model performance - stored as JSON string for nested data
+  claims_model_metrics_json: '{"total_predictions":1425,"high_cost_risk_customers":156,"average_prediction_accuracy":0.74,"cost_prediction_mae":485.30,"frequency_prediction_accuracy":0.78,"severity_prediction_accuracy":0.71,"early_intervention_savings":890000.00}',
+
+  // Flattened claims model properties
+  claims_total_predictions: 1425,
+  claims_high_cost_risk_customers: 156,
+  claims_average_prediction_accuracy: 0.74,
+  claims_cost_prediction_mae: 485.30,
+  claims_frequency_prediction_accuracy: 0.78,
+  claims_severity_prediction_accuracy: 0.71,
+  claims_early_intervention_savings: 890000.00,
+
+  // Risk assessment performance - stored as JSON string for nested data
+  risk_model_metrics_json: '{"total_assessments":1350,"very_high_risk_customers":45,"high_risk_customers":123,"assessment_confidence_avg":0.79,"data_completeness_avg":0.81,"manual_review_accuracy":0.85,"risk_mitigation_effectiveness":0.73}',
+
+  // Flattened risk model properties
+  risk_total_assessments: 1350,
+  risk_very_high_risk_customers: 45,
+  risk_high_risk_customers: 123,
+  risk_assessment_confidence_avg: 0.79,
+  risk_data_completeness_avg: 0.81,
+  risk_manual_review_accuracy: 0.85,
+  risk_mitigation_effectiveness: 0.73,
+
+  // Overall system performance - stored as JSON string for nested data
+  system_performance_json: '{"total_customers_scored":1350,"models_in_production":3,"average_prediction_latency_ms":23,"system_uptime_percentage":99.8,"data_quality_score":94.2,"feature_drift_alerts":2,"model_retraining_needed":1}',
+
+  // Flattened system performance properties
+  system_total_customers_scored: 1350,
+  system_models_in_production: 3,
+  system_average_prediction_latency_ms: 23,
+  system_uptime_percentage: 99.8,
+  system_data_quality_score: 94.2,
+  system_feature_drift_alerts: 2,
+  system_model_retraining_needed: 1,
   
-  // Churn model performance
-  churn_model_metrics: {
-    total_predictions: 1250,
-    high_risk_customers: 87,
-    medium_risk_customers: 234,
-    retention_interventions_triggered: 187,
-    successful_retentions: 127,
-    prevention_success_rate: 0.68,
-    model_accuracy_last_month: 0.81,
-    false_positive_rate: 0.12,
-    business_value_generated: 1250000.00
-  },
-  
-  // Claims model performance
-  claims_model_metrics: {
-    total_predictions: 1425,
-    high_cost_risk_customers: 156,
-    average_prediction_accuracy: 0.74,
-    cost_prediction_mae: 485.30,
-    frequency_prediction_accuracy: 0.78,
-    severity_prediction_accuracy: 0.71,
-    early_intervention_savings: 890000.00
-  },
-  
-  // Risk assessment performance
-  risk_model_metrics: {
-    total_assessments: 1350,
-    very_high_risk_customers: 45,
-    high_risk_customers: 123,
-    assessment_confidence_avg: 0.79,
-    data_completeness_avg: 0.81,
-    manual_review_accuracy: 0.85,
-    risk_mitigation_effectiveness: 0.73
-  },
-  
-  // Overall system performance
-  system_performance: {
-    total_customers_scored: 1350,
-    models_in_production: 3,
-    average_prediction_latency_ms: 23,
-    system_uptime_percentage: 99.8,
-    data_quality_score: 94.2,
-    feature_drift_alerts: 2,
-    model_retraining_needed: 1
-  },
-  
-  // Business impact metrics
-  business_impact: {
-    estimated_annual_churn_prevention: 1250000.00,
-    claims_cost_optimization: 890000.00,
-    operational_efficiency_gains: 675000.00,
-    customer_satisfaction_improvement: 0.15,
-    total_roi_estimate: 2815000.00,
-    cost_of_ml_operations: 485000.00,
-    net_business_value: 2330000.00
-  },
-  
-  // Data quality monitoring
-  data_quality_metrics: {
-    customer_data_completeness: 0.92,
-    policy_data_completeness: 0.89,
-    claims_data_completeness: 0.85,
-    payment_data_completeness: 0.91,
-    missing_critical_features: 67,
-    data_freshness_hours: 4.2,
-    data_validation_errors: 12
-  },
-  
-  // Model drift monitoring
-  model_drift_indicators: {
-    churn_model_drift_score: 0.08,  // Low drift
-    claims_model_drift_score: 0.15,  // Moderate drift
-    risk_model_drift_score: 0.05,   // Very low drift
-    concept_drift_detected: false,
-    population_drift_detected: true,
-    feature_importance_changes: ["credit_score: +0.03", "claims_history: -0.02"]
-  },
+  // Business impact metrics - stored as JSON string for nested data
+  business_impact_json: '{"estimated_annual_churn_prevention":1250000.00,"claims_cost_optimization":890000.00,"operational_efficiency_gains":675000.00,"customer_satisfaction_improvement":0.15,"total_roi_estimate":2815000.00,"cost_of_ml_operations":485000.00,"net_business_value":2330000.00}',
+
+  // Flattened business impact properties
+  estimated_annual_churn_prevention: 1250000.00,
+  claims_cost_optimization: 890000.00,
+  operational_efficiency_gains: 675000.00,
+  customer_satisfaction_improvement: 0.15,
+  total_roi_estimate: 2815000.00,
+  cost_of_ml_operations: 485000.00,
+  net_business_value: 2330000.00,
+
+  // Data quality monitoring - stored as JSON string for nested data
+  data_quality_metrics_json: '{"customer_data_completeness":0.92,"policy_data_completeness":0.89,"claims_data_completeness":0.85,"payment_data_completeness":0.91,"missing_critical_features":67,"data_freshness_hours":4.2,"data_validation_errors":12}',
+
+  // Flattened data quality properties
+  dq_customer_data_completeness: 0.92,
+  dq_policy_data_completeness: 0.89,
+  dq_claims_data_completeness: 0.85,
+  dq_payment_data_completeness: 0.91,
+  dq_missing_critical_features: 67,
+  dq_data_freshness_hours: 4.2,
+  dq_data_validation_errors: 12,
+
+  // Model drift monitoring - stored as JSON string for nested data
+  model_drift_indicators_json: '{"churn_model_drift_score":0.08,"claims_model_drift_score":0.15,"risk_model_drift_score":0.05,"concept_drift_detected":false,"population_drift_detected":true,"feature_importance_changes":["credit_score: +0.03","claims_history: -0.02"]}',
+
+  // Flattened model drift properties
+  drift_churn_model_score: 0.08,
+  drift_claims_model_score: 0.15,
+  drift_risk_model_score: 0.05,
+  drift_concept_drift_detected: false,
+  drift_population_drift_detected: true,
+  drift_feature_importance_changes: ["credit_score: +0.03", "claims_history: -0.02"],
   
   // Recommendations
   operational_recommendations: [
@@ -824,38 +846,41 @@ CREATE (model_validation:ModelValidation {
     "Accuracy", "Precision", "Recall", "F1-Score", 
     "AUC-ROC", "Business Impact", "Fairness Metrics"
   ],
-  
-  // Churn model validation results
-  churn_validation_results: {
-    test_accuracy: 0.82,
-    precision: 0.79,
-    recall: 0.84,
-    f1_score: 0.81,
-    auc_roc: 0.86,
-    business_impact_validation: "Successful - 68% retention rate achieved",
-    fairness_score: 0.91,
-    bias_detected: false,
-    validation_status: "Passed"
-  },
-  
-  // Claims model validation results  
-  claims_validation_results: {
-    frequency_mae: 0.28,
-    severity_mape: 0.15,
-    combined_accuracy: 0.74,
-    business_impact_validation: "Good - Cost predictions within 12% of actual",
-    early_warning_effectiveness: 0.71,
-    validation_status: "Passed with recommendations"
-  },
-  
-  // Risk model validation results
-  risk_validation_results: {
-    risk_classification_accuracy: 0.77,
-    human_expert_agreement: 0.83,
-    recommendation_effectiveness: 0.69,
-    customer_outcome_correlation: 0.74,
-    validation_status: "Passed"
-  },
+
+  // Churn model validation results - stored as JSON string for nested data
+  churn_validation_results_json: '{"test_accuracy":0.82,"precision":0.79,"recall":0.84,"f1_score":0.81,"auc_roc":0.86,"business_impact_validation":"Successful - 68% retention rate achieved","fairness_score":0.91,"bias_detected":false,"validation_status":"Passed"}',
+
+  // Flattened churn validation properties
+  churn_val_test_accuracy: 0.82,
+  churn_val_precision: 0.79,
+  churn_val_recall: 0.84,
+  churn_val_f1_score: 0.81,
+  churn_val_auc_roc: 0.86,
+  churn_val_business_impact_validation: "Successful - 68% retention rate achieved",
+  churn_val_fairness_score: 0.91,
+  churn_val_bias_detected: false,
+  churn_val_validation_status: "Passed",
+
+  // Claims model validation results - stored as JSON string for nested data
+  claims_validation_results_json: '{"frequency_mae":0.28,"severity_mape":0.15,"combined_accuracy":0.74,"business_impact_validation":"Good - Cost predictions within 12% of actual","early_warning_effectiveness":0.71,"validation_status":"Passed with recommendations"}',
+
+  // Flattened claims validation properties
+  claims_val_frequency_mae: 0.28,
+  claims_val_severity_mape: 0.15,
+  claims_val_combined_accuracy: 0.74,
+  claims_val_business_impact_validation: "Good - Cost predictions within 12% of actual",
+  claims_val_early_warning_effectiveness: 0.71,
+  claims_val_validation_status: "Passed with recommendations",
+
+  // Risk model validation results - stored as JSON string for nested data
+  risk_validation_results_json: '{"risk_classification_accuracy":0.77,"human_expert_agreement":0.83,"recommendation_effectiveness":0.69,"customer_outcome_correlation":0.74,"validation_status":"Passed"}',
+
+  // Flattened risk validation properties
+  risk_val_risk_classification_accuracy: 0.77,
+  risk_val_human_expert_agreement: 0.83,
+  risk_val_recommendation_effectiveness: 0.69,
+  risk_val_customer_outcome_correlation: 0.74,
+  risk_val_validation_status: "Passed",
   
   // Overall validation summary
   overall_validation_score: 0.81,
@@ -872,25 +897,27 @@ CREATE (model_validation:ModelValidation {
     "Infrastructure: Upgrade prediction serving infrastructure for lower latency"
   ],
   
-  // Business validation
-  business_validation: {
-    customer_outcome_improvement: true,
-    cost_reduction_achieved: true,
-    revenue_impact_positive: true,
-    operational_efficiency_gained: true,
-    customer_satisfaction_maintained: true,
-    regulatory_compliance_status: "Compliant"
-  },
-  
-  // Technical validation
-  technical_validation: {
-    model_stability: "Stable",
-    performance_consistency: "Good",
-    data_dependency_health: "Healthy", 
-    infrastructure_performance: "Excellent",
-    monitoring_effectiveness: "Good",
-    alert_system_functioning: true
-  },
+  // Business validation - stored as JSON string for nested data
+  business_validation_json: '{"customer_outcome_improvement":true,"cost_reduction_achieved":true,"revenue_impact_positive":true,"operational_efficiency_gained":true,"customer_satisfaction_maintained":true,"regulatory_compliance_status":"Compliant"}',
+
+  // Flattened business validation properties
+  customer_outcome_improvement: true,
+  cost_reduction_achieved: true,
+  revenue_impact_positive: true,
+  operational_efficiency_gained: true,
+  customer_satisfaction_maintained: true,
+  regulatory_compliance_status: "Compliant",
+
+  // Technical validation - stored as JSON string for nested data
+  technical_validation_json: '{"model_stability":"Stable","performance_consistency":"Good","data_dependency_health":"Healthy","infrastructure_performance":"Excellent","monitoring_effectiveness":"Good","alert_system_functioning":true}',
+
+  // Flattened technical validation properties
+  tech_val_model_stability: "Stable",
+  tech_val_performance_consistency: "Good",
+  tech_val_data_dependency_health: "Healthy",
+  tech_val_infrastructure_performance: "Excellent",
+  tech_val_monitoring_effectiveness: "Good",
+  tech_val_alert_system_functioning: true,
   
   // Future improvements identified
   improvement_roadmap: [
@@ -983,6 +1010,8 @@ CREATE (ml_summary:MLPerformanceSummary {
   created_by: "ml_summary_system",
   version: 1
 })
+
+WITH ml_summary
 
 // Validate the complete predictive analytics infrastructure
 MATCH (churn:ChurnPrediction)

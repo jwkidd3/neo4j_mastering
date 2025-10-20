@@ -1,0 +1,26 @@
+# Python Testing Dependencies for Labs 12-17
+# Simplified for Python 3.13 compatibility
+
+# Core testing framework
+pytest>=8.0.0
+pytest-timeout>=2.2.0
+
+# Neo4j driver (essential for all labs)
+neo4j>=5.26.0
+
+# Web frameworks (Lab 13-14)
+fastapi>=0.104.0
+uvicorn>=0.24.0
+httpx>=0.26.0
+requests>=2.31.0
+
+# Templates and forms (Lab 14)
+jinja2>=3.1.0
+python-multipart>=0.0.6
+
+# Monitoring (Lab 15)
+prometheus-client>=0.19.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.5.0

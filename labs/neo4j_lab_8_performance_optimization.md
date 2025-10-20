@@ -63,21 +63,10 @@ RETURN a.first_name + " " + a.last_name AS agent_name,
 
 ## Part 2: Strategic Index Implementation (15 minutes)
 
-### Step 5: Create Business-Critical Indexes
+### Step 5: Verify Business-Critical Constraints
 ```cypher
-// Create unique constraints for business identifiers
-CREATE CONSTRAINT customer_number_unique IF NOT EXISTS
-FOR (c:Customer) REQUIRE c.customer_number IS UNIQUE
-```
-
-```cypher
-CREATE CONSTRAINT policy_number_unique IF NOT EXISTS
-FOR (p:Policy) REQUIRE p.policy_number IS UNIQUE
-```
-
-```cypher
-CREATE CONSTRAINT agent_id_unique IF NOT EXISTS
-FOR (a:Agent) REQUIRE a.agent_id IS UNIQUE
+// Verify unique constraints for business identifiers
+SHOW CONSTRAINTS WHERE type = 'UNIQUENESS'
 ```
 
 ### Step 6: Create Performance Indexes for Customer Queries
@@ -310,37 +299,13 @@ CREATE (query_track:QueryPerformance {
   id: randomUUID(),
   tracking_date: date(),
   
-  // Common query patterns with performance metrics
-  query_patterns: [
-    {
-      pattern: "Customer Lookup by ID",
-      frequency: "High",
-      avg_execution_time_ms: 2.1,
-      index_usage: "customer_number_unique",
-      optimization_status: "Optimized"
-    },
-    {
-      pattern: "Policy Search by Status",
-      frequency: "High", 
-      avg_execution_time_ms: 12.8,
-      index_usage: "policy_status",
-      optimization_status: "Optimized"
-    },
-    {
-      pattern: "Agent Portfolio Analysis",
-      frequency: "Medium",
-      avg_execution_time_ms: 38.5,
-      index_usage: "agent_territory, policy_status",
-      optimization_status: "Good"
-    },
-    {
-      pattern: "Claims by Amount Range",
-      frequency: "Medium",
-      avg_execution_time_ms: 25.2,
-      index_usage: "claim_amount, claim_status",
-      optimization_status: "Optimized"
-    }
-  ],
+  // Common query patterns with performance metrics - stored as JSON string for nested data
+  query_patterns_json: '[{"pattern":"Customer Lookup by ID","frequency":"High","avg_execution_time_ms":2.1,"index_usage":"customer_number_unique","optimization_status":"Optimized"},{"pattern":"Policy Search by Status","frequency":"High","avg_execution_time_ms":12.8,"index_usage":"policy_status","optimization_status":"Optimized"},{"pattern":"Agent Portfolio Analysis","frequency":"Medium","avg_execution_time_ms":38.5,"index_usage":"agent_territory, policy_status","optimization_status":"Good"},{"pattern":"Claims by Amount Range","frequency":"Medium","avg_execution_time_ms":25.2,"index_usage":"claim_amount, claim_status","optimization_status":"Optimized"}]',
+
+  // Flattened query pattern simple arrays
+  query_pattern_names: ["Customer Lookup by ID", "Policy Search by Status", "Agent Portfolio Analysis", "Claims by Amount Range"],
+  query_pattern_frequencies: ["High", "High", "Medium", "Medium"],
+  query_pattern_avg_times: [2.1, 12.8, 38.5, 25.2],
   
   // Performance recommendations
   recommendations: [
@@ -365,19 +330,13 @@ CREATE (cache:QueryCache {
   cache_date: date(),
   cache_type: "Frequently Accessed Customer Data",
   
-  // Cache high-value customer summaries
-  cached_data: [
-    {
-      customer_id: "CUST-001234",
-      customer_name: "Sarah Johnson",
-      total_policies: 2,
-      total_premium: 2200.00,
-      risk_tier: "Standard",
-      last_claim_date: "2024-06-15",
-      agent_name: "David Wilson"
-    }
-    // Additional cached records would be populated by application layer
-  ],
+  // Cache high-value customer summaries - stored as JSON string for nested data
+  cached_data_json: '[{"customer_id":"CUST-001234","customer_name":"Sarah Johnson","total_policies":2,"total_premium":2200.00,"risk_tier":"Standard","last_claim_date":"2024-06-15","agent_name":"David Wilson"}]',
+
+  // Flattened cache data - sample record
+  cached_customer_ids: ["CUST-001234"],
+  cached_customer_names: ["Sarah Johnson"],
+  cached_total_policies: [2],
   
   cache_expiry: datetime() + duration({hours: 6}),
   cache_hit_count: 0,
@@ -450,73 +409,38 @@ CREATE (optimization:PerformanceOptimization {
   optimization_date: date(),
   database_version: "Neo4j Enterprise 2025.06",
   
-  // Optimization categories implemented
-  optimizations_applied: [
-    {
-      category: "Indexing Strategy",
-      techniques: [
-        "Unique constraints on business identifiers",
-        "Composite indexes for geographic queries", 
-        "Range indexes for numeric fields",
-        "Status indexes for operational queries"
-      ],
-      performance_improvement: "60-80% faster query execution"
-    },
-    {
-      category: "Query Optimization",
-      techniques: [
-        "Early filtering with WHERE clauses",
-        "Strategic WITH clause placement",
-        "Proper LIMIT and pagination",
-        "Memory-efficient aggregations"
-      ],
-      performance_improvement: "40-60% reduction in query time"
-    },
-    {
-      category: "Memory Management",
-      techniques: [
-        "Graph projection cleanup",
-        "Streaming aggregations",
-        "Batch processing patterns",
-        "Connection pooling"
-      ],
-      performance_improvement: "50% better memory utilization"
-    },
-    {
-      category: "Monitoring Systems",
-      techniques: [
-        "Query performance tracking",
-        "Resource utilization monitoring",
-        "Health status dashboards",
-        "Proactive alerting"
-      ],
-      performance_improvement: "95% uptime reliability"
-    }
-  ],
+  // Optimization categories implemented - stored as JSON string for nested data
+  optimizations_applied_json: '[{"category":"Indexing Strategy","techniques":["Unique constraints on business identifiers","Composite indexes for geographic queries","Range indexes for numeric fields","Status indexes for operational queries"],"performance_improvement":"60-80% faster query execution"},{"category":"Query Optimization","techniques":["Early filtering with WHERE clauses","Strategic WITH clause placement","Proper LIMIT and pagination","Memory-efficient aggregations"],"performance_improvement":"40-60% reduction in query time"},{"category":"Memory Management","techniques":["Graph projection cleanup","Streaming aggregations","Batch processing patterns","Connection pooling"],"performance_improvement":"50% better memory utilization"},{"category":"Monitoring Systems","techniques":["Query performance tracking","Resource utilization monitoring","Health status dashboards","Proactive alerting"],"performance_improvement":"95% uptime reliability"}]',
+
+  // Flattened optimization categories
+  optimization_categories: ["Indexing Strategy", "Query Optimization", "Memory Management", "Monitoring Systems"],
+  optimization_improvements: ["60-80% faster query execution", "40-60% reduction in query time", "50% better memory utilization", "95% uptime reliability"],
   
-  // Production readiness checklist
-  production_readiness: {
-    indexing_complete: true,
-    constraints_implemented: true,
-    monitoring_active: true,
-    caching_strategy: true,
-    backup_procedures: false,  // To be implemented in Lab 15
-    security_hardening: false,  // To be implemented in Lab 15
-    load_balancing: false,  // To be implemented in Lab 15
-    disaster_recovery: false   // To be implemented in Lab 15
-  },
+  // Production readiness checklist - stored as JSON string for nested data
+  production_readiness_json: '{"indexing_complete":true,"constraints_implemented":true,"monitoring_active":true,"caching_strategy":true,"backup_procedures":false,"security_hardening":false,"load_balancing":false,"disaster_recovery":false}',
+
+  // Flattened production readiness properties
+  indexing_complete: true,
+  constraints_implemented: true,
+  monitoring_active: true,
+  caching_strategy: true,
+  backup_procedures: false,
+  security_hardening: false,
+  load_balancing: false,
+  disaster_recovery: false,
   
-  // Performance benchmarks
-  benchmarks: {
-    customer_lookup_target_ms: 5,
-    customer_lookup_actual_ms: 2.1,
-    policy_search_target_ms: 20,
-    policy_search_actual_ms: 12.8,
-    complex_query_target_ms: 100,
-    complex_query_actual_ms: 38.5,
-    concurrent_users_supported: 50,
-    throughput_queries_per_second: 485
-  },
+  // Performance benchmarks - stored as JSON string for nested data
+  benchmarks_json: '{"customer_lookup_target_ms":5,"customer_lookup_actual_ms":2.1,"policy_search_target_ms":20,"policy_search_actual_ms":12.8,"complex_query_target_ms":100,"complex_query_actual_ms":38.5,"concurrent_users_supported":50,"throughput_queries_per_second":485}',
+
+  // Flattened benchmark properties
+  customer_lookup_target_ms: 5,
+  customer_lookup_actual_ms: 2.1,
+  policy_search_target_ms: 20,
+  policy_search_actual_ms: 12.8,
+  complex_query_target_ms: 100,
+  complex_query_actual_ms: 38.5,
+  concurrent_users_supported: 50,
+  throughput_queries_per_second: 485,
   
   // Next optimization steps
   future_optimizations: [

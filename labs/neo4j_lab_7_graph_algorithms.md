@@ -1,10 +1,69 @@
 # Neo4j Lab 7: Graph Algorithms for Insurance Analytics
 
 ## Overview
-**Duration:** 45 minutes  
+**Duration:** 45 minutes
 **Objective:** Apply centrality algorithms and community detection to identify customer influence, agent networks, and fraud patterns in insurance operations
 
 Building on Lab 6's customer analytics, you'll now leverage the Graph Data Science library to apply advanced algorithms that reveal hidden patterns, identify influential customers, optimize agent territories, and detect potential fraud rings through network analysis.
+
+---
+
+## ⚠️ Important Note: Graph Data Science (GDS) Plugin
+
+**This lab uses the Neo4j Graph Data Science (GDS) plugin, which is optional.**
+
+### If GDS Plugin is Available:
+- Complete all exercises as written below
+- Learn advanced graph algorithms (PageRank, Betweenness, Community Detection)
+- Apply algorithms to insurance network analysis
+
+### If GDS Plugin is NOT Available:
+**Don't worry!** Use these alternative exercises that achieve the same learning objectives:
+
+**Alternative Exercise 1: Manual Network Analysis (replaces PageRank)**
+```cypher
+// Find influential customers by counting their network connections
+MATCH (c:Customer)
+OPTIONAL MATCH (c)-[:REFERRED]->(referred:Customer)
+OPTIONAL MATCH (c)-[:HOLDS_POLICY]->(p:Policy)
+WITH c, count(DISTINCT referred) AS referrals, count(DISTINCT p) AS policies
+RETURN c.customer_number AS customer_id,
+       c.first_name + " " + c.last_name AS customer_name,
+       referrals,
+       policies,
+       (referrals * 2 + policies) AS influence_score
+ORDER BY influence_score DESC
+LIMIT 10
+```
+
+**Alternative Exercise 2: Agent Territory Analysis (replaces Community Detection)**
+```cypher
+// Analyze agent territories using native Cypher
+MATCH (a:Agent)-[:SERVICES]->(c:Customer)
+WITH a, collect(c) AS customers
+WITH a, customers, size(customers) AS customer_count
+RETURN a.agent_id AS agent_id,
+       a.first_name + " " + a.last_name AS agent_name,
+       customer_count,
+       [c IN customers | c.city] AS cities_served,
+       size([c IN customers WHERE c.risk_tier = 'Preferred']) AS preferred_customers
+ORDER BY customer_count DESC
+```
+
+**Alternative Exercise 3: Fraud Pattern Detection (replaces Louvain)**
+```cypher
+// Identify suspicious claim patterns
+MATCH (c1:Customer)-[:FILED_CLAIM]->(claim1:Claim)-[:INVOLVES_ASSET]->(asset)
+MATCH (c2:Customer)-[:FILED_CLAIM]->(claim2:Claim)-[:INVOLVES_ASSET]->(asset)
+WHERE c1 <> c2 AND claim1.claim_date = claim2.claim_date
+RETURN c1.customer_number AS customer1,
+       c2.customer_number AS customer2,
+       asset.asset_type AS shared_asset,
+       claim1.claim_date AS claim_date,
+       'Potential Fraud Ring' AS flag
+```
+
+**Continue to Part 1 below if GDS is available, or use the alternatives above.**
 
 ---
 
@@ -77,7 +136,7 @@ CALL gds.graph.project(
             orientation: 'UNDIRECTED'
         },
         REFERRED: {
-            orientation: 'NATURAL'
+            orientation: 'UNDIRECTED'
         }
     }
 )
@@ -101,15 +160,15 @@ CALL gds.pageRank.write(
         nodeLabels: ['Customer']
     }
 )
-YIELD nodePropertiesWritten, iterations, didConverge
-RETURN nodePropertiesWritten, iterations, didConverge
+YIELD nodePropertiesWritten, ranIterations, didConverge
+RETURN nodePropertiesWritten, ranIterations, didConverge
 ```
 
 ### Step 6: Analyze Customer Influence Rankings
 ```cypher
 // Find the most influential customers based on PageRank
 MATCH (c:Customer)
-WHERE exists(c.pagerank_score)
+WHERE c.pagerank_score IS NOT NULL
 OPTIONAL MATCH (c)-[:HOLDS_POLICY]->(p:Policy)
 WITH c, sum(p.annual_premium) AS total_premium
 RETURN c.first_name + " " + c.last_name AS customer_name,
@@ -141,7 +200,7 @@ RETURN nodePropertiesWritten, computeMillis
 ```cypher
 // Find customers who serve as bridges between different network segments
 MATCH (c:Customer)
-WHERE exists(c.betweenness_score) AND c.betweenness_score > 0
+WHERE c.betweenness_score IS NOT NULL AND c.betweenness_score > 0
 RETURN c.first_name + " " + c.last_name AS customer_name,
        c.customer_number AS customer_id,
        round(c.betweenness_score * 100) / 100 AS bridge_score,
@@ -171,7 +230,7 @@ RETURN nodePropertiesWritten
 ```cypher
 // Analyze agent network performance using centrality metrics
 MATCH (agent:Agent)
-WHERE exists(agent.network_reach)
+WHERE agent.network_reach IS NOT NULL
 OPTIONAL MATCH (agent)-[:SERVICES]->(customer:Customer)
 WITH agent, 
      count(DISTINCT customer) AS actual_customers,
@@ -182,7 +241,7 @@ RETURN agent.first_name + " " + agent.last_name AS agent_name,
        actual_customers AS customers_managed,
        round(COALESCE(portfolio_value, 0) * 100) / 100 AS total_portfolio_value,
        agent.performance_rating AS rating,
-       round(agent.network_reach * 1.0 / GREATEST(actual_customers, 1) * 100) / 100 AS network_efficiency
+       round(agent.network_reach * 1.0 / CASE WHEN actual_customers > 1 THEN actual_customers ELSE 1 END * 100) / 100 AS network_efficiency
 ORDER BY agent.network_reach DESC
 ```
 
@@ -210,7 +269,7 @@ RETURN nodePropertiesWritten, communityCount, modularity
 ```cypher
 // Analyze the characteristics of detected communities
 MATCH (c:Customer)
-WHERE exists(c.community_id)
+WHERE c.community_id IS NOT NULL
 WITH c.community_id AS community,
      count(c) AS community_size,
      avg(c.lifetime_value) AS avg_ltv,
@@ -231,7 +290,7 @@ ORDER BY community_size DESC
 ```cypher
 // Analyze geographic distribution within communities
 MATCH (c:Customer)
-WHERE exists(c.community_id)
+WHERE c.community_id IS NOT NULL
 WITH c.community_id AS community,
      c.city AS city,
      count(c) AS customers_in_city
@@ -251,7 +310,7 @@ ORDER BY total_customers DESC
 ```cypher
 // Identify cross-sell patterns within communities
 MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)
-WHERE exists(c.community_id)
+WHERE c.community_id IS NOT NULL
 WITH c.community_id AS community,
      c.customer_number AS customer_id,
      collect(DISTINCT p.product_type) AS customer_products,
@@ -367,7 +426,7 @@ ORDER BY customer_pairs DESC, avg_combined_amount DESC
 ```cypher
 // Analyze correlation between network influence and business value
 MATCH (c:Customer)
-WHERE exists(c.pagerank_score) AND exists(c.betweenness_score)
+WHERE c.pagerank_score IS NOT NULL AND c.betweenness_score IS NOT NULL
 
 WITH c,
      CASE 
@@ -389,7 +448,7 @@ ORDER BY avg_lifetime_value DESC
 ```cypher
 // Identify business opportunities based on community analysis
 MATCH (c:Customer)-[:HOLDS_POLICY]->(p:Policy)
-WHERE exists(c.community_id) AND exists(c.pagerank_score)
+WHERE c.community_id IS NOT NULL AND c.pagerank_score IS NOT NULL
 
 WITH c.community_id AS community,
      avg(c.pagerank_score) AS avg_influence,

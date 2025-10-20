@@ -68,16 +68,13 @@ CREATE (fraud_model:FraudModel {
   model_type: "Auto Insurance",
   algorithm_version: "2.1",
   
-  // Fraud indicators and weights
-  risk_factors: [
-    {factor: "Multiple claims within 6 months", weight: 0.25, threshold: 2},
-    {factor: "Shared vendor with other suspicious claims", weight: 0.20, threshold: 1},
-    {factor: "Claim amount significantly above vehicle value", weight: 0.15, threshold: 0.8},
-    {factor: "Late reporting (>72 hours)", weight: 0.12, threshold: 72},
-    {factor: "No police report for significant damage", weight: 0.10, threshold: 5000},
-    {factor: "Customer credit score below threshold", weight: 0.08, threshold: 600},
-    {factor: "Incident in high-fraud area", weight: 0.10, threshold: 1}
-  ],
+  // Fraud indicators and weights - stored as JSON string for nested data
+  risk_factors_json: '[{"factor":"Multiple claims within 6 months","weight":0.25,"threshold":2},{"factor":"Shared vendor with other suspicious claims","weight":0.20,"threshold":1},{"factor":"Claim amount significantly above vehicle value","weight":0.15,"threshold":0.8},{"factor":"Late reporting (>72 hours)","weight":0.12,"threshold":72},{"factor":"No police report for significant damage","weight":0.10,"threshold":5000},{"factor":"Customer credit score below threshold","weight":0.08,"threshold":600},{"factor":"Incident in high-fraud area","weight":0.10,"threshold":1}]',
+
+  // Flattened risk factors - simple arrays
+  risk_factor_names: ["Multiple claims within 6 months", "Shared vendor with other suspicious claims", "Claim amount significantly above vehicle value", "Late reporting (>72 hours)", "No police report for significant damage", "Customer credit score below threshold", "Incident in high-fraud area"],
+  risk_factor_weights: [0.25, 0.20, 0.15, 0.12, 0.10, 0.08, 0.10],
+  risk_factor_thresholds: [2, 1, 0.8, 72, 5000, 600, 1],
   
   // Scoring thresholds
   low_risk_threshold: 0.25,
@@ -105,24 +102,24 @@ CREATE (property_fraud_model:FraudModel {
   model_name: "Property Claim Fraud Detection",
   model_type: "Property Insurance",
   algorithm_version: "1.8",
-  
-  risk_factors: [
-    {factor: "Recent policy changes or increases", weight: 0.30, threshold: 30},
-    {factor: "Fire/water damage without external cause", weight: 0.25, threshold: 1},
-    {factor: "Claim amount near policy limit", weight: 0.20, threshold: 0.9},
-    {factor: "Previous denied claims", weight: 0.15, threshold: 1},
-    {factor: "Financial distress indicators", weight: 0.10, threshold: 1}
-  ],
-  
+
+  // Risk factors stored as JSON string for nested data
+  risk_factors_json: '[{"factor":"Recent policy changes or increases","weight":0.30,"threshold":30},{"factor":"Fire/water damage without external cause","weight":0.25,"threshold":1},{"factor":"Claim amount near policy limit","weight":0.20,"threshold":0.9},{"factor":"Previous denied claims","weight":0.15,"threshold":1},{"factor":"Financial distress indicators","weight":0.10,"threshold":1}]',
+
+  // Flattened risk factors - simple arrays
+  risk_factor_names: ["Recent policy changes or increases", "Fire/water damage without external cause", "Claim amount near policy limit", "Previous denied claims", "Financial distress indicators"],
+  risk_factor_weights: [0.30, 0.25, 0.20, 0.15, 0.10],
+  risk_factor_thresholds: [30, 1, 0.9, 1, 1],
+
   low_risk_threshold: 0.20,
   medium_risk_threshold: 0.45,
   high_risk_threshold: 0.70,
-  
+
   accuracy: 0.91,
   precision: 0.88,
   recall: 0.89,
   false_positive_rate: 0.12,
-  
+
   created_at: datetime(),
   created_by: "fraud_analytics_team",
   version: 1
@@ -537,58 +534,21 @@ CREATE (timeline:InvestigationTimeline {
   id: randomUUID(),
   timeline_id: "TL-" + investigation.case_id,
   case_id: investigation.case_id,
-  
-  // Timeline milestones
-  milestones: [
-    {
-      milestone: "Initial Case Review",
-      target_date: date() + duration({days: 3}),
-      status: "Pending",
-      description: "Review automated fraud detection findings and evidence"
-    },
-    {
-      milestone: "Subject Interview Scheduling",
-      target_date: date() + duration({days: 14}),
-      status: "Pending", 
-      description: "Schedule interviews with suspected fraudulent claimants"
-    },
-    {
-      milestone: "Vendor Investigation",
-      target_date: date() + duration({days: 21}),
-      status: "Pending",
-      description: "Investigate repair shop records and business practices"
-    },
-    {
-      milestone: "Financial Analysis Complete",
-      target_date: date() + duration({days: 35}),
-      status: "Pending",
-      description: "Complete analysis of financial patterns and transactions"
-    },
-    {
-      milestone: "Expert Analysis",
-      target_date: date() + duration({days: 50}),
-      status: "Pending",
-      description: "Vehicle damage analysis and accident reconstruction if needed"
-    },
-    {
-      milestone: "Evidence Package Compilation",
-      target_date: date() + duration({days: 70}),
-      status: "Pending",
-      description: "Compile all evidence for legal review"
-    },
-    {
-      milestone: "Case Resolution Recommendation",
-      target_date: date() + duration({days: 85}),
-      status: "Pending",
-      description: "Recommend prosecution, settlement, or case closure"
-    }
-  ],
-  
+
+  // Timeline milestones stored as JSON string for nested data
+  milestones_json: '[{"milestone":"Initial Case Review","target_days":3,"status":"Pending","description":"Review automated fraud detection findings and evidence"},{"milestone":"Subject Interview Scheduling","target_days":14,"status":"Pending","description":"Schedule interviews with suspected fraudulent claimants"},{"milestone":"Vendor Investigation","target_days":21,"status":"Pending","description":"Investigate repair shop records and business practices"},{"milestone":"Financial Analysis Complete","target_days":35,"status":"Pending","description":"Complete analysis of financial patterns and transactions"},{"milestone":"Expert Analysis","target_days":50,"status":"Pending","description":"Vehicle damage analysis and accident reconstruction if needed"},{"milestone":"Evidence Package Compilation","target_days":70,"status":"Pending","description":"Compile all evidence for legal review"},{"milestone":"Case Resolution Recommendation","target_days":85,"status":"Pending","description":"Recommend prosecution, settlement, or case closure"}]',
+
+  // Flattened milestones - simple arrays
+  milestone_names: ["Initial Case Review", "Subject Interview Scheduling", "Vendor Investigation", "Financial Analysis Complete", "Expert Analysis", "Evidence Package Compilation", "Case Resolution Recommendation"],
+  milestone_target_days: [3, 14, 21, 35, 50, 70, 85],
+  milestone_statuses: ["Pending", "Pending", "Pending", "Pending", "Pending", "Pending", "Pending"],
+  milestone_descriptions: ["Review automated fraud detection findings and evidence", "Schedule interviews with suspected fraudulent claimants", "Investigate repair shop records and business practices", "Complete analysis of financial patterns and transactions", "Vehicle damage analysis and accident reconstruction if needed", "Compile all evidence for legal review", "Recommend prosecution, settlement, or case closure"],
+
   // Progress tracking
   completion_percentage: 0,
   days_since_opened: 0,
   days_remaining: 90,
-  
+
   created_at: datetime(),
   created_by: "investigation_timeline_system",
   version: 1
@@ -611,33 +571,13 @@ CREATE (realtime_scorer:RealTimeFraudScorer {
   scorer_id: "RT-FRAUD-SCORE-V1",
   scorer_name: "Real-Time Claim Fraud Analyzer",
   
-  // Scoring algorithm
-  scoring_rules: [
-    {
-      rule_id: "MULTI_CLAIM_CHECK",
-      description: "Check for multiple claims by same customer within 6 months",
-      weight: 0.25,
-      query: "MATCH (c:Customer)-[:FILED_CLAIM]->(cl:Claim) WHERE cl.incident_date >= $claim_date - duration({months: 6}) RETURN count(cl) as claim_count"
-    },
-    {
-      rule_id: "VENDOR_REPUTATION_CHECK", 
-      description: "Check vendor reputation and previous fraud associations",
-      weight: 0.20,
-      query: "MATCH (v:RepairShop) WHERE v.vendor_id = $vendor_id RETURN v.rating, EXISTS((v)-[:FLAGGED_AS_SUSPICIOUS]->()) as flagged"
-    },
-    {
-      rule_id: "GEOGRAPHIC_HOTSPOT_CHECK",
-      description: "Check if claim location is in known fraud hotspot",
-      weight: 0.15,
-      query: "MATCH (h:FraudHotspot) WHERE $incident_area CONTAINS h.geographic_area RETURN h.hotspot_risk"
-    },
-    {
-      rule_id: "TEMPORAL_PATTERN_CHECK",
-      description: "Check for suspicious temporal clustering",
-      weight: 0.10,
-      query: "MATCH (c:Claim) WHERE c.incident_date = $incident_date RETURN count(c) as same_day_claims"
-    }
-  ],
+  // Scoring algorithm - stored as JSON string for nested data
+  scoring_rules_json: '[{"rule_id":"MULTI_CLAIM_CHECK","description":"Check for multiple claims by same customer within 6 months","weight":0.25,"query":"MATCH (c:Customer)-[:FILED_CLAIM]->(cl:Claim) WHERE cl.incident_date >= $claim_date - duration({months: 6}) RETURN count(cl) as claim_count"},{"rule_id":"VENDOR_REPUTATION_CHECK","description":"Check vendor reputation and previous fraud associations","weight":0.20,"query":"MATCH (v:RepairShop) WHERE v.vendor_id = $vendor_id RETURN v.rating, EXISTS((v)-[:FLAGGED_AS_SUSPICIOUS]->()) as flagged"},{"rule_id":"GEOGRAPHIC_HOTSPOT_CHECK","description":"Check if claim location is in known fraud hotspot","weight":0.15,"query":"MATCH (h:FraudHotspot) WHERE $incident_area CONTAINS h.geographic_area RETURN h.hotspot_risk"},{"rule_id":"TEMPORAL_PATTERN_CHECK","description":"Check for suspicious temporal clustering","weight":0.10,"query":"MATCH (c:Claim) WHERE c.incident_date = $incident_date RETURN count(c) as same_day_claims"}]',
+
+  // Flattened scoring rules - simple arrays
+  scoring_rule_ids: ["MULTI_CLAIM_CHECK", "VENDOR_REPUTATION_CHECK", "GEOGRAPHIC_HOTSPOT_CHECK", "TEMPORAL_PATTERN_CHECK"],
+  scoring_rule_descriptions: ["Check for multiple claims by same customer within 6 months", "Check vendor reputation and previous fraud associations", "Check if claim location is in known fraud hotspot", "Check for suspicious temporal clustering"],
+  scoring_rule_weights: [0.25, 0.20, 0.15, 0.10],
   
   // Performance metrics
   processing_time_ms: 150,
@@ -698,13 +638,13 @@ CREATE (fraud_dashboard:FraudAnalyticsDashboard {
   cost_per_investigation: 8500.00,
   roi_fraud_prevention: 4.2,  // $4.20 saved per $1 spent
   
-  // Trending patterns
-  fraud_trends: [
-    {trend: "Auto fraud rings", change: "+15%", severity: "Increasing"},
-    {trend: "Vendor collusion", change: "+8%", severity: "Stable"},
-    {trend: "Staged accidents", change: "-5%", severity: "Decreasing"},
-    {trend: "Property arson", change: "+12%", severity: "Concerning"}
-  ],
+  // Trending patterns - stored as JSON string for nested data
+  fraud_trends_json: '[{"trend":"Auto fraud rings","change":"+15%","severity":"Increasing"},{"trend":"Vendor collusion","change":"+8%","severity":"Stable"},{"trend":"Staged accidents","change":"-5%","severity":"Decreasing"},{"trend":"Property arson","change":"+12%","severity":"Concerning"}]',
+
+  // Flattened fraud trends - simple arrays
+  fraud_trend_names: ["Auto fraud rings", "Vendor collusion", "Staged accidents", "Property arson"],
+  fraud_trend_changes: ["+15%", "+8%", "-5%", "+12%"],
+  fraud_trend_severities: ["Increasing", "Stable", "Decreasing", "Concerning"],
   
   // Geographic distribution
   highest_fraud_areas: ["Austin Central", "Dallas North", "Houston Southwest"],
@@ -733,37 +673,59 @@ MATCH (investigation:FraudInvestigation)
 OPTIONAL MATCH (investigator:Investigator)-[:ASSIGNED_TO_CASE]->(investigation)
 OPTIONAL MATCH (investigation)-[:INVESTIGATES]->(fraud_ring:FraudRing)
 
+WITH collect(DISTINCT investigation) AS all_investigations,
+     collect(DISTINCT investigator) AS all_investigators
+
+WITH all_investigations, all_investigators,
+     [i IN all_investigations WHERE i.case_status = "Assigned"] AS assigned_investigations,
+     [i IN all_investigations WHERE i.case_status = "Open"] AS open_investigations,
+     [i IN all_investigations WHERE i.case_status = "Closed"] AS closed_investigations,
+     [i IN all_investigations WHERE i.priority_level = "Critical"] AS critical_investigations,
+     [inv IN all_investigators WHERE inv.current_cases >= inv.case_load_limit] AS overloaded_investigators
+
+// Calculate all aggregate values before CREATE
+WITH all_investigations, all_investigators, assigned_investigations, open_investigations,
+     closed_investigations, critical_investigations, overloaded_investigators,
+     size(all_investigations) AS total_inv_count,
+     size(assigned_investigations) AS assigned_inv_count,
+     size(open_investigations) AS open_inv_count,
+     size(closed_investigations) AS closed_inv_count,
+     reduce(total = 0.0, i IN all_investigations | total + COALESCE(i.estimated_loss, 0.0)) AS calc_total_exposure,
+     reduce(total = 0.0, i IN all_investigations | total + CASE WHEN i.priority_level = "Critical" THEN COALESCE(i.estimated_loss, 0.0) ELSE 0.0 END) AS calc_high_priority_exposure,
+     size(all_investigators) AS total_inv_count_staff,
+     CASE WHEN size(all_investigators) > 0 THEN reduce(total = 0.0, inv IN all_investigators | total + COALESCE(inv.current_cases, 0)) / size(all_investigators) ELSE 0.0 END AS calc_avg_caseload,
+     size(overloaded_investigators) AS overloaded_inv_count,
+     CASE WHEN size(all_investigators) > 0 THEN reduce(total = 0.0, inv IN all_investigators | total + COALESCE(inv.clearance_rate, 0.0)) / size(all_investigators) ELSE 0.0 END AS calc_avg_clearance_rate,
+     size(critical_investigations) AS critical_inv_count
+
 CREATE (status_report:InvestigationStatusReport {
   id: randomUUID(),
   report_id: "INV-STATUS-" + toString(date()),
   report_date: date(),
-  
+
   // Investigation summary
-  total_investigations: count(DISTINCT investigation),
-  active_investigations: size([i IN collect(investigation) WHERE i.case_status = "Assigned"]),
-  pending_investigations: size([i IN collect(investigation) WHERE i.case_status = "Open"]),
-  completed_investigations: size([i IN collect(investigation) WHERE i.case_status = "Closed"]),
-  
+  total_investigations: total_inv_count,
+  active_investigations: assigned_inv_count,
+  pending_investigations: open_inv_count,
+  completed_investigations: closed_inv_count,
+
   // Financial exposure
-  total_exposure: sum(investigation.estimated_loss),
-  high_priority_exposure: sum(CASE WHEN investigation.priority_level = "Critical" 
-                                  THEN investigation.estimated_loss ELSE 0 END),
-                                  
+  total_exposure: calc_total_exposure,
+  high_priority_exposure: calc_high_priority_exposure,
+
   // Investigator workload
-  total_investigators: count(DISTINCT investigator),
-  avg_caseload: avg(investigator.current_cases),
-  overloaded_investigators: size([inv IN collect(investigator) 
-                                 WHERE inv.current_cases >= inv.case_load_limit]),
-  
+  total_investigators: total_inv_count_staff,
+  avg_caseload: calc_avg_caseload,
+  overloaded_investigators: overloaded_inv_count,
+
   // Performance metrics
-  avg_clearance_rate: avg(investigator.clearance_rate),
-  cases_requiring_immediate_attention: size([i IN collect(investigation) 
-                                           WHERE i.priority_level = "Critical"]),
-  
+  avg_clearance_rate: calc_avg_clearance_rate,
+  cases_requiring_immediate_attention: critical_inv_count,
+
   // Timeline analysis
   overdue_milestones: 15,  // Would be calculated from timeline analysis
   avg_days_to_resolution: 72.5,
-  
+
   created_at: datetime(),
   created_by: "investigation_reporting_system",
   version: 1
@@ -781,65 +743,32 @@ CREATE (prevention_plan:FraudPreventionPlan {
   plan_date: date(),
   planning_horizon: "Next 90 Days",
   
-  // Immediate actions (0-30 days)
-  immediate_actions: [
-    {
-      action: "Implement enhanced vendor screening",
-      priority: "High",
-      estimated_cost: 25000,
-      expected_savings: 150000,
-      responsible_team: "Vendor Management",
-      target_date: date() + duration({days: 20})
-    },
-    {
-      action: "Deploy real-time fraud scoring to all claims",
-      priority: "Critical", 
-      estimated_cost: 50000,
-      expected_savings: 300000,
-      responsible_team: "Claims Processing",
-      target_date: date() + duration({days: 15})
-    }
-  ],
-  
-  // Short-term improvements (30-60 days)
-  short_term_improvements: [
-    {
-      action: "Establish fraud investigator training program",
-      priority: "Medium",
-      estimated_cost: 15000,
-      expected_savings: 100000,
-      responsible_team: "Human Resources",
-      target_date: date() + duration({days: 45})
-    },
-    {
-      action: "Create customer fraud education campaign",
-      priority: "Medium",
-      estimated_cost: 20000,
-      expected_savings: 75000,
-      responsible_team: "Marketing",
-      target_date: date() + duration({days: 50})
-    }
-  ],
-  
-  // Strategic initiatives (60-90 days)
-  strategic_initiatives: [
-    {
-      action: "Implement predictive fraud modeling",
-      priority: "High",
-      estimated_cost: 100000,
-      expected_savings: 500000,
-      responsible_team: "Data Science",
-      target_date: date() + duration({days: 80})
-    },
-    {
-      action: "Establish industry fraud data sharing",
-      priority: "Medium",
-      estimated_cost: 30000,
-      expected_savings: 200000,
-      responsible_team: "Compliance",
-      target_date: date() + duration({days: 75})
-    }
-  ],
+  // Immediate actions (0-30 days) - stored as JSON string for nested data
+  immediate_actions_json: '[{"action":"Implement enhanced vendor screening","priority":"High","estimated_cost":25000,"expected_savings":150000,"responsible_team":"Vendor Management","target_days":20},{"action":"Deploy real-time fraud scoring to all claims","priority":"Critical","estimated_cost":50000,"expected_savings":300000,"responsible_team":"Claims Processing","target_days":15}]',
+
+  // Flattened immediate actions - simple arrays
+  immediate_action_names: ["Implement enhanced vendor screening", "Deploy real-time fraud scoring to all claims"],
+  immediate_action_priorities: ["High", "Critical"],
+  immediate_action_costs: [25000, 50000],
+  immediate_action_savings: [150000, 300000],
+
+  // Short-term improvements (30-60 days) - stored as JSON string for nested data
+  short_term_improvements_json: '[{"action":"Establish fraud investigator training program","priority":"Medium","estimated_cost":15000,"expected_savings":100000,"responsible_team":"Human Resources","target_days":45},{"action":"Create customer fraud education campaign","priority":"Medium","estimated_cost":20000,"expected_savings":75000,"responsible_team":"Marketing","target_days":50}]',
+
+  // Flattened short-term improvements - simple arrays
+  short_term_action_names: ["Establish fraud investigator training program", "Create customer fraud education campaign"],
+  short_term_action_priorities: ["Medium", "Medium"],
+  short_term_action_costs: [15000, 20000],
+  short_term_action_savings: [100000, 75000],
+
+  // Strategic initiatives (60-90 days) - stored as JSON string for nested data
+  strategic_initiatives_json: '[{"action":"Implement predictive fraud modeling","priority":"High","estimated_cost":100000,"expected_savings":500000,"responsible_team":"Data Science","target_days":80},{"action":"Establish industry fraud data sharing","priority":"Medium","estimated_cost":30000,"expected_savings":200000,"responsible_team":"Compliance","target_days":75}]',
+
+  // Flattened strategic initiatives - simple arrays
+  strategic_action_names: ["Implement predictive fraud modeling", "Establish industry fraud data sharing"],
+  strategic_action_priorities: ["High", "Medium"],
+  strategic_action_costs: [100000, 30000],
+  strategic_action_savings: [500000, 200000],
   
   // Performance targets
   target_fraud_reduction: 0.25,  // 25% reduction

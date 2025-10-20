@@ -320,22 +320,17 @@ CREATE (contractor1:RepairShop:Vendor {
 ```
 
 ### Step 6: Create Claims Relationships
+
+#### Part A: Customer Filed Claims
 ```cypher
-// Connect claims to customers, policies, and assets
+// Connect claims to customers
 MATCH (claim1:Claim {claim_number: "CLM-AUTO-001234"})
 MATCH (claim2:Claim {claim_number: "CLM-AUTO-002345"})
 MATCH (claim3:Claim {claim_number: "CLM-PROP-003456"})
 MATCH (sarah:Customer {customer_number: "CUST-001234"})
 MATCH (emma:Customer {customer_number: "CUST-001236"})
 MATCH (michael:Customer {customer_number: "CUST-001235"})
-MATCH (sarah_auto:Policy {policy_number: "POL-AUTO-001234"})
-MATCH (emma_auto:Policy {policy_number: "POL-AUTO-001236"})
-MATCH (michael_home:Policy {policy_number: "POL-HOME-001235"})
-MATCH (vehicle1:Vehicle {vin: "1HGBH41JXMN109186"})
-MATCH (vehicle2:Vehicle {vin: "2HGFC2F59MH542789"})
-MATCH (property1:Property {property_id: "PROP-001234"})
 
-// Customer filed claims
 CREATE (sarah)-[:FILED_CLAIM {
   filing_date: date("2024-06-16"),
   filing_method: "Phone",
@@ -356,8 +351,18 @@ CREATE (michael)-[:FILED_CLAIM {
   filing_location: "Emergency Hotline",
   created_at: datetime()
 }]->(claim3)
+```
 
-// Claims involve assets
+#### Part B: Claims Involve Assets
+```cypher
+// Connect claims to assets
+MATCH (claim1:Claim {claim_number: "CLM-AUTO-001234"})
+MATCH (claim2:Claim {claim_number: "CLM-AUTO-002345"})
+MATCH (claim3:Claim {claim_number: "CLM-PROP-003456"})
+MATCH (vehicle1:Vehicle {vin: "1HGBH41JXMN109186"})
+MATCH (vehicle2:Vehicle {vin: "2HGFC2F59MH542789"})
+MATCH (property1:Property {property_id: "PROP-001234"})
+
 CREATE (claim1)-[:INVOLVES_ASSET {
   damage_type: "Collision",
   damage_severity: "Moderate",
@@ -381,8 +386,14 @@ CREATE (claim3)-[:INVOLVES_ASSET {
   total_loss: false,
   created_at: datetime()
 }]->(property1)
+```
 
-// Claims assigned to vendors
+#### Part C: Claims Assigned to Vendors
+```cypher
+// Connect claims to repair vendors
+MATCH (claim1:Claim {claim_number: "CLM-AUTO-001234"})
+MATCH (claim2:Claim {claim_number: "CLM-AUTO-002345"})
+MATCH (claim3:Claim {claim_number: "CLM-PROP-003456"})
 MATCH (repair1:RepairShop {vendor_id: "VEN-REP-001"})
 MATCH (repair2:RepairShop {vendor_id: "VEN-REP-002"})
 MATCH (contractor1:RepairShop {vendor_id: "VEN-CON-001"})
@@ -529,21 +540,17 @@ CREATE (invoice2:Invoice {
 ```
 
 ### Step 9: Create Financial Relationships
+
+#### Part A: Customer Payment Relationships
 ```cypher
-// Connect payments to customers and policies
+// Connect customers to payments
 MATCH (payment1:Payment {payment_id: "PAY-001234"})
 MATCH (payment2:Payment {payment_id: "PAY-002345"})
 MATCH (payment3:Payment {payment_id: "PAY-003456"})
-MATCH (settlement1:Payment {payment_id: "PAY-SETT-001"})
 MATCH (sarah:Customer {customer_number: "CUST-001234"})
 MATCH (michael:Customer {customer_number: "CUST-001235"})
 MATCH (emma:Customer {customer_number: "CUST-001236"})
-MATCH (sarah_auto:Policy {policy_number: "POL-AUTO-001234"})
-MATCH (michael_home:Policy {policy_number: "POL-HOME-001235"})
-MATCH (emma_auto:Policy {policy_number: "POL-AUTO-001236"})
-MATCH (claim2:Claim {claim_number: "CLM-AUTO-002345"})
 
-// Customer payment relationships
 CREATE (sarah)-[:MADE_PAYMENT {
   payment_date: date("2024-07-01"),
   payment_channel: "Online Banking",
@@ -561,8 +568,18 @@ CREATE (emma)-[:MADE_PAYMENT {
   payment_channel: "Auto Pay",
   created_at: datetime()
 }]->(payment3)
+```
 
-// Policy payment applications
+#### Part B: Policy Payment Applications
+```cypher
+// Connect payments to policies
+MATCH (payment1:Payment {payment_id: "PAY-001234"})
+MATCH (payment2:Payment {payment_id: "PAY-002345"})
+MATCH (payment3:Payment {payment_id: "PAY-003456"})
+MATCH (sarah_auto:Policy {policy_number: "POL-AUTO-001234"})
+MATCH (michael_home:Policy {policy_number: "POL-HOME-001235"})
+MATCH (emma_auto:Policy {policy_number: "POL-AUTO-001236"})
+
 CREATE (payment1)-[:APPLIED_TO {
   application_date: date("2024-07-01"),
   amount_applied: 110.00,
@@ -583,8 +600,15 @@ CREATE (payment3)-[:APPLIED_TO {
   remaining_balance: 0.00,
   created_at: datetime()
 }]->(emma_auto)
+```
 
-// Claim settlement relationship
+#### Part C: Claim Settlement Relationships
+```cypher
+// Connect settlements to claims and customers
+MATCH (settlement1:Payment {payment_id: "PAY-SETT-001"})
+MATCH (emma:Customer {customer_number: "CUST-001236"})
+MATCH (claim2:Claim {claim_number: "CLM-AUTO-002345"})
+
 CREATE (settlement1)-[:SETTLES_CLAIM {
   settlement_date: date("2024-07-10"),
   settlement_type: "Full Payment",
