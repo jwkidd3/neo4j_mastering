@@ -600,12 +600,6 @@
 
             <!-- Lab 1 Introduction -->
             <section>
-                <div class="lab-intro">
-                    <h2>🔧 Lab 1 Introduction</h2>
-                    <p>Enterprise Neo4j Setup and Cypher Fundamentals</p>
-                </div>
-            </section>
-
             <!-- CREATE Statement Fundamentals -->
             <section>
                 <h2>Cypher CREATE Statement - Building Your Graph</h2>
@@ -1075,10 +1069,7 @@
 
             <!-- Lab 2 Introduction -->
             <section>
-                <div class="lab-intro">
-                    <h2>🔧 Lab 2 Introduction</h2>
-                    <p>Cypher Query Fundamentals and Network Expansion</p>
-                </div>
+                <h2>Lab 2 Content Coming</h2>
             </section>
 
             <!-- String Operations and Aggregations for Lab 2 -->
@@ -1939,6 +1930,10 @@
                         <li><strong>Advanced Patterns:</strong> Recommendations and fraud detection</li>
                     </ul>
                 </div>
+            </section>
+
+            </section>
+
             </section>
 
             </section>
