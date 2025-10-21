@@ -141,12 +141,30 @@ RETURN datetime() AS created_at,
 ```
 
 ### Step 10: Preview Graph Data Science for Insurance Analytics
+
+**⚠️ Note for Windows Users:** The Graph Data Science (GDS) plugin may not work on Windows. If you encounter issues with GDS, skip this step and refer to **Lab 7** which provides complete alternatives using native Cypher queries.
+
+**If GDS is available:**
 ```cypher
 // List Graph Data Science algorithms relevant to insurance
 CALL gds.list() YIELD name, description
 WHERE name CONTAINS "centrality" OR name CONTAINS "community" OR name CONTAINS "similarity"
 RETURN name, description
 LIMIT 8
+```
+
+**If GDS is NOT available (Windows users):**
+```cypher
+// Explore graph patterns using native Cypher instead
+MATCH (n)
+WITH labels(n) AS nodeTypes, count(n) AS nodeCount
+RETURN nodeTypes[0] AS node_type, nodeCount
+ORDER BY nodeCount DESC
+
+// Note: Lab 7 provides complete alternatives for:
+// - PageRank → Manual influence scoring via relationship counts
+// - Community Detection → Territory analysis via agent groupings
+// - Betweenness Centrality → Bridge analysis via path patterns
 ```
 
 **Insurance Enterprise Advantage:** These algorithms power fraud detection, customer segmentation, risk assessment, and claims network analysis in production insurance systems.

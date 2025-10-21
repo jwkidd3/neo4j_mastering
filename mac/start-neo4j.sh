@@ -25,8 +25,8 @@ else
         -v $HOME/neo4j/import:/var/lib/neo4j/import \
         --env NEO4J_AUTH=neo4j/password \
         --env NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
-        --env NEO4J_dbms_memory_heap_max__size=2G \
-        --env NEO4J_dbms_memory_transaction_total_max=2G \
+        --env NEO4J_dbms_memory_heap_max__size=4G \
+        --env NEO4J_dbms_memory_transaction_total_max=4G \
         --env NEO4J_dbms_security_procedures_unrestricted=apoc.*,gds.* \
         neo4j:5.26.9-enterprise
 

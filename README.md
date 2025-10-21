@@ -40,6 +40,20 @@ neo4j_mastering/
 - 20GB free disk space
 - Internet connection for Docker images
 
+### ⚠️ Important: Windows Users - GDS Compatibility
+
+**The Graph Data Science (GDS) plugin may not work on Windows.** This affects Lab 7 (Graph Algorithms) primarily.
+
+**Solutions:**
+- ✅ Lab 7 includes complete alternative exercises using native Cypher
+- ✅ All learning objectives are achievable without GDS
+- ✅ See [WINDOWS_GDS_GUIDE.md](WINDOWS_GDS_GUIDE.md) for detailed instructions
+
+**Affected Labs:**
+- Lab 1 (Step 10): Minor - just a preview, alternative provided
+- Lab 7: Major - full alternatives provided at beginning of lab
+- Lab 15: None - just configuration reference
+
 ### Step 1: Neo4j Enterprise Setup (Docker)
 
 **Mac/Linux:**
