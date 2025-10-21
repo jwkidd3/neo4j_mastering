@@ -26,8 +26,10 @@ RETURN c.first_name, c.last_name, c.credit_score  // R - RETURN specific data
 
 ```cypher
 // MWR Pattern: Find active auto policies
-MATCH (p:Policy:Auto)
-WHERE p.policy_status = "Active"
+// Note: In Lab 1, policies are created with label Policy:Active
+// The product_type property indicates Auto vs Property
+MATCH (p:Policy:Active)
+WHERE p.product_type = "Auto"
 RETURN p.policy_number, p.annual_premium, p.auto_make, p.auto_model
 ```
 
