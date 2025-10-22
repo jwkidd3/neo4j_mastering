@@ -1,2464 +1,2308 @@
-# Neo4j Lab 12: Python Driver & Service Architecture
+# Neo4j Lab 12: Production Insurance API Development
 
-## Overview
 **Duration:** 45 minutes  
-**Objective:** Build Python applications with Neo4j driver integration, proper architecture patterns, service layers with error handling, and automated testing for graph operations
+**Prerequisites:** Completion of Lab 7 (Python Driver & Service Architecture)  
+**Database State:** Starting with 650 nodes, 800 relationships → Ending with 720 nodes, 900 relationships  
 
-Building on Lab 11's predictive analytics capabilities, you'll now transition from Cypher to Python development, implementing enterprise-grade service architecture patterns that provide robust, scalable, and maintainable applications for insurance operations with comprehensive error handling and testing strategies.
+## Learning Objectives
 
-## Prerequisites
-- Completed Neo4j Labs 1-11
-- Neo4j Enterprise 2025.06.0 running in Docker (container name: neo4j)
-- Python 3.8+ and Jupyter Lab installed
-- Neo4j Python driver (`pip install neo4j`)
+By the end of this lab, you will be able to:
+- Build production-ready RESTful APIs using FastAPI with Neo4j integration
+- Implement secure authentication and authorization systems with JWT tokens
+- Create comprehensive API documentation with OpenAPI specifications
+- Design customer management, policy administration, and claims processing endpoints
+- Handle API security, error responses, and rate limiting for production environments
 
 ---
 
-## 🚀 Lab Environment Setup & Execution Instructions
+## 🛠️ Development Tools Setup & Configuration
 
-### Step 1: Python Environment Setup
+### Prerequisites: Development Environment
 
-**Please refer to the main `README.md` file (Step 2: Python Environment Setup section) for complete Python environment setup instructions including:**
-- Python 3.8+ installation and verification
-- Virtual environment creation and activation
-- Package manager configuration
-- Jupyter Lab installation and setup
+Before starting this lab, ensure you have the following development tools properly configured:
 
-### Step 2: Start Jupyter Lab Environment
+#### 1. **Python Development Environment**
+- **Python 3.8+** (verify with `python --version`)
+- **Virtual Environment** (recommended for project isolation)
+- **Package Manager** (pip, pipenv, or poetry)
 
-**Windows:**
+#### 2. **Jupyter Lab Configuration**
 ```bash
-# Navigate to your lab directory
+# Windows Setup
 cd C:\Users\%USERNAME%\neo4j-labs
-
-# Start Jupyter Lab
+pip install jupyterlab fastapi uvicorn
 jupyter lab
 
-# If Jupyter is not installed
-pip install jupyterlab
-jupyter lab
-```
-
-**Mac:**
-```bash
-# Navigate to your lab directory
+# Mac/Linux Setup  
 cd ~/neo4j-labs
-
-# Start Jupyter Lab
-jupyter lab
-
-# If Jupyter is not installed
-pip install jupyterlab
+pip install jupyterlab fastapi uvicorn
 jupyter lab
 ```
 
-**Expected Result:** Jupyter Lab opens in your browser at `http://localhost:8888`
+#### 3. **Jupyter Lab Development Environment**
+This lab uses **Jupyter Lab** as the primary development tool for interactive API development:
 
-### Step 3: Create New Jupyter Notebook
+**Jupyter Lab Features for API Development:**
+- **Notebook-based development** - Interactive code execution and testing
+- **Built-in terminal** - Package installation and server management
+- **File management** - Organized project structure within the interface
+- **Live code execution** - Real-time API testing and debugging
+- **Markdown documentation** - Integrated documentation alongside code
+- **Variable inspection** - Monitor API responses and data structures
 
-1. In Jupyter Lab, click **"+"** to create new launcher
-2. Select **"Python 3"** notebook
-3. Rename notebook to `neo4j_lab_12_python_integration.ipynb`
-4. Create the following directory structure in Jupyter:
+#### 4. **API Testing in Jupyter Lab**
 
+**Built-in Testing Capabilities:**
+Jupyter Lab provides integrated tools for API development and testing:
+
+**In-Notebook API Testing:**
+```python
+# Test API endpoints directly in notebook cells
+import requests
+response = requests.get("http://localhost:8000/health")
+print(f"Status: {response.status_code}")
+print(f"Response: {response.json()}")
+```
+
+**Terminal-based Testing:**
+```bash
+# Use Jupyter Lab terminal for cURL commands
+curl -X GET "http://localhost:8000/health" -H "accept: application/json"
+
+# Install additional tools if needed
+pip install httpie
+http GET localhost:8000/health
+```
+
+**Interactive Documentation:**
+- FastAPI automatically generates interactive docs at `/docs`
+- Access through Jupyter Lab's built-in browser tabs
+- Test endpoints directly from the documentation interface
+
+#### 5. **Database Development Tools**
+
+**Neo4j Desktop (Primary)**
+- Already configured from previous labs
+- Remote connection to Docker container
+- Query development and testing
+
+**Neo4j Browser (Web Interface)**
+- Access at `http://localhost:7474`
+- Direct Cypher query execution
+- Data visualization
+
+#### 5. **Jupyter Lab Project Setup**
+
+**Create Lab Directory Structure in Jupyter Lab:**
+1. **Open Jupyter Lab** - Navigate to your course directory
+2. **Create new folder** - Right-click in file browser → "New Folder" → Name it "lab_13"
+3. **Create notebook** - Click "+" → "Python 3" → Save as "neo4j_lab_13_insurance_api.ipynb"
+4. **Organize files** - Use Jupyter's file browser to maintain clean structure
+
+**Jupyter Lab File Organization:**
 ```
 neo4j-labs/
-├── lab_12/
-│   ├── neo4j_lab_12_python_integration.ipynb
-│   ├── requirements.txt
-│   └── .env
+├── lab_13/
+│   ├── neo4j_lab_13_insurance_api.ipynb  # Main notebook
+│   ├── requirements.txt                   # Dependencies
+│   ├── .env                              # Environment variables
+│   └── api_tests.ipynb                   # Optional: Separate testing notebook
 ```
 
-### Step 4: Environment Configuration Files
+**Working with Multiple Notebooks:**
+- **Main development** - Primary API implementation notebook
+- **Testing notebook** - Separate notebook for API testing and validation
+- **Documentation** - Markdown cells for comprehensive documentation
+- **File browser** - Easy navigation between related files
+
+---
+
+## 🚀 Lab Environment Setup
+
+### Step 1: Jupyter Lab Environment Preparation
+
+**Launch Jupyter Lab:**
+```bash
+# Windows
+cd C:\Users\%USERNAME%\neo4j-labs
+jupyter lab
+
+# Mac/Linux  
+cd ~/neo4j-labs
+jupyter lab
+```
+
+**Verify Jupyter Lab Setup:**
+- Jupyter Lab opens in browser at `http://localhost:8888`
+- File browser shows your neo4j-labs directory
+- Terminal tab available for command execution
+- Python 3 kernel ready for notebook creation
+
+### Step 2: Create Lab 12 Notebook Structure
+
+**In Jupyter Lab Interface:**
+1. **Create lab_13 folder** using the file browser
+2. **New Python 3 notebook** → Save as `neo4j_lab_13_insurance_api.ipynb`
+3. **Create supporting files** using the built-in text editor:
+
+**Create `requirements.txt` in Jupyter Lab:**
+- Click "+" → "Text File" → Save as "requirements.txt"
+- Copy the dependencies list below into the file
 
 **Create `requirements.txt` file:**
 ```txt
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database
 neo4j==5.26.0
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# Environment & Configuration
 python-dotenv==1.0.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Development & Testing
 pytest==8.0.0
 pytest-asyncio==0.23.0
-pydantic==2.5.0
+httpx==0.26.0
+
+# Documentation
+python-markdown==3.5.1
+jinja2==3.1.2
+
+# Utilities
 typing-extensions==4.9.0
 ```
 
+**Install dependencies using Jupyter Lab terminal:**
+```bash
+# Open terminal in Jupyter Lab (File → New → Terminal)
+cd lab_13
+pip install -r requirements.txt
+
+# Alternative: Install directly in notebook cell
+!pip install -r requirements.txt
+```
+
+### Step 3: Environment Configuration in Jupyter Lab
+
+**Create `.env` file using Jupyter Lab text editor:**
+- Click "+" → "Text File" → Save as ".env"
+- Add the following configuration:
+
 **Create `.env` file:**
 ```env
+# Database Configuration
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=password
 NEO4J_DATABASE=neo4j
-NEO4J_MAX_CONNECTION_LIFETIME=1800
-NEO4J_MAX_POOL_SIZE=50
-NEO4J_ACQUISITION_TIMEOUT=60
-NEO4J_MAX_RETRY_TIME=30
-NEO4J_ENCRYPTED=false
-NEO4J_TRUST=TRUST_ALL_CERTIFICATES
+
+# API Configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+API_DEBUG=True
+API_RELOAD=True
+
+# Security Configuration
+SECRET_KEY=your-secret-key-here-use-openssl-rand-hex-32
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Environment
 ENVIRONMENT=development
 LOG_LEVEL=INFO
+
+# CORS Configuration
+CORS_ORIGINS=["http://localhost:3000", "http://localhost:8080"]
 ```
 
-### Step 5: Verify Python Dependencies
+### Step 4: Development Environment Verification in Jupyter Lab
 
-**Run this in your first Jupyter cell:**
+**Create your first notebook cell to verify the setup:**
 ```python
-# Cell 1: Install and verify dependencies
+# Cell 1: Development environment verification
 import subprocess
 import sys
-import importlib
+import os
+from pathlib import Path
 
-def install_package(package):
-    """Install package using pip"""
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-        print(f"✓ Successfully installed {package}")
-    except subprocess.CalledProcessError as e:
-        print(f"✗ Failed to install {package}: {e}")
-
-def verify_package(package_name, import_name=None):
-    """Verify package is installed and importable"""
-    if import_name is None:
-        import_name = package_name.replace('-', '_')
+def verify_development_environment():
+    """Comprehensive verification of development setup"""
     
-    try:
-        importlib.import_module(import_name)
-        print(f"✓ {package_name} is installed and importable")
-        return True
-    except ImportError:
-        print(f"✗ {package_name} is not available")
+    print("🔧 DEVELOPMENT ENVIRONMENT VERIFICATION")
+    print("=" * 50)
+    
+    # 1. Python version check
+    python_version = sys.version_info
+    print(f"Python Version: {python_version.major}.{python_version.minor}.{python_version.micro}")
+    
+    if python_version >= (3, 8):
+        print("✓ Python version meets requirements (3.8+)")
+    else:
+        print("✗ Python version too old. Please upgrade to 3.8+")
         return False
+    
+    # 2. Required packages verification
+    required_packages = [
+        "fastapi", "uvicorn", "neo4j", "pydantic", 
+        "python_jose", "passlib", "pytest"
+    ]
+    
+    missing_packages = []
+    for package in required_packages:
+        try:
+            __import__(package.replace("-", "_"))
+            print(f"✓ {package} is available")
+        except ImportError:
+            missing_packages.append(package)
+            print(f"✗ {package} is missing")
+    
+    if missing_packages:
+        print(f"\nInstalling missing packages: {', '.join(missing_packages)}")
+        subprocess.check_call([
+            sys.executable, "-m", "pip", "install", 
+            *missing_packages
+        ])
+    
+    # 3. Jupyter Lab setup verification
+    lab_dir = Path("lab_13")
+    if not lab_dir.exists():
+        print("Creating lab directory structure in Jupyter Lab...")
+        lab_dir.mkdir(exist_ok=True)
+        print("✓ Use Jupyter Lab file browser to navigate to lab_13/")
+    else:
+        print("✓ Lab directory structure exists in Jupyter Lab")
+    
+    # 4. Environment file verification  
+    env_file = lab_dir / ".env"
+    if not env_file.exists():
+        print("⚠ Create .env file using Jupyter Lab text editor")
+        print("  Click '+' → 'Text File' → Save as '.env'")
+    else:
+        print("✓ Environment file exists")
+    
+    # 5. Neo4j connection test
+    try:
+        from neo4j import GraphDatabase
+        driver = GraphDatabase.driver(
+            "bolt://localhost:7687", 
+            auth=("neo4j", "password")
+        )
+        with driver.session() as session:
+            result = session.run("RETURN 1 as test")
+            record = result.single()
+            if record and record["test"] == 1:
+                print("✓ Neo4j connection successful")
+            else:
+                print("✗ Neo4j connection test failed")
+        driver.close()
+    except Exception as e:
+        print(f"✗ Neo4j connection failed: {e}")
+        return False
+    
+    print("\n🎯 DEVELOPMENT ENVIRONMENT READY")
+    print("All prerequisites verified successfully!")
+    return True
 
-# Required packages for this lab
-required_packages = [
-    ("neo4j", "neo4j"),
-    ("python-dotenv", "dotenv"),
-    ("pytest", "pytest"),
-    ("pydantic", "pydantic"),
-    ("typing-extensions", "typing_extensions")
-]
-
-print("DEPENDENCY VERIFICATION:")
-print("=" * 50)
-
-all_available = True
-for package_name, import_name in required_packages:
-    if not verify_package(package_name, import_name):
-        print(f"Installing {package_name}...")
-        install_package(package_name)
-        all_available = False
-
-if all_available:
-    print("\n✓ All dependencies are ready!")
-else:
-    print("\n⚠ Some dependencies were installed. Restart kernel and re-run this cell.")
-
-print("=" * 50)
+# Run verification
+verify_development_environment()
 ```
 
 ---
 
-## 🔧 Part 1: Neo4j Driver Architecture & Connection Management
+## 📋 Lab Overview
 
-### Cell 2: Environment Setup and Configuration
+In this lab, you'll build a comprehensive insurance API platform that exposes your Neo4j-powered insurance system through secure, well-documented REST endpoints. Building on the service architecture from Lab 11, you'll create production-ready APIs that handle customer management, policy administration, claims processing, and business analytics.
+
+### 🎯 Lab Components
+
+1. **FastAPI Application Setup** - Modern Python web framework configuration
+2. **Authentication System** - JWT-based security with role-based access
+3. **Customer Management APIs** - Complete CRUD operations with search capabilities
+4. **Policy Administration** - Policy lifecycle management endpoints
+5. **Claims Processing** - Claims submission and tracking workflows
+6. **Analytics Endpoints** - Business intelligence and reporting APIs
+7. **API Documentation** - Interactive OpenAPI documentation
+8. **Testing Framework** - Automated API testing suite
+
+---
+
+## 🔧 Part 1: FastAPI Application Foundation
+
+### Cell 2: Core Application Setup
 ```python
-# Cell 2: Environment configuration and connection setup
+# Cell 2: FastAPI application foundation
 import os
+from pathlib import Path
 from dotenv import load_dotenv
-from neo4j import GraphDatabase
-import logging
-from typing import Optional, Dict, Any, List
-import time
-import json
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any
+from datetime import datetime, timedelta
+import uvicorn
 
-# Load environment configuration
-load_dotenv()
+# Load environment variables
+load_dotenv("lab_13/.env")
 
-# Neo4j connection configuration from environment
-NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-NEO4J_USERNAME = os.getenv("NEO4J_USERNAME", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
-NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "neo4j")
-
-# Additional connection configuration from environment
-NEO4J_MAX_CONNECTION_LIFETIME = int(os.getenv("NEO4J_MAX_CONNECTION_LIFETIME", 1800))
-NEO4J_MAX_POOL_SIZE = int(os.getenv("NEO4J_MAX_POOL_SIZE", 50))
-NEO4J_ACQUISITION_TIMEOUT = int(os.getenv("NEO4J_ACQUISITION_TIMEOUT", 60))
-NEO4J_MAX_RETRY_TIME = int(os.getenv("NEO4J_MAX_RETRY_TIME", 30))
-NEO4J_ENCRYPTED = os.getenv("NEO4J_ENCRYPTED", "false").lower() == "true"
-NEO4J_TRUST = os.getenv("NEO4J_TRUST", "TRUST_ALL_CERTIFICATES")
-
-# Configure logging for debugging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+# FastAPI application configuration
+app = FastAPI(
+    title="Neo4j Insurance API",
+    description="Production-ready insurance management API built with Neo4j and FastAPI",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
-logger = logging.getLogger(__name__)
 
-print("🔧 ENVIRONMENT CONFIGURATION:")
-print("=" * 50)
-print(f"Neo4j URI: {NEO4J_URI}")
-print(f"Database: {NEO4J_DATABASE}")
-print(f"Username: {NEO4J_USERNAME}")
-print(f"Password: {'*' * len(NEO4J_PASSWORD)}")
-print(f"Max Connection Lifetime: {NEO4J_MAX_CONNECTION_LIFETIME}s")
-print(f"Max Pool Size: {NEO4J_MAX_POOL_SIZE}")
-print(f"Acquisition Timeout: {NEO4J_ACQUISITION_TIMEOUT}s")
-print(f"Max Retry Time: {NEO4J_MAX_RETRY_TIME}s")
-print(f"Encrypted: {NEO4J_ENCRYPTED}")
-print(f"Trust: {NEO4J_TRUST}")
-print("=" * 50)
+# CORS middleware configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:8080", "http://localhost:8000"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allow_headers=["*"],
+)
 
-# Test basic connection using loaded configuration
-try:
-    test_driver = GraphDatabase.driver(
-        NEO4J_URI, 
-        auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
-        max_connection_lifetime=NEO4J_MAX_CONNECTION_LIFETIME,
-        max_connection_pool_size=NEO4J_MAX_POOL_SIZE,
-        connection_acquisition_timeout=NEO4J_ACQUISITION_TIMEOUT,
-        encrypted=NEO4J_ENCRYPTED,
-        trust=NEO4J_TRUST
-    )
-    with test_driver.session(database=NEO4J_DATABASE) as session:
-        result = session.run("RETURN 'Connection successful' as message")
-        message = result.single()["message"]
-        print(f"✓ Connection Test: {message}")
-    test_driver.close()
-except Exception as e:
-    print(f"✗ Connection Failed: {e}")
-    print("\n🔍 TROUBLESHOOTING STEPS:")
-    print("1. Verify Docker container 'neo4j' is running: docker ps")
-    print("2. Check container logs: docker logs neo4j")
-    print("3. Restart container if needed: docker restart neo4j")
-    print("4. Verify port 7687 is not blocked by firewall")
+# Global configuration
+CONFIG = {
+    "neo4j_uri": os.getenv("NEO4J_URI", "bolt://localhost:7687"),
+    "neo4j_username": os.getenv("NEO4J_USERNAME", "neo4j"),
+    "neo4j_password": os.getenv("NEO4J_PASSWORD", "password"),
+    "neo4j_database": os.getenv("NEO4J_DATABASE", "neo4j"),
+    "secret_key": os.getenv("SECRET_KEY", "your-secret-key"),
+    "algorithm": os.getenv("ALGORITHM", "HS256"),
+    "access_token_expire_minutes": int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")),
+    "api_host": os.getenv("API_HOST", "0.0.0.0"),
+    "api_port": int(os.getenv("API_PORT", "8000"))
+}
+
+print("✓ FastAPI application configured")
+print(f"✓ Database URI: {CONFIG['neo4j_uri']}")
+print(f"✓ API will run on {CONFIG['api_host']}:{CONFIG['api_port']}")
 ```
 
-### Cell 3: Enterprise Connection Manager Implementation
+### Cell 3: Database Connection Manager
 ```python
-# Cell 3: Production-grade connection manager
-from typing import Optional, Dict, Any, List, Callable
-import time
-import threading
+# Cell 3: Enhanced database connection manager for API
+from neo4j import GraphDatabase
 from contextlib import contextmanager
+import logging
 
-class Neo4jConnectionManager:
-    """
-    Enterprise-grade Neo4j connection manager with:
-    - Connection pooling and retry logic
-    - Health monitoring and metrics
-    - Thread-safe operations
-    - Graceful error handling
-    """
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class APIConnectionManager:
+    """Production-grade Neo4j connection manager for API applications"""
     
-    def __init__(self, uri: str, username: str, password: str, database: str = "neo4j"):
+    def __init__(self, uri: str, username: str, password: str, database: str):
         self.uri = uri
         self.username = username
         self.password = password
         self.database = database
-        self._driver = None
-        self._connection_attempts = 0
-        self._successful_queries = 0
-        self._failed_queries = 0
-        self._lock = threading.Lock()
-        
-        # Load connection configuration from environment or use defaults
-        self.config = {
-            "max_connection_lifetime": int(os.getenv("NEO4J_MAX_CONNECTION_LIFETIME", 30 * 60)),
-            "max_connection_pool_size": int(os.getenv("NEO4J_MAX_POOL_SIZE", 50)),
-            "connection_acquisition_timeout": int(os.getenv("NEO4J_ACQUISITION_TIMEOUT", 60)),
-            "max_retry_time": int(os.getenv("NEO4J_MAX_RETRY_TIME", 30)),
-            "encrypted": os.getenv("NEO4J_ENCRYPTED", "false").lower() == "true",
-            "trust": os.getenv("NEO4J_TRUST", "TRUST_ALL_CERTIFICATES")
-        }
-        
-        self._initialize_driver()
+        self.driver = None
+        self._connect()
     
-    def _initialize_driver(self):
-        """Initialize Neo4j driver with retry logic"""
-        max_attempts = 3
-        retry_delay = 2
-        
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self._connection_attempts += 1
-                logger.info(f"Initializing driver (attempt {attempt}/{max_attempts})")
-                
-                self._driver = GraphDatabase.driver(
-                    self.uri,
-                    auth=(self.username, self.password),
-                    **self.config
-                )
-                
-                # Verify connection
-                with self._driver.session(database=self.database) as session:
-                    session.run("RETURN 1").single()
-                
-                logger.info("✓ Driver initialized successfully")
-                return
-                
-            except Exception as e:
-                logger.error(f"Connection attempt {attempt} failed: {e}")
-                if attempt < max_attempts:
-                    time.sleep(retry_delay)
-                    retry_delay *= 2  # Exponential backoff
-                else:
-                    raise Exception(f"Failed to connect after {max_attempts} attempts: {e}")
+    def _connect(self):
+        """Establish connection with retry logic"""
+        try:
+            self.driver = GraphDatabase.driver(
+                self.uri,
+                auth=(self.username, self.password),
+                max_connection_lifetime=1800,  # 30 minutes
+                max_connection_pool_size=50,
+                connection_acquisition_timeout=60,
+                encrypted=False
+            )
+            # Verify connectivity
+            with self.driver.session(database=self.database) as session:
+                session.run("RETURN 1").consume()
+            logger.info("✓ Neo4j connection established successfully")
+        except Exception as e:
+            logger.error(f"✗ Failed to connect to Neo4j: {e}")
+            raise
     
     @contextmanager
     def get_session(self):
         """Context manager for database sessions"""
-        session = None
+        session = self.driver.session(database=self.database)
         try:
-            if not self._driver:
-                self._initialize_driver()
-            
-            session = self._driver.session(database=self.database)
             yield session
-            
-        except Exception as e:
-            logger.error(f"Session error: {e}")
-            raise
         finally:
-            if session:
-                session.close()
+            session.close()
     
-    def execute_query(self, query: str, parameters: Optional[Dict[str, Any]] = None, retry_count: int = 3):
-        """Execute query with retry logic and error handling"""
-        parameters = parameters or {}
-        
-        for attempt in range(1, retry_count + 1):
-            try:
-                with self.get_session() as session:
-                    start_time = time.time()
-                    result = session.run(query, parameters)
-                    records = [record for record in result]
-                    execution_time = time.time() - start_time
-                    
-                    self._successful_queries += 1
-                    logger.debug(f"Query executed successfully in {execution_time:.3f}s")
-                    return records
-                    
-            except Exception as e:
-                self._failed_queries += 1
-                logger.error(f"Query attempt {attempt} failed: {e}")
-                
-                if attempt < retry_count:
-                    wait_time = 2 ** attempt  # Exponential backoff
-                    logger.info(f"Retrying in {wait_time} seconds...")
-                    time.sleep(wait_time)
-                else:
-                    raise Exception(f"Query failed after {retry_count} attempts: {e}")
-    
-    def execute_write_transaction(self, transaction_function: Callable, **kwargs):
-        """Execute write transaction with proper error handling"""
+    def execute_query(self, query: str, parameters: Dict = None):
+        """Execute a single query with error handling"""
         try:
             with self.get_session() as session:
-                return session.execute_write(transaction_function, **kwargs)
+                result = session.run(query, parameters or {})
+                return [record.data() for record in result]
         except Exception as e:
-            logger.error(f"Write transaction failed: {e}")
-            raise
+            logger.error(f"Query execution failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Database query failed: {str(e)}"
+            )
     
-    def execute_read_transaction(self, transaction_function: Callable, **kwargs):
-        """Execute read transaction with proper error handling"""
+    def execute_write_query(self, query: str, parameters: Dict = None):
+        """Execute write query with transaction handling"""
         try:
             with self.get_session() as session:
-                return session.execute_read(transaction_function, **kwargs)
+                result = session.write_transaction(
+                    lambda tx: tx.run(query, parameters or {}).data()
+                )
+                return result
         except Exception as e:
-            logger.error(f"Read transaction failed: {e}")
-            raise
+            logger.error(f"Write query execution failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Database write operation failed: {str(e)}"
+            )
     
     def health_check(self) -> Dict[str, Any]:
-        """Comprehensive health check with metrics"""
+        """Comprehensive database health check"""
         try:
-            start_time = time.time()
-            
             with self.get_session() as session:
-                # Basic connectivity test
-                result = session.run("RETURN datetime() as server_time, 'healthy' as status")
-                record = result.single()
+                # Connection test
+                start_time = datetime.now()
+                session.run("RETURN 1").consume()
+                response_time = (datetime.now() - start_time).total_seconds() * 1000
                 
-                # Get database info
-                db_info = session.run("""
-                    CALL dbms.components() YIELD name, versions, edition
-                    RETURN name, versions[0] as version, edition
-                """).single()
-                
-                # Get basic statistics
-                stats = session.run("""
-                    MATCH (n) 
-                    RETURN count(n) as node_count
-                    UNION ALL
-                    MATCH ()-[r]->() 
-                    RETURN count(r) as relationship_count
-                """).data()
-                
-                response_time = time.time() - start_time
+                # Database statistics
+                stats_result = session.run("""
+                    CALL apoc.meta.stats() YIELD nodeCount, relCount, labelCount, relTypeCount
+                    RETURN nodeCount, relCount, labelCount, relTypeCount
+                """)
+                stats = stats_result.single()
                 
                 return {
                     "status": "healthy",
-                    "server_time": str(record["server_time"]),
-                    "database": {
-                        "name": db_info["name"],
-                        "version": db_info["version"],
-                        "edition": db_info["edition"]
-                    },
+                    "response_time_ms": round(response_time, 2),
+                    "database": self.database,
                     "statistics": {
-                        "nodes": stats[0]["node_count"] if stats else 0,
-                        "relationships": stats[1]["relationship_count"] if len(stats) > 1 else 0
-                    },
-                    "connection_metrics": {
-                        "connection_attempts": self._connection_attempts,
-                        "successful_queries": self._successful_queries,
-                        "failed_queries": self._failed_queries,
-                        "response_time_ms": round(response_time * 1000, 2)
+                        "total_nodes": stats["nodeCount"] if stats else 0,
+                        "total_relationships": stats["relCount"] if stats else 0,
+                        "label_count": stats["labelCount"] if stats else 0,
+                        "relationship_types": stats["relTypeCount"] if stats else 0
                     }
                 }
-                
         except Exception as e:
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "connection_metrics": {
-                    "connection_attempts": self._connection_attempts,
-                    "successful_queries": self._successful_queries,
-                    "failed_queries": self._failed_queries
-                }
+                "database": self.database
             }
     
     def close(self):
-        """Close driver connection"""
-        if self._driver:
-            self._driver.close()
-            logger.info("Driver connection closed")
+        """Close database connection"""
+        if self.driver:
+            self.driver.close()
+            logger.info("✓ Database connection closed")
 
 # Initialize connection manager
-print("🚀 INITIALIZING CONNECTION MANAGER:")
-print("=" * 50)
+connection_manager = APIConnectionManager(
+    uri=CONFIG["neo4j_uri"],
+    username=CONFIG["neo4j_username"],
+    password=CONFIG["neo4j_password"],
+    database=CONFIG["neo4j_database"]
+)
 
-try:
-    connection_manager = Neo4jConnectionManager(
-        uri=NEO4J_URI,
-        username=NEO4J_USERNAME,
-        password=NEO4J_PASSWORD,
-        database=NEO4J_DATABASE
-    )
-    
-    print("✓ Connection manager initialized successfully")
-    
-    # Perform health check
-    health_status = connection_manager.health_check()
-    print(f"✓ Health check status: {health_status['status']}")
-    
-    if health_status['status'] == 'healthy':
-        print(f"✓ Database: {health_status['database']['name']} {health_status['database']['version']}")
-        print(f"✓ Nodes: {health_status['statistics']['nodes']}")
-        print(f"✓ Relationships: {health_status['statistics']['relationships']}")
-        print(f"✓ Response time: {health_status['connection_metrics']['response_time_ms']}ms")
-    else:
-        print(f"✗ Health check failed: {health_status.get('error', 'Unknown error')}")
-    
-except Exception as e:
-    print(f"✗ Failed to initialize connection manager: {e}")
-    print("\n🔍 TROUBLESHOOTING:")
-    print("1. Ensure Neo4j Docker container is running")
-    print("2. Check network connectivity to port 7687")
-    print("3. Verify credentials are correct")
-    print("4. Check Docker container logs for errors")
-
-print("=" * 50)
+print("✓ API-specific database connection manager initialized")
 ```
 
----
-
-## 📊 Part 2: Pydantic Data Models & Type Safety
-
-### Cell 4: Insurance Data Models with Validation
+### Cell 4: Pydantic Models for API
 ```python
-# Cell 4: Pydantic models for type safety and validation
-from pydantic import BaseModel, Field, validator, EmailStr
-from typing import Optional, List, Dict, Any, Literal
+# Cell 4: Comprehensive Pydantic models for API requests/responses
+from pydantic import BaseModel, Field, EmailStr, validator
+from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 from enum import Enum
-import uuid
 
-print("📊 CREATING PYDANTIC DATA MODELS:")
-print("=" * 50)
-
-# Enums for controlled values
+# Enum definitions
 class PolicyStatus(str, Enum):
     ACTIVE = "Active"
-    INACTIVE = "Inactive"
+    PENDING = "Pending"
+    EXPIRED = "Expired"
     CANCELLED = "Cancelled"
-    SUSPENDED = "Suspended"
-
-class PolicyType(str, Enum):
-    AUTO = "Auto"
-    HOME = "Homeowner"
-    LIFE = "Life"
-    HEALTH = "Health"
-    COMMERCIAL = "Commercial"
 
 class ClaimStatus(str, Enum):
-    FILED = "Filed"
-    INVESTIGATING = "Investigating"
+    SUBMITTED = "Submitted"
+    UNDER_REVIEW = "Under Review"
     APPROVED = "Approved"
-    DENIED = "Denied"
+    REJECTED = "Rejected"
     SETTLED = "Settled"
 
-class RiskLevel(str, Enum):
-    LOW = "Low Risk"
-    MEDIUM = "Medium Risk"
-    HIGH = "High Risk"
-    VERY_HIGH = "Very High Risk"
+class UserRole(str, Enum):
+    CUSTOMER = "customer"
+    AGENT = "agent"
+    ADJUSTER = "adjuster"
+    ADMIN = "admin"
 
-# Base model with common fields
-class BaseEntity(BaseModel):
-    """Base model with common entity fields"""
-    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: Optional[datetime] = Field(default_factory=datetime.now)
-    updated_at: Optional[datetime] = Field(default_factory=datetime.now)
-    version: Optional[int] = Field(default=1)
-    
-    class Config:
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            date: lambda v: v.isoformat()
-        }
+# Authentication models
+class UserLogin(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=6)
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user_id: str
+    role: UserRole
+
+class UserProfile(BaseModel):
+    user_id: str
+    username: str
+    email: EmailStr
+    full_name: str
+    role: UserRole
+    is_active: bool = True
+    created_date: datetime
 
 # Customer models
-class CustomerBase(BaseModel):
-    """Base customer model"""
-    customer_id: str = Field(..., description="Unique customer identifier")
+class CustomerCreate(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=50)
     last_name: str = Field(..., min_length=1, max_length=50)
     email: EmailStr
-    phone: Optional[str] = Field(None, regex=r'^\+?1?\d{9,15}$')
+    phone: str = Field(..., regex=r"^\+?1?\d{9,15}$")
     date_of_birth: date
-    
-    @validator('customer_id')
-    def customer_id_format(cls, v):
-        if not v.startswith('CUST-'):
-            raise ValueError('Customer ID must start with CUST-')
-        return v
+    address: str = Field(..., min_length=10, max_length=200)
+    city: str = Field(..., min_length=2, max_length=50)
+    state: str = Field(..., min_length=2, max_length=50)
+    zip_code: str = Field(..., regex=r"^\d{5}(-\d{4})?$")
     
     @validator('date_of_birth')
     def validate_age(cls, v):
-        today = date.today()
-        age = today.year - v.year - ((today.month, today.day) < (v.month, v.day))
-        if age < 18 or age > 120:
-            raise ValueError('Customer must be between 18 and 120 years old')
+        if v > date.today():
+            raise ValueError('Date of birth cannot be in the future')
+        age = (date.today() - v).days / 365.25
+        if age < 18:
+            raise ValueError('Customer must be at least 18 years old')
         return v
 
-class CustomerCreate(CustomerBase):
-    """Model for creating new customers"""
-    initial_contact_method: Optional[str] = "Web"
-    referral_source: Optional[str] = None
+class CustomerUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
 
-class Customer(BaseEntity, CustomerBase):
-    """Complete customer model"""
-    customer_since: Optional[date] = None
-    total_policies: Optional[int] = Field(default=0, ge=0)
-    total_claims: Optional[int] = Field(default=0, ge=0)
-    customer_value: Optional[float] = Field(default=0.0, ge=0)
-    risk_score: Optional[float] = Field(default=0.0, ge=0, le=100)
+class CustomerResponse(BaseModel):
+    customer_id: str
+    first_name: str
+    last_name: str
+    email: str
+    phone: str
+    date_of_birth: date
+    address: str
+    city: str
+    state: str
+    zip_code: str
+    customer_since: datetime
+    total_policies: int = 0
+    total_premium: float = 0.0
+    risk_score: Optional[float] = None
 
 # Policy models
-class PolicyBase(BaseModel):
-    """Base policy model"""
-    policy_number: str = Field(..., description="Unique policy identifier")
-    policy_type: PolicyType
+class PolicyCreate(BaseModel):
     customer_id: str
-    effective_date: date
-    expiration_date: date
-    premium_amount: float = Field(..., gt=0, description="Monthly premium amount")
-    coverage_amount: float = Field(..., gt=0, description="Total coverage amount")
-    deductible: Optional[float] = Field(default=0, ge=0)
+    product_name: str = Field(..., min_length=1, max_length=100)
+    coverage_amount: float = Field(..., gt=0, le=10000000)
+    premium_amount: float = Field(..., gt=0, le=100000)
+    policy_term_months: int = Field(..., ge=1, le=360)
+    deductible: float = Field(..., ge=0, le=50000)
     
-    @validator('policy_number')
-    def policy_number_format(cls, v):
-        if not (v.startswith('POL-') and len(v) >= 8):
-            raise ValueError('Policy number must start with POL- and be at least 8 characters')
-        return v
-    
-    @validator('expiration_date')
-    def expiration_after_effective(cls, v, values):
-        if 'effective_date' in values and v <= values['effective_date']:
-            raise ValueError('Expiration date must be after effective date')
-        return v
+    @validator('premium_amount', 'coverage_amount', 'deductible')
+    def round_currency(cls, v):
+        return round(v, 2)
 
-class PolicyCreate(PolicyBase):
-    """Model for creating new policies"""
-    agent_id: Optional[str] = None
-    underwriting_notes: Optional[str] = None
+class PolicyUpdate(BaseModel):
+    coverage_amount: Optional[float] = None
+    premium_amount: Optional[float] = None
+    deductible: Optional[float] = None
+    status: Optional[PolicyStatus] = None
 
-class Policy(BaseEntity, PolicyBase):
-    """Complete policy model"""
-    policy_status: PolicyStatus = PolicyStatus.ACTIVE
-    last_payment_date: Optional[date] = None
-    next_payment_due: Optional[date] = None
-    claims_count: Optional[int] = Field(default=0, ge=0)
-    total_claims_amount: Optional[float] = Field(default=0.0, ge=0)
-
-# Claim models
-class ClaimBase(BaseModel):
-    """Base claim model"""
-    claim_number: str = Field(..., description="Unique claim identifier")
+class PolicyResponse(BaseModel):
+    policy_id: str
     policy_number: str
-    claim_date: date
+    customer_id: str
+    customer_name: str
+    product_name: str
+    status: PolicyStatus
+    coverage_amount: float
+    premium_amount: float
+    deductible: float
+    policy_term_months: int
+    start_date: date
+    end_date: date
+    created_date: datetime
+
+# Claims models
+class ClaimCreate(BaseModel):
+    policy_id: str
     incident_date: date
-    claim_amount: float = Field(..., gt=0)
+    claim_amount: float = Field(..., gt=0, le=10000000)
     description: str = Field(..., min_length=10, max_length=1000)
-    
-    @validator('claim_number')
-    def claim_number_format(cls, v):
-        if not (v.startswith('CLM-') and len(v) >= 8):
-            raise ValueError('Claim number must start with CLM- and be at least 8 characters')
-        return v
+    incident_type: str = Field(..., min_length=1, max_length=50)
+    location: str = Field(..., min_length=5, max_length=200)
     
     @validator('incident_date')
-    def incident_before_claim(cls, v, values):
-        if 'claim_date' in values and v > values['claim_date']:
-            raise ValueError('Incident date cannot be after claim date')
+    def validate_incident_date(cls, v):
+        if v > date.today():
+            raise ValueError('Incident date cannot be in the future')
+        if v < date.today() - timedelta(days=365):
+            raise ValueError('Incident date cannot be more than 1 year ago')
         return v
 
-class ClaimCreate(ClaimBase):
-    """Model for creating new claims"""
-    adjuster_id: Optional[str] = None
-    priority: Optional[Literal["Low", "Medium", "High", "Critical"]] = "Medium"
+class ClaimUpdate(BaseModel):
+    claim_amount: Optional[float] = None
+    description: Optional[str] = None
+    status: Optional[ClaimStatus] = None
 
-class Claim(BaseEntity, ClaimBase):
-    """Complete claim model"""
-    claim_status: ClaimStatus = ClaimStatus.FILED
-    adjuster_id: Optional[str] = None
-    settlement_amount: Optional[float] = Field(default=0.0, ge=0)
-    settlement_date: Optional[date] = None
-    investigation_notes: Optional[str] = None
+class ClaimResponse(BaseModel):
+    claim_id: str
+    claim_number: str
+    policy_id: str
+    policy_number: str
+    customer_name: str
+    status: ClaimStatus
+    claim_amount: float
+    incident_date: date
+    filed_date: datetime
+    description: str
+    incident_type: str
+    location: str
+    adjuster_name: Optional[str] = None
 
-# Risk Assessment model
-class RiskAssessment(BaseEntity):
-    """Risk assessment model"""
-    customer_id: str
-    assessment_date: date
-    risk_level: RiskLevel
-    risk_score: float = Field(..., ge=0, le=100)
-    factors: List[str] = Field(default_factory=list)
-    recommendations: List[str] = Field(default_factory=list)
-    next_review_date: Optional[date] = None
+# Analytics models
+class CustomerAnalytics(BaseModel):
+    total_customers: int
+    new_customers_this_month: int
+    average_customer_value: float
+    top_customers_by_premium: List[Dict[str, Any]]
 
-# Test data model validation
-print("🧪 TESTING DATA MODEL VALIDATION:")
+class PolicyAnalytics(BaseModel):
+    total_policies: int
+    active_policies: int
+    total_premium_collected: float
+    average_policy_value: float
+    policies_by_status: Dict[str, int]
 
-try:
-    # Valid customer
-    customer_data = {
-        "customer_id": "CUST-123456",
-        "first_name": "John",
-        "last_name": "Smith",
-        "email": "john.smith@email.com",
-        "phone": "+1234567890",
-        "date_of_birth": "1985-03-15"
-    }
-    customer = Customer(**customer_data)
-    print("✓ Customer model validation passed")
-    
-    # Valid policy
-    policy_data = {
-        "policy_number": "POL-AUTO-001",
-        "policy_type": "Auto",
-        "customer_id": "CUST-123456",
-        "effective_date": "2025-01-01",
-        "expiration_date": "2026-01-01",
-        "premium_amount": 150.00,
-        "coverage_amount": 25000.00,
-        "deductible": 500.00
-    }
-    policy = Policy(**policy_data)
-    print("✓ Policy model validation passed")
-    
-    # Valid claim
-    claim_data = {
-        "claim_number": "CLM-2025-001",
-        "policy_number": "POL-AUTO-001",
-        "claim_date": "2025-07-18",
-        "incident_date": "2025-07-17",
-        "claim_amount": 2500.00,
-        "description": "Minor fender bender in parking lot with damage to rear bumper"
-    }
-    claim = Claim(**claim_data)
-    print("✓ Claim model validation passed")
-    
-    print("✓ All data models validated successfully")
-    
-except Exception as e:
-    print(f"✗ Model validation failed: {e}")
+class ClaimAnalytics(BaseModel):
+    total_claims: int
+    pending_claims: int
+    total_claim_amount: float
+    average_claim_amount: float
+    claims_by_status: Dict[str, int]
 
-print("=" * 50)
+# Response wrapper models
+class APIResponse(BaseModel):
+    success: bool = True
+    message: str = "Operation completed successfully"
+    data: Optional[Any] = None
+    errors: Optional[List[str]] = None
+
+class PaginatedResponse(BaseModel):
+    items: List[Any]
+    total: int
+    page: int = 1
+    per_page: int = 10
+    pages: int
+
+print("✓ Comprehensive Pydantic models defined")
+print("✓ Input validation and response formatting ready")
 ```
 
----
-
-## 🏗️ Part 3: Repository Pattern Implementation
-
-### Cell 5: Abstract Repository Base Class
+### Cell 5: Authentication System
 ```python
-# Cell 5: Repository pattern implementation
-from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Any, TypeVar, Generic
-import json
+# Cell 5: JWT-based authentication system
+from fastapi import HTTPException, Depends, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+from datetime import datetime, timedelta
+import secrets
 
-print("🏗️ IMPLEMENTING REPOSITORY PATTERN:")
-print("=" * 50)
+# Security configuration
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer()
 
-T = TypeVar('T', bound=BaseModel)
-
-class AbstractRepository(ABC, Generic[T]):
-    """Abstract base repository for common database operations"""
+class AuthenticationManager:
+    """Handles JWT authentication and authorization"""
     
-    def __init__(self, connection_manager: Neo4jConnectionManager):
-        self.connection_manager = connection_manager
-        self.logger = logging.getLogger(self.__class__.__name__)
+    def __init__(self, secret_key: str, algorithm: str = "HS256"):
+        self.secret_key = secret_key
+        self.algorithm = algorithm
     
-    @abstractmethod
-    def create(self, entity: T) -> T:
-        """Create a new entity"""
-        pass
+    def create_access_token(self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None):
+        """Create JWT access token"""
+        to_encode = data.copy()
+        
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(minutes=CONFIG["access_token_expire_minutes"])
+        
+        to_encode.update({"exp": expire})
+        encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+        
+        return {
+            "access_token": encoded_jwt,
+            "token_type": "bearer",
+            "expires_in": int(expires_delta.total_seconds()) if expires_delta else CONFIG["access_token_expire_minutes"] * 60,
+            "user_id": data.get("sub"),
+            "role": data.get("role")
+        }
     
-    @abstractmethod
-    def get_by_id(self, entity_id: str) -> Optional[T]:
-        """Get entity by ID"""
-        pass
-    
-    @abstractmethod
-    def update(self, entity: T) -> T:
-        """Update existing entity"""
-        pass
-    
-    @abstractmethod
-    def delete(self, entity_id: str) -> bool:
-        """Delete entity by ID"""
-        pass
-    
-    @abstractmethod
-    def list_all(self, limit: int = 100, offset: int = 0) -> List[T]:
-        """List all entities with pagination"""
-        pass
-    
-    def execute_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-        """Execute raw query and return results"""
+    def verify_token(self, token: str) -> Dict[str, Any]:
+        """Verify and decode JWT token"""
         try:
-            records = self.connection_manager.execute_query(query, parameters)
-            return [record.data() for record in records]
-        except Exception as e:
-            self.logger.error(f"Query execution failed: {e}")
-            raise
-
-class CustomerRepository(AbstractRepository[Customer]):
-    """Repository for customer operations"""
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            return payload
+        except JWTError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
     
-    def create(self, customer: CustomerCreate) -> Customer:
-        """Create a new customer in Neo4j"""
-        query = """
-        CREATE (c:Customer {
-            customerId: $customer_id,
-            firstName: $first_name,
-            lastName: $last_name,
+    def hash_password(self, password: str) -> str:
+        """Hash password using bcrypt"""
+        return pwd_context.hash(password)
+    
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        """Verify password against hash"""
+        return pwd_context.verify(plain_password, hashed_password)
+
+# Initialize authentication manager
+auth_manager = AuthenticationManager(CONFIG["secret_key"], CONFIG["algorithm"])
+
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
+    """Dependency to get current authenticated user"""
+    return auth_manager.verify_token(credentials.credentials)
+
+def require_role(required_role: UserRole):
+    """Dependency factory for role-based access control"""
+    def role_checker(current_user: Dict[str, Any] = Depends(get_current_user)):
+        user_role = current_user.get("role")
+        if user_role != required_role.value and user_role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied. Required role: {required_role.value}"
+            )
+        return current_user
+    return role_checker
+
+# Create demo users in database
+def create_demo_users():
+    """Create demo users for API testing"""
+    demo_users = [
+        {
+            "user_id": "user_001",
+            "username": "admin",
+            "email": "admin@insurance.com",
+            "full_name": "System Administrator",
+            "password_hash": auth_manager.hash_password("admin123"),
+            "role": "admin",
+            "is_active": True
+        },
+        {
+            "user_id": "user_002", 
+            "username": "agent1",
+            "email": "agent1@insurance.com",
+            "full_name": "John Agent",
+            "password_hash": auth_manager.hash_password("agent123"),
+            "role": "agent",
+            "is_active": True
+        },
+        {
+            "user_id": "user_003",
+            "username": "customer1",
+            "email": "customer1@email.com", 
+            "full_name": "Jane Customer",
+            "password_hash": auth_manager.hash_password("customer123"),
+            "role": "customer",
+            "is_active": True
+        }
+    ]
+    
+    for user_data in demo_users:
+        create_user_query = """
+        MERGE (u:User {user_id: $user_id})
+        SET u += {
+            username: $username,
             email: $email,
-            phone: $phone,
-            dateOfBirth: date($date_of_birth),
-            customerSince: date(),
-            totalPolicies: 0,
-            totalClaims: 0,
-            customerValue: 0.0,
-            riskScore: 50.0,
-            initialContactMethod: $initial_contact_method,
-            referralSource: $referral_source,
-            createdAt: datetime(),
-            updatedAt: datetime(),
-            version: 1
-        })
-        RETURN c
-        """
-        
-        parameters = {
-            "customer_id": customer.customer_id,
-            "first_name": customer.first_name,
-            "last_name": customer.last_name,
-            "email": customer.email,
-            "phone": customer.phone,
-            "date_of_birth": customer.date_of_birth.isoformat(),
-            "initial_contact_method": customer.initial_contact_method,
-            "referral_source": customer.referral_source
+            full_name: $full_name,
+            password_hash: $password_hash,
+            role: $role,
+            is_active: $is_active,
+            created_date: datetime()
         }
-        
-        try:
-            result = self.execute_query(query, parameters)
-            if result:
-                customer_data = result[0]['c']
-                return Customer(**self._neo4j_to_dict(customer_data))
-            else:
-                raise Exception("Failed to create customer")
-        except Exception as e:
-            self.logger.error(f"Customer creation failed: {e}")
-            raise
-    
-    def get_by_id(self, customer_id: str) -> Optional[Customer]:
-        """Get customer by ID"""
-        query = """
-        MATCH (c:Customer {customerId: $customer_id})
-        RETURN c
+        RETURN u.username as username
         """
         
-        try:
-            result = self.execute_query(query, {"customer_id": customer_id})
-            if result:
-                customer_data = result[0]['c']
-                return Customer(**self._neo4j_to_dict(customer_data))
-            return None
-        except Exception as e:
-            self.logger.error(f"Customer retrieval failed: {e}")
-            raise
-    
-    def update(self, customer: Customer) -> Customer:
-        """Update existing customer"""
-        query = """
-        MATCH (c:Customer {customerId: $customer_id})
-        SET c.firstName = $first_name,
-            c.lastName = $last_name,
-            c.email = $email,
-            c.phone = $phone,
-            c.updatedAt = datetime(),
-            c.version = c.version + 1
-        RETURN c
-        """
-        
-        parameters = {
-            "customer_id": customer.customer_id,
-            "first_name": customer.first_name,
-            "last_name": customer.last_name,
-            "email": customer.email,
-            "phone": customer.phone
-        }
-        
-        try:
-            result = self.execute_query(query, parameters)
-            if result:
-                customer_data = result[0]['c']
-                return Customer(**self._neo4j_to_dict(customer_data))
-            else:
-                raise Exception("Customer not found for update")
-        except Exception as e:
-            self.logger.error(f"Customer update failed: {e}")
-            raise
-    
-    def delete(self, customer_id: str) -> bool:
-        """Delete customer by ID"""
-        query = """
-        MATCH (c:Customer {customerId: $customer_id})
-        DETACH DELETE c
-        RETURN count(c) as deleted_count
-        """
-        
-        try:
-            result = self.execute_query(query, {"customer_id": customer_id})
-            return result[0]['deleted_count'] > 0 if result else False
-        except Exception as e:
-            self.logger.error(f"Customer deletion failed: {e}")
-            raise
-    
-    def list_all(self, limit: int = 100, offset: int = 0) -> List[Customer]:
-        """List all customers with pagination"""
-        query = """
-        MATCH (c:Customer)
-        RETURN c
-        ORDER BY c.lastName, c.firstName
-        SKIP $offset
-        LIMIT $limit
-        """
-        
-        try:
-            result = self.execute_query(query, {"limit": limit, "offset": offset})
-            return [Customer(**self._neo4j_to_dict(record['c'])) for record in result]
-        except Exception as e:
-            self.logger.error(f"Customer listing failed: {e}")
-            raise
-    
-    def search_by_email(self, email: str) -> Optional[Customer]:
-        """Search customer by email"""
-        query = """
-        MATCH (c:Customer {email: $email})
-        RETURN c
-        """
-        
-        try:
-            result = self.execute_query(query, {"email": email})
-            if result:
-                customer_data = result[0]['c']
-                return Customer(**self._neo4j_to_dict(customer_data))
-            return None
-        except Exception as e:
-            self.logger.error(f"Customer email search failed: {e}")
-            raise
-    
-    def get_customer_stats(self, customer_id: str) -> Dict[str, Any]:
-        """Get comprehensive customer statistics"""
-        query = """
-        MATCH (c:Customer {customerId: $customer_id})
-        OPTIONAL MATCH (c)-[:HOLDS]->(p:Policy)
-        OPTIONAL MATCH (p)-[:COVERS]->(cl:Claim)
-        RETURN c,
-               count(DISTINCT p) as policy_count,
-               count(DISTINCT cl) as claim_count,
-               sum(p.premiumAmount) as total_premiums,
-               sum(cl.claimAmount) as total_claims_amount
-        """
-        
-        try:
-            result = self.execute_query(query, {"customer_id": customer_id})
-            if result:
-                record = result[0]
-                return {
-                    "customer": Customer(**self._neo4j_to_dict(record['c'])),
-                    "statistics": {
-                        "policy_count": record['policy_count'] or 0,
-                        "claim_count": record['claim_count'] or 0,
-                        "total_premiums": float(record['total_premiums'] or 0),
-                        "total_claims_amount": float(record['total_claims_amount'] or 0)
-                    }
-                }
-            return None
-        except Exception as e:
-            self.logger.error(f"Customer stats retrieval failed: {e}")
-            raise
-    
-    def _neo4j_to_dict(self, neo4j_node) -> Dict[str, Any]:
-        """Convert Neo4j node to dictionary with proper type conversion"""
-        data = dict(neo4j_node)
-        
-        # Convert Neo4j field names to Python model field names
-        field_mapping = {
-            'customerId': 'customer_id',
-            'firstName': 'first_name',
-            'lastName': 'last_name',
-            'dateOfBirth': 'date_of_birth',
-            'customerSince': 'customer_since',
-            'totalPolicies': 'total_policies',
-            'totalClaims': 'total_claims',
-            'customerValue': 'customer_value',
-            'riskScore': 'risk_score',
-            'createdAt': 'created_at',
-            'updatedAt': 'updated_at'
-        }
-        
-        converted_data = {}
-        for neo4j_key, value in data.items():
-            python_key = field_mapping.get(neo4j_key, neo4j_key)
-            converted_data[python_key] = value
-        
-        return converted_data
+        result = connection_manager.execute_write_query(create_user_query, user_data)
+        if result:
+            print(f"✓ Demo user created: {user_data['username']}")
 
-# Initialize repository
-print("🏗️ INITIALIZING CUSTOMER REPOSITORY:")
+create_demo_users()
+print("✓ Authentication system configured")
+print("✓ Demo users created (admin/admin123, agent1/agent123, customer1/customer123)")
+```
 
-try:
-    customer_repo = CustomerRepository(connection_manager)
-    print("✓ Customer repository initialized successfully")
+### Cell 6: Authentication Endpoints
+```python
+# Cell 6: Authentication API endpoints
+@app.post("/auth/login", response_model=Token, tags=["Authentication"])
+async def login(login_data: UserLogin):
+    """Authenticate user and return JWT token"""
     
-    # Test repository with sample data
-    sample_customer = CustomerCreate(
-        customer_id="CUST-TEST-001",
-        first_name="Test",
-        last_name="Customer",
-        email="test.customer@example.com",
-        phone="+1234567890",
-        date_of_birth=date(1990, 1, 1),
-        initial_contact_method="Lab Testing",
-        referral_source="Unit Test"
+    # Query user from database
+    query = """
+    MATCH (u:User {username: $username, is_active: true})
+    RETURN u.user_id as user_id, u.username as username, u.email as email,
+           u.full_name as full_name, u.password_hash as password_hash, 
+           u.role as role, u.created_date as created_date
+    """
+    
+    result = connection_manager.execute_query(query, {"username": login_data.username})
+    
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password"
+        )
+    
+    user = result[0]
+    
+    # Verify password
+    if not auth_manager.verify_password(login_data.password, user["password_hash"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password"
+        )
+    
+    # Create access token
+    token_data = {
+        "sub": user["user_id"],
+        "username": user["username"],
+        "role": user["role"],
+        "email": user["email"]
+    }
+    
+    token = auth_manager.create_access_token(token_data)
+    
+    return Token(**token)
+
+@app.get("/auth/profile", response_model=UserProfile, tags=["Authentication"])
+async def get_profile(current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Get current user profile"""
+    
+    query = """
+    MATCH (u:User {user_id: $user_id})
+    RETURN u.user_id as user_id, u.username as username, u.email as email,
+           u.full_name as full_name, u.role as role, u.is_active as is_active,
+           u.created_date as created_date
+    """
+    
+    result = connection_manager.execute_query(query, {"user_id": current_user["sub"]})
+    
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User profile not found"
+        )
+    
+    user = result[0]
+    return UserProfile(**user)
+
+@app.post("/auth/logout", tags=["Authentication"])
+async def logout(current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Logout user (client should discard token)"""
+    return APIResponse(message=f"User {current_user['username']} logged out successfully")
+
+print("✓ Authentication endpoints configured")
+```
+
+### Cell 7: Customer Management APIs
+```python
+# Cell 7: Customer management API endpoints
+@app.post("/customers", response_model=CustomerResponse, tags=["Customer Management"])
+async def create_customer(
+    customer_data: CustomerCreate,
+    current_user: Dict[str, Any] = Depends(require_role(UserRole.AGENT))
+):
+    """Create new customer"""
+    
+    # Check if customer with email already exists
+    check_query = """
+    MATCH (c:Customer {email: $email})
+    RETURN c.customer_id as customer_id
+    """
+    
+    existing = connection_manager.execute_query(check_query, {"email": customer_data.email})
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Customer with this email already exists"
+        )
+    
+    # Create new customer
+    customer_id = f"CUST_{secrets.token_hex(6).upper()}"
+    
+    create_query = """
+    CREATE (c:Customer {
+        customer_id: $customer_id,
+        first_name: $first_name,
+        last_name: $last_name,
+        email: $email,
+        phone: $phone,
+        date_of_birth: date($date_of_birth),
+        address: $address,
+        city: $city,
+        state: $state,
+        zip_code: $zip_code,
+        customer_since: datetime(),
+        created_by: $created_by,
+        risk_score: 0.5
+    })
+    RETURN c
+    """
+    
+    customer_dict = customer_data.dict()
+    customer_dict.update({
+        "customer_id": customer_id,
+        "created_by": current_user["sub"],
+        "date_of_birth": customer_data.date_of_birth.isoformat()
+    })
+    
+    result = connection_manager.execute_write_query(create_query, customer_dict)
+    
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create customer"
+        )
+    
+    # Return created customer with additional stats
+    return_query = """
+    MATCH (c:Customer {customer_id: $customer_id})
+    OPTIONAL MATCH (c)-[:HAS_POLICY]->(p:Policy)
+    RETURN c.customer_id as customer_id,
+           c.first_name as first_name,
+           c.last_name as last_name, 
+           c.email as email,
+           c.phone as phone,
+           c.date_of_birth as date_of_birth,
+           c.address as address,
+           c.city as city,
+           c.state as state,
+           c.zip_code as zip_code,
+           c.customer_since as customer_since,
+           c.risk_score as risk_score,
+           count(p) as total_policies,
+           coalesce(sum(p.premium_amount), 0.0) as total_premium
+    """
+    
+    result = connection_manager.execute_query(return_query, {"customer_id": customer_id})
+    return CustomerResponse(**result[0])
+
+@app.get("/customers/{customer_id}", response_model=CustomerResponse, tags=["Customer Management"])
+async def get_customer(
+    customer_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Get customer by ID"""
+    
+    query = """
+    MATCH (c:Customer {customer_id: $customer_id})
+    OPTIONAL MATCH (c)-[:HAS_POLICY]->(p:Policy {status: 'Active'})
+    RETURN c.customer_id as customer_id,
+           c.first_name as first_name,
+           c.last_name as last_name,
+           c.email as email,
+           c.phone as phone,
+           c.date_of_birth as date_of_birth,
+           c.address as address,
+           c.city as city,
+           c.state as state,
+           c.zip_code as zip_code,
+           c.customer_since as customer_since,
+           c.risk_score as risk_score,
+           count(p) as total_policies,
+           coalesce(sum(p.premium_amount), 0.0) as total_premium
+    """
+    
+    result = connection_manager.execute_query(query, {"customer_id": customer_id})
+    
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Customer not found"
+        )
+    
+    return CustomerResponse(**result[0])
+
+@app.get("/customers", response_model=PaginatedResponse, tags=["Customer Management"])
+async def list_customers(
+    page: int = 1,
+    per_page: int = 10,
+    search: Optional[str] = None,
+    state: Optional[str] = None,
+    current_user: Dict[str, Any] = Depends(require_role(UserRole.AGENT))
+):
+    """List customers with pagination and filtering"""
+    
+    # Build WHERE clause for filtering
+    where_conditions = []
+    params = {}
+    
+    if search:
+        where_conditions.append(
+            "(toLower(c.first_name) CONTAINS toLower($search) OR "
+            "toLower(c.last_name) CONTAINS toLower($search) OR "
+            "toLower(c.email) CONTAINS toLower($search))"
+        )
+        params["search"] = search
+    
+    if state:
+        where_conditions.append("c.state = $state")
+        params["state"] = state
+    
+    where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+    
+    # Count total customers
+    count_query = f"""
+    MATCH (c:Customer)
+    {where_clause}
+    RETURN count(c) as total
+    """
+    
+    total_result = connection_manager.execute_query(count_query, params)
+    total = total_result[0]["total"]
+    
+    # Get paginated customers
+    skip = (page - 1) * per_page
+    params.update({"skip": skip, "limit": per_page})
+    
+    list_query = f"""
+    MATCH (c:Customer)
+    {where_clause}
+    OPTIONAL MATCH (c)-[:HAS_POLICY]->(p:Policy {{'status': 'Active'}})
+    RETURN c.customer_id as customer_id,
+           c.first_name as first_name,
+           c.last_name as last_name,
+           c.email as email,
+           c.phone as phone,
+           c.date_of_birth as date_of_birth,
+           c.address as address,
+           c.city as city,
+           c.state as state,
+           c.zip_code as zip_code,
+           c.customer_since as customer_since,
+           c.risk_score as risk_score,
+           count(p) as total_policies,
+           coalesce(sum(p.premium_amount), 0.0) as total_premium
+    ORDER BY c.customer_since DESC
+    SKIP $skip LIMIT $limit
+    """
+    
+    result = connection_manager.execute_query(list_query, params)
+    customers = [CustomerResponse(**record) for record in result]
+    
+    return PaginatedResponse(
+        items=customers,
+        total=total,
+        page=page,
+        per_page=per_page,
+        pages=(total + per_page - 1) // per_page
+    )
+
+@app.put("/customers/{customer_id}", response_model=CustomerResponse, tags=["Customer Management"])
+async def update_customer(
+    customer_id: str,
+    update_data: CustomerUpdate,
+    current_user: Dict[str, Any] = Depends(require_role(UserRole.AGENT))
+):
+    """Update customer information"""
+    
+    # Check if customer exists
+    check_query = """
+    MATCH (c:Customer {customer_id: $customer_id})
+    RETURN c.customer_id as customer_id
+    """
+    
+    existing = connection_manager.execute_query(check_query, {"customer_id": customer_id})
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Customer not found"
+        )
+    
+    # Build SET clause for updates
+    update_fields = {k: v for k, v in update_data.dict().items() if v is not None}
+    
+    if not update_fields:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No valid fields to update"
+        )
+    
+    # Create SET clause
+    set_clauses = [f"c.{field} = ${field}" for field in update_fields.keys()]
+    set_clause = "SET " + ", ".join(set_clauses)
+    set_clause += ", c.last_updated = datetime(), c.updated_by = $updated_by"
+    
+    update_fields.update({
+        "customer_id": customer_id,
+        "updated_by": current_user["sub"]
+    })
+    
+    update_query = f"""
+    MATCH (c:Customer {{customer_id: $customer_id}})
+    {set_clause}
+    RETURN c
+    """
+    
+    connection_manager.execute_write_query(update_query, update_fields)
+    
+    # Return updated customer
+    return await get_customer(customer_id, current_user)
+
+print("✓ Customer management API endpoints configured")
+print("✓ CRUD operations with validation and pagination ready")
+```
+
+### Cell 8: Policy Management APIs
+```python
+# Cell 8: Policy management API endpoints
+@app.post("/policies", response_model=PolicyResponse, tags=["Policy Management"])
+async def create_policy(
+    policy_data: PolicyCreate,
+    current_user: Dict[str, Any] = Depends(require_role(UserRole.AGENT))
+):
+    """Create new insurance policy"""
+    
+    # Verify customer exists
+    customer_check = """
+    MATCH (c:Customer {customer_id: $customer_id})
+    RETURN c.customer_id as customer_id, 
+           c.first_name + ' ' + c.last_name as customer_name
+    """
+    
+    customer_result = connection_manager.execute_query(
+        customer_check, 
+        {"customer_id": policy_data.customer_id}
     )
     
-    print("✓ Sample customer model created")
-    print("✓ Repository pattern implementation complete")
+    if not customer_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Customer not found"
+        )
     
-except Exception as e:
-    print(f"✗ Repository initialization failed: {e}")
+    customer_name = customer_result[0]["customer_name"]
+    
+    # Generate policy ID and number
+    policy_id = f"POL_{secrets.token_hex(6).upper()}"
+    policy_number = f"INS-{datetime.now().year}-{secrets.token_hex(4).upper()}"
+    
+    # Calculate dates
+    start_date = date.today()
+    end_date = start_date + timedelta(days=30 * policy_data.policy_term_months)
+    
+    # Create policy
+    create_query = """
+    MATCH (c:Customer {customer_id: $customer_id})
+    CREATE (p:Policy {
+        policy_id: $policy_id,
+        policy_number: $policy_number,
+        product_name: $product_name,
+        status: 'Active',
+        coverage_amount: $coverage_amount,
+        premium_amount: $premium_amount,
+        deductible: $deductible,
+        policy_term_months: $policy_term_months,
+        start_date: date($start_date),
+        end_date: date($end_date),
+        created_date: datetime(),
+        created_by: $created_by
+    })
+    CREATE (c)-[:HAS_POLICY]->(p)
+    RETURN p
+    """
+    
+    policy_dict = policy_data.dict()
+    policy_dict.update({
+        "policy_id": policy_id,
+        "policy_number": policy_number,
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "created_by": current_user["sub"]
+    })
+    
+    result = connection_manager.execute_write_query(create_query, policy_dict)
+    
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create policy"
+        )
+    
+    # Return created policy
+    return PolicyResponse(
+        policy_id=policy_id,
+        policy_number=policy_number,
+        customer_id=policy_data.customer_id,
+        customer_name=customer_name,
+        product_name=policy_data.product_name,
+        status=PolicyStatus.ACTIVE,
+        coverage_amount=policy_data.coverage_amount,
+        premium_amount=policy_data.premium_amount,
+        deductible=policy_data.deductible,
+        policy_term_months=policy_data.policy_term_months,
+        start_date=start_date,
+        end_date=end_date,
+        created_date=datetime.now()
+    )
 
-print("=" * 50)
+@app.get("/policies/{policy_id}", response_model=PolicyResponse, tags=["Policy Management"])
+async def get_policy(
+    policy_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Get policy by ID"""
+    
+    query = """
+    MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy {policy_id: $policy_id})
+    RETURN p.policy_id as policy_id,
+           p.policy_number as policy_number,
+           c.customer_id as customer_id,
+           c.first_name + ' ' + c.last_name as customer_name,
+           p.product_name as product_name,
+           p.status as status,
+           p.coverage_amount as coverage_amount,
+           p.premium_amount as premium_amount,
+           p.deductible as deductible,
+           p.policy_term_months as policy_term_months,
+           p.start_date as start_date,
+           p.end_date as end_date,
+           p.created_date as created_date
+    """
+    
+    result = connection_manager.execute_query(query, {"policy_id": policy_id})
+    
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Policy not found"
+        )
+    
+    return PolicyResponse(**result[0])
+
+@app.get("/policies", response_model=PaginatedResponse, tags=["Policy Management"])
+async def list_policies(
+    page: int = 1,
+    per_page: int = 10,
+    status: Optional[PolicyStatus] = None,
+    customer_id: Optional[str] = None,
+    current_user: Dict[str, Any] = Depends(require_role(UserRole.AGENT))
+):
+    """List policies with pagination and filtering"""
+    
+    # Build WHERE clause
+    where_conditions = []
+    params = {}
+    
+    if status:
+        where_conditions.append("p.status = $status")
+        params["status"] = status.value
+    
+    if customer_id:
+        where_conditions.append("c.customer_id = $customer_id")
+        params["customer_id"] = customer_id
+    
+    where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+    
+    # Count total policies
+    count_query = f"""
+    MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy)
+    {where_clause}
+    RETURN count(p) as total
+    """
+    
+    total_result = connection_manager.execute_query(count_query, params)
+    total = total_result[0]["total"]
+    
+    # Get paginated policies
+    skip = (page - 1) * per_page
+    params.update({"skip": skip, "limit": per_page})
+    
+    list_query = f"""
+    MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy)
+    {where_clause}
+    RETURN p.policy_id as policy_id,
+           p.policy_number as policy_number,
+           c.customer_id as customer_id,
+           c.first_name + ' ' + c.last_name as customer_name,
+           p.product_name as product_name,
+           p.status as status,
+           p.coverage_amount as coverage_amount,
+           p.premium_amount as premium_amount,
+           p.deductible as deductible,
+           p.policy_term_months as policy_term_months,
+           p.start_date as start_date,
+           p.end_date as end_date,
+           p.created_date as created_date
+    ORDER BY p.created_date DESC
+    SKIP $skip LIMIT $limit
+    """
+    
+    result = connection_manager.execute_query(list_query, params)
+    policies = [PolicyResponse(**record) for record in result]
+    
+    return PaginatedResponse(
+        items=policies,
+        total=total,
+        page=page,
+        per_page=per_page,
+        pages=(total + per_page - 1) // per_page
+    )
+
+print("✓ Policy management API endpoints configured")
 ```
 
----
-
-## 🔧 Part 4: Service Layer Implementation
-
-### Cell 6: Insurance Business Logic Service
+### Cell 9: Claims Processing APIs
 ```python
-# Cell 6: Service layer with business logic
-from typing import List, Dict, Any, Optional
-from datetime import datetime, date, timedelta
-import uuid
-
-print("🔧 IMPLEMENTING SERVICE LAYER:")
-print("=" * 50)
-
-class InsuranceService:
+# Cell 9: Claims processing API endpoints
+@app.post("/claims", response_model=ClaimResponse, tags=["Claims Processing"])
+async def create_claim(
+    claim_data: ClaimCreate,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Submit new insurance claim"""
+    
+    # Verify policy exists and is active
+    policy_check = """
+    MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy {policy_id: $policy_id})
+    WHERE p.status = 'Active' AND p.start_date <= date() AND p.end_date >= date()
+    RETURN p.policy_id as policy_id,
+           p.policy_number as policy_number,
+           c.first_name + ' ' + c.last_name as customer_name,
+           p.coverage_amount as coverage_amount,
+           p.deductible as deductible
     """
-    Service layer implementing insurance business logic
-    Handles complex operations involving multiple entities
+    
+    policy_result = connection_manager.execute_query(
+        policy_check,
+        {"policy_id": claim_data.policy_id}
+    )
+    
+    if not policy_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Active policy not found"
+        )
+    
+    policy_info = policy_result[0]
+    
+    # Validate claim amount against coverage
+    if claim_data.claim_amount > policy_info["coverage_amount"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Claim amount exceeds policy coverage limit of ${policy_info['coverage_amount']:,.2f}"
+        )
+    
+    # Generate claim ID and number
+    claim_id = f"CLM_{secrets.token_hex(6).upper()}"
+    claim_number = f"CLM-{datetime.now().year}-{secrets.token_hex(4).upper()}"
+    
+    # Create claim
+    create_query = """
+    MATCH (p:Policy {policy_id: $policy_id})
+    CREATE (cl:Claim {
+        claim_id: $claim_id,
+        claim_number: $claim_number,
+        status: 'Submitted',
+        claim_amount: $claim_amount,
+        incident_date: date($incident_date),
+        filed_date: datetime(),
+        description: $description,
+        incident_type: $incident_type,
+        location: $location,
+        filed_by: $filed_by
+    })
+    CREATE (p)-[:HAS_CLAIM]->(cl)
+    RETURN cl
     """
     
-    def __init__(self, connection_manager: Neo4jConnectionManager):
-        self.connection_manager = connection_manager
-        self.customer_repo = CustomerRepository(connection_manager)
-        self.logger = logging.getLogger(self.__class__.__name__)
+    claim_dict = claim_data.dict()
+    claim_dict.update({
+        "claim_id": claim_id,
+        "claim_number": claim_number,
+        "incident_date": claim_data.incident_date.isoformat(),
+        "filed_by": current_user["sub"]
+    })
     
-    def create_customer_with_policy(self, customer_data: CustomerCreate, policy_data: PolicyCreate) -> Dict[str, Any]:
-        """Create customer and initial policy in a single transaction"""
-        
-        def create_transaction(tx):
-            # Create customer
-            customer_query = """
-            CREATE (c:Customer {
-                customerId: $customer_id,
-                firstName: $first_name,
-                lastName: $last_name,
-                email: $email,
-                phone: $phone,
-                dateOfBirth: date($date_of_birth),
-                customerSince: date(),
-                totalPolicies: 1,
-                totalClaims: 0,
-                customerValue: $premium_amount,
-                riskScore: 50.0,
-                createdAt: datetime(),
-                updatedAt: datetime(),
-                version: 1
-            })
-            RETURN c
-            """
-            
-            # Create policy
-            policy_query = """
-            MATCH (c:Customer {customerId: $customer_id})
-            CREATE (p:Policy {
-                policyNumber: $policy_number,
-                policyType: $policy_type,
-                customerId: $customer_id,
-                effectiveDate: date($effective_date),
-                expirationDate: date($expiration_date),
-                premiumAmount: $premium_amount,
-                coverageAmount: $coverage_amount,
-                deductible: $deductible,
-                policyStatus: 'Active',
-                claimsCount: 0,
-                totalClaimsAmount: 0.0,
-                createdAt: datetime(),
-                updatedAt: datetime(),
-                version: 1
-            })
-            CREATE (c)-[:HOLDS]->(p)
-            RETURN p
-            """
-            
-            # Execute customer creation
-            customer_result = tx.run(customer_query, {
-                "customer_id": customer_data.customer_id,
-                "first_name": customer_data.first_name,
-                "last_name": customer_data.last_name,
-                "email": customer_data.email,
-                "phone": customer_data.phone,
-                "date_of_birth": customer_data.date_of_birth.isoformat(),
-                "premium_amount": policy_data.premium_amount
-            })
-            
-            # Execute policy creation
-            policy_result = tx.run(policy_query, {
-                "customer_id": customer_data.customer_id,
-                "policy_number": policy_data.policy_number,
-                "policy_type": policy_data.policy_type.value,
-                "effective_date": policy_data.effective_date.isoformat(),
-                "expiration_date": policy_data.expiration_date.isoformat(),
-                "premium_amount": policy_data.premium_amount,
-                "coverage_amount": policy_data.coverage_amount,
-                "deductible": policy_data.deductible or 0
-            })
-            
-            customer_record = customer_result.single()
-            policy_record = policy_result.single()
-            
-            return {
-                "customer": dict(customer_record["c"]),
-                "policy": dict(policy_record["p"])
-            }
-        
-        try:
-            result = self.connection_manager.execute_write_transaction(create_transaction)
-            
-            # Create audit record
-            self._create_audit_record("customer_policy_creation", customer_data.customer_id)
-            
-            self.logger.info(f"Customer and policy created successfully: {customer_data.customer_id}")
-            return result
-            
-        except Exception as e:
-            self.logger.error(f"Customer/policy creation failed: {e}")
-            raise Exception(f"Failed to create customer and policy: {e}")
+    result = connection_manager.execute_write_query(create_query, claim_dict)
     
-    def process_claim(self, claim_data: ClaimCreate) -> Dict[str, Any]:
-        """Process a new insurance claim with business logic"""
-        
-        # Validate policy exists and is active
-        policy_check_query = """
-        MATCH (p:Policy {policyNumber: $policy_number})
-        WHERE p.policyStatus = 'Active'
-        RETURN p.coverageAmount as coverage, p.deductible as deductible
-        """
-        
-        try:
-            policy_result = self.connection_manager.execute_query(
-                policy_check_query, 
-                {"policy_number": claim_data.policy_number}
-            )
-            
-            if not policy_result:
-                raise Exception(f"Policy {claim_data.policy_number} not found or inactive")
-            
-            policy_info = policy_result[0]
-            coverage_amount = float(policy_info['coverage'])
-            deductible = float(policy_info['deductible'])
-            
-            # Validate claim amount doesn't exceed coverage
-            if claim_data.claim_amount > coverage_amount:
-                raise Exception(f"Claim amount ${claim_data.claim_amount} exceeds coverage ${coverage_amount}")
-            
-            # Calculate potential payout (claim amount minus deductible)
-            potential_payout = max(0, claim_data.claim_amount - deductible)
-            
-            # Create claim with business logic
-            def create_claim_transaction(tx):
-                create_claim_query = """
-                MATCH (p:Policy {policyNumber: $policy_number})
-                MATCH (c:Customer {customerId: p.customerId})
-                CREATE (cl:Claim {
-                    claimNumber: $claim_number,
-                    policyNumber: $policy_number,
-                    claimDate: date($claim_date),
-                    incidentDate: date($incident_date),
-                    claimAmount: $claim_amount,
-                    description: $description,
-                    claimStatus: 'Filed',
-                    potentialPayout: $potential_payout,
-                    priority: $priority,
-                    createdAt: datetime(),
-                    updatedAt: datetime(),
-                    version: 1
-                })
-                CREATE (p)-[:COVERS]->(cl)
-                
-                // Update policy statistics
-                SET p.claimsCount = p.claimsCount + 1,
-                    p.totalClaimsAmount = p.totalClaimsAmount + $claim_amount,
-                    p.updatedAt = datetime()
-                
-                // Update customer statistics  
-                SET c.totalClaims = c.totalClaims + 1,
-                    c.updatedAt = datetime()
-                
-                RETURN cl, p, c
-                """
-                
-                result = tx.run(create_claim_query, {
-                    "claim_number": claim_data.claim_number,
-                    "policy_number": claim_data.policy_number,
-                    "claim_date": claim_data.claim_date.isoformat(),
-                    "incident_date": claim_data.incident_date.isoformat(),
-                    "claim_amount": claim_data.claim_amount,
-                    "description": claim_data.description,
-                    "potential_payout": potential_payout,
-                    "priority": getattr(claim_data, 'priority', 'Medium')
-                })
-                
-                return result.single()
-            
-            result = self.connection_manager.execute_write_transaction(create_claim_transaction)
-            
-            # Create audit record
-            self._create_audit_record("claim_creation", claim_data.claim_number)
-            
-            self.logger.info(f"Claim processed successfully: {claim_data.claim_number}")
-            
-            return {
-                "claim": dict(result["cl"]),
-                "policy": dict(result["p"]),
-                "customer": dict(result["c"]),
-                "business_analysis": {
-                    "potential_payout": potential_payout,
-                    "deductible_applied": deductible,
-                    "coverage_utilization": (claim_data.claim_amount / coverage_amount) * 100
-                }
-            }
-            
-        except Exception as e:
-            self.logger.error(f"Claim processing failed: {e}")
-            raise
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create claim"
+        )
     
-    def calculate_customer_risk_score(self, customer_id: str) -> Dict[str, Any]:
-        """Calculate comprehensive risk score for customer"""
-        risk_query = """
-        MATCH (c:Customer {customerId: $customer_id})
-        OPTIONAL MATCH (c)-[:HOLDS]->(p:Policy)-[:COVERS]->(cl:Claim)
-        WITH c, 
-             count(DISTINCT p) as policy_count,
-             count(DISTINCT cl) as claim_count,
-             sum(cl.claimAmount) as total_claims,
-             sum(p.premiumAmount) as total_premiums
-        
-        // Calculate risk factors
-        WITH c, policy_count, claim_count, total_claims, total_premiums,
-             CASE 
-                WHEN claim_count = 0 THEN 0
-                WHEN policy_count = 0 THEN 100
-                ELSE (claim_count * 1.0 / policy_count) * 30
-             END as claims_frequency_score,
-             
-             CASE
-                WHEN total_premiums = 0 THEN 0
-                WHEN total_claims = 0 THEN 0
-                ELSE (total_claims / total_premiums) * 40
-             END as claims_ratio_score,
-             
-             CASE
-                WHEN c.customerSince IS NULL THEN 20
-                WHEN duration.between(c.customerSince, date()).days < 365 THEN 15
-                WHEN duration.between(c.customerSince, date()).days < 1095 THEN 10
-                ELSE 5
-             END as tenure_score
-        
-        WITH c, policy_count, claim_count, total_claims, total_premiums,
-             claims_frequency_score + claims_ratio_score + tenure_score as calculated_risk_score
-        
-        // Determine risk level
-        WITH c, policy_count, claim_count, total_claims, total_premiums, calculated_risk_score,
-             CASE
-                WHEN calculated_risk_score <= 25 THEN 'Low Risk'
-                WHEN calculated_risk_score <= 50 THEN 'Medium Risk'
-                WHEN calculated_risk_score <= 75 THEN 'High Risk'
-                ELSE 'Very High Risk'
-             END as risk_level
-        
-        // Update customer record
-        SET c.riskScore = calculated_risk_score,
-            c.updatedAt = datetime()
-        
-        RETURN c.customerId as customer_id,
-               calculated_risk_score as risk_score,
-               risk_level,
-               policy_count,
-               claim_count,
-               total_claims,
-               total_premiums
-        """
-        
-        try:
-            result = self.connection_manager.execute_query(risk_query, {"customer_id": customer_id})
-            
-            if not result:
-                raise Exception(f"Customer {customer_id} not found")
-            
-            data = result[0]
-            risk_score = float(data['risk_score'])
-            risk_level = data['risk_level']
-            
-            # Generate risk factors and recommendations
-            factors = []
-            if data['claim_count'] > 2:
-                factors.append("High claim frequency")
-            if data['total_claims'] and data['total_premiums'] and (data['total_claims'] / data['total_premiums']) > 1.5:
-                factors.append("Claims exceed premiums paid")
-            if data['policy_count'] == 0:
-                factors.append("No active policies")
-            
-            # Create risk assessment record
-            assessment_query = """
-            MATCH (c:Customer {customerId: $customer_id})
-            CREATE (ra:RiskAssessment {
-                assessmentId: randomUUID(),
-                customerId: $customer_id,
-                assessmentDate: date(),
-                riskScore: $risk_score,
-                riskLevel: $risk_level,
-                factors: $factors,
-                createdAt: datetime(),
-                version: 1
-            })
-            CREATE (c)-[:HAS_RISK_ASSESSMENT]->(ra)
-            RETURN ra.assessmentId as assessment_id
-            """
-            
-            assessment_result = self.connection_manager.execute_query(assessment_query, {
-                "customer_id": customer_id,
-                "risk_score": risk_score,
-                "risk_level": risk_level,
-                "factors": factors
-            })
-            
-            self.logger.info(f"Risk score calculated for customer {customer_id}: {risk_score}")
-            
-            return {
-                "customer_id": customer_id,
-                "risk_score": risk_score,
-                "risk_level": risk_level,
-                "factors": factors,
-                "assessment_id": assessment_result[0]["assessment_id"] if assessment_result else None
-            }
-            
-        except Exception as e:
-            self.logger.error(f"Risk calculation failed: {e}")
-            raise
-    
-    def get_customer_360_view(self, customer_id: str) -> Dict[str, Any]:
-        """Comprehensive customer view with all relationships"""
-        query = """
-        MATCH (c:Customer {customerId: $customer_id})
-        OPTIONAL MATCH (c)-[:HOLDS]->(p:Policy)
-        OPTIONAL MATCH (p)-[:COVERS]->(claim:Claim)
-        OPTIONAL MATCH (c)-[:HAS_RISK_ASSESSMENT]->(ra:RiskAssessment)
-        
-        RETURN c,
-               collect(DISTINCT p) as policies,
-               collect(DISTINCT claim) as claims,
-               collect(DISTINCT ra) as risk_assessments
-        """
-        
-        try:
-            result = self.connection_manager.execute_query(query, {"customer_id": customer_id})
-            
-            if not result:
-                return {"error": "Customer not found"}
-            
-            data = result[0]
-            customer_data = dict(data['c'])
-            
-            return {
-                "customer": customer_data,
-                "policies": [dict(p) for p in data['policies'] if p],
-                "claims": [dict(c) for c in data['claims'] if c],
-                "risk_assessments": [dict(ra) for ra in data['risk_assessments'] if ra],
-                "summary": {
-                    "total_policies": len([p for p in data['policies'] if p]),
-                    "total_claims": len([c for c in data['claims'] if c]),
-                    "latest_risk_score": customer_data.get('riskScore', 0)
-                }
-            }
-            
-        except Exception as e:
-            self.logger.error(f"Customer 360 view failed: {e}")
-            raise
-    
-    def _create_audit_record(self, action: str, entity_id: str):
-        """Create audit trail record"""
-        query = """
-        CREATE (ar:AuditRecord {
-            auditId: randomUUID(),
-            action: $action,
-            entityId: $entity_id,
-            timestamp: datetime(),
-            userId: 'system',
-            details: 'Automated system action'
-        })
-        RETURN ar.auditId as audit_id
-        """
-        
-        try:
-            self.connection_manager.execute_query(query, {
-                "action": action,
-                "entity_id": entity_id
-            })
-        except Exception as e:
-            self.logger.warning(f"Audit record creation failed: {e}")
+    # Return created claim
+    return ClaimResponse(
+        claim_id=claim_id,
+        claim_number=claim_number,
+        policy_id=claim_data.policy_id,
+        policy_number=policy_info["policy_number"],
+        customer_name=policy_info["customer_name"],
+        status=ClaimStatus.SUBMITTED,
+        claim_amount=claim_data.claim_amount,
+        incident_date=claim_data.incident_date,
+        filed_date=datetime.now(),
+        description=claim_data.description,
+        incident_type=claim_data.incident_type,
+        location=claim_data.location,
+        adjuster_name=None
+    )
 
-# Initialize service
-print("🔧 INITIALIZING INSURANCE SERVICE:")
-
-try:
-    insurance_service = InsuranceService(connection_manager)
-    print("✓ Insurance service initialized successfully")
-    print("✓ Service layer implementation complete")
+@app.get("/claims/{claim_id}", response_model=ClaimResponse, tags=["Claims Processing"])
+async def get_claim(
+    claim_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Get claim by ID"""
     
-except Exception as e:
-    print(f"✗ Service initialization failed: {e}")
+    query = """
+    MATCH (c:Customer)-[:HAS_POLICY]->(p:Policy)-[:HAS_CLAIM]->(cl:Claim {claim_id: $claim_id})
+    OPTIONAL MATCH (cl)-[:ASSIGNED_TO]->(adj:Agent)
+    RETURN cl.claim_id as claim_id,
+           cl.claim_number as claim_number,
+           p.policy_id as policy_id,
+           p.policy_number as policy_number,
+           c.first_name + ' ' + c.last_name as customer_name,
+           cl.status as status,
+           cl.claim_amount as claim_amount,
+           cl.incident_date as incident_date,
+           cl.filed_date as filed_date,
+           cl.description as description,
+           cl.incident_type as incident_type,
+           cl.location as location,
+           adj.first_name + ' ' + adj.last_name as adjuster_name
+    """
+    
+    result = connection_manager.execute_query(query, {"claim_id": claim_id})
+    
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Claim not found"
+        )
+    
+    return ClaimResponse(**result[0])
 
-print("=" * 50)
+@app.put("/claims/{claim_id}/status", response_model=ClaimResponse, tags=["Claims Processing"])
+async def update_claim_status(
+    claim_id: str,
+    status_update: ClaimUpdate,
+    current_user: Dict[str, Any] = Depends(require_role(UserRole.ADJUSTER))
+):
+    """Update claim status (adjusters only)"""
+    
+    # Check if claim exists
+    check_query = """
+    MATCH (cl:Claim {claim_id: $claim_id})
+    RETURN cl.claim_id as claim_id
+    """
+    
+    existing = connection_manager.execute_query(check_query, {"claim_id": claim_id})
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Claim not found"
+        )
+    
+    # Update claim
+    update_fields = {k: v for k, v in status_update.dict().items() if v is not None}
+    
+    if not update_fields:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No valid fields to update"
+        )
+    
+    # Handle status updates
+    if "status" in update_fields:
+        update_fields["status"] = update_fields["status"].value
+    
+    set_clauses = [f"cl.{field} = ${field}" for field in update_fields.keys()]
+    set_clause = "SET " + ", ".join(set_clauses)
+    set_clause += ", cl.last_updated = datetime(), cl.updated_by = $updated_by"
+    
+    update_fields.update({
+        "claim_id": claim_id,
+        "updated_by": current_user["sub"]
+    })
+    
+    update_query = f"""
+    MATCH (cl:Claim {{claim_id: $claim_id}})
+    {set_clause}
+    RETURN cl
+    """
+    
+    connection_manager.execute_write_query(update_query, update_fields)
+    
+    # Return updated claim
+    return await get_claim(claim_id, current_user)
+
+print("✓ Claims processing API endpoints configured")
 ```
 
----
-
-## 🧪 Part 5: Testing Framework & Quality Assurance
-
-### Cell 7: Comprehensive Testing Suite
+### Cell 10: Analytics and Health Check APIs
 ```python
-# Cell 7: Testing framework and quality assurance
-import pytest
-from unittest.mock import Mock, patch
+# Cell 10: Analytics and health check endpoints
+@app.get("/health", tags=["System"])
+async def health_check():
+    """System health check endpoint"""
+    
+    health_status = connection_manager.health_check()
+    
+    # Add API-specific health information
+    health_status.update({
+        "api_version": "1.0.0",
+        "timestamp": datetime.now().isoformat(),
+        "environment": CONFIG.get("environment", "development")
+    })
+    
+    status_code = status.HTTP_200_OK if health_status["status"] == "healthy" else status.HTTP_503_SERVICE_UNAVAILABLE
+    
+    return JSONResponse(content=health_status, status_code=status_code)
+
+@app.get("/analytics/customers", response_model=CustomerAnalytics, tags=["Analytics"])
+async def get_customer_analytics(
+    current_user: Dict[str, Any] = Depends(require_role(UserRole.AGENT))
+):
+    """Get customer analytics dashboard data"""
+    
+    query = """
+    MATCH (c:Customer)
+    OPTIONAL MATCH (c)-[:HAS_POLICY]->(p:Policy {status: 'Active'})
+    WITH c, p, 
+         CASE WHEN c.customer_since >= datetime() - duration({days: 30}) 
+              THEN 1 ELSE 0 END as is_new
+    RETURN count(DISTINCT c) as total_customers,
+           sum(is_new) as new_customers_this_month,
+           avg(coalesce(p.premium_amount, 0)) as average_customer_value,
+           collect({
+               customer_id: c.customer_id,
+               name: c.first_name + ' ' + c.last_name,
+               total_premium: coalesce(sum(p.premium_amount), 0)
+           })[0..5] as top_customers
+    """
+    
+    result = connection_manager.execute_query(query)
+    analytics_data = result[0] if result else {}
+    
+    return CustomerAnalytics(
+        total_customers=analytics_data.get("total_customers", 0),
+        new_customers_this_month=analytics_data.get("new_customers_this_month", 0),
+        average_customer_value=round(analytics_data.get("average_customer_value", 0), 2),
+        top_customers_by_premium=analytics_data.get("top_customers", [])
+    )
+
+@app.get("/analytics/policies", response_model=PolicyAnalytics, tags=["Analytics"])
+async def get_policy_analytics(
+    current_user: Dict[str, Any] = Depends(require_role(UserRole.AGENT))
+):
+    """Get policy analytics dashboard data"""
+    
+    query = """
+    MATCH (p:Policy)
+    RETURN count(p) as total_policies,
+           count(CASE WHEN p.status = 'Active' THEN 1 END) as active_policies,
+           sum(CASE WHEN p.status = 'Active' THEN p.premium_amount ELSE 0 END) as total_premium,
+           avg(p.premium_amount) as average_policy_value,
+           collect(DISTINCT {status: p.status, count: count(*)}) as status_breakdown
+    """
+    
+    result = connection_manager.execute_query(query)
+    analytics_data = result[0] if result else {}
+    
+    # Process status breakdown
+    status_counts = {}
+    for item in analytics_data.get("status_breakdown", []):
+        status_counts[item["status"]] = item["count"]
+    
+    return PolicyAnalytics(
+        total_policies=analytics_data.get("total_policies", 0),
+        active_policies=analytics_data.get("active_policies", 0),
+        total_premium_collected=round(analytics_data.get("total_premium", 0), 2),
+        average_policy_value=round(analytics_data.get("average_policy_value", 0), 2),
+        policies_by_status=status_counts
+    )
+
+@app.get("/analytics/claims", response_model=ClaimAnalytics, tags=["Analytics"])
+async def get_claim_analytics(
+    current_user: Dict[str, Any] = Depends(require_role(UserRole.ADJUSTER))
+):
+    """Get claims analytics dashboard data"""
+    
+    query = """
+    MATCH (cl:Claim)
+    RETURN count(cl) as total_claims,
+           count(CASE WHEN cl.status IN ['Submitted', 'Under Review'] THEN 1 END) as pending_claims,
+           sum(cl.claim_amount) as total_claim_amount,
+           avg(cl.claim_amount) as average_claim_amount,
+           collect(DISTINCT {status: cl.status, count: count(*)}) as status_breakdown
+    """
+    
+    result = connection_manager.execute_query(query)
+    analytics_data = result[0] if result else {}
+    
+    # Process status breakdown
+    status_counts = {}
+    for item in analytics_data.get("status_breakdown", []):
+        status_counts[item["status"]] = item["count"]
+    
+    return ClaimAnalytics(
+        total_claims=analytics_data.get("total_claims", 0),
+        pending_claims=analytics_data.get("pending_claims", 0),
+        total_claim_amount=round(analytics_data.get("total_claim_amount", 0), 2),
+        average_claim_amount=round(analytics_data.get("average_claim_amount", 0), 2),
+        claims_by_status=status_counts
+    )
+
+print("✓ Analytics and health check endpoints configured")
+```
+
+### Cell 11: API Server Startup and Testing
+```python
+# Cell 11: API server startup and comprehensive testing
 import asyncio
-from typing import Any, Dict
-
-print("🧪 IMPLEMENTING TESTING FRAMEWORK:")
-print("=" * 50)
-
-class TestInsuranceService:
-    """Comprehensive test suite for insurance service"""
-    
-    @pytest.fixture
-    def mock_connection_manager(self):
-        """Mock connection manager for testing"""
-        mock_manager = Mock(spec=Neo4jConnectionManager)
-        return mock_manager
-    
-    @pytest.fixture
-    def insurance_service(self, mock_connection_manager):
-        """Insurance service with mocked dependencies"""
-        return InsuranceService(mock_connection_manager)
-    
-    def test_customer_creation_validation(self):
-        """Test customer data validation"""
-        try:
-            # Valid customer
-            valid_customer = CustomerCreate(
-                customer_id="CUST-TEST-001",
-                first_name="John",
-                last_name="Doe",
-                email="john.doe@test.com",
-                phone="+1234567890",
-                date_of_birth=date(1990, 1, 1)
-            )
-            assert valid_customer.customer_id == "CUST-TEST-001"
-            print("✓ Valid customer creation test passed")
-            
-            # Invalid customer ID format
-            try:
-                invalid_customer = CustomerCreate(
-                    customer_id="INVALID-001",
-                    first_name="John",
-                    last_name="Doe",
-                    email="john.doe@test.com",
-                    date_of_birth=date(1990, 1, 1)
-                )
-                print("✗ Invalid customer ID test failed - should have raised error")
-            except ValueError:
-                print("✓ Invalid customer ID validation test passed")
-            
-            # Invalid age
-            try:
-                young_customer = CustomerCreate(
-                    customer_id="CUST-TEST-002",
-                    first_name="Too",
-                    last_name="Young",
-                    email="young@test.com",
-                    date_of_birth=date(2010, 1, 1)  # Too young
-                )
-                print("✗ Age validation test failed - should have raised error")
-            except ValueError:
-                print("✓ Age validation test passed")
-                
-        except Exception as e:
-            print(f"✗ Customer validation tests failed: {e}")
-    
-    def test_policy_validation(self):
-        """Test policy data validation"""
-        try:
-            # Valid policy
-            valid_policy = PolicyCreate(
-                policy_number="POL-AUTO-001",
-                policy_type=PolicyType.AUTO,
-                customer_id="CUST-123456",
-                effective_date=date(2025, 1, 1),
-                expiration_date=date(2026, 1, 1),
-                premium_amount=150.00,
-                coverage_amount=25000.00,
-                deductible=500.00
-            )
-            assert valid_policy.policy_type == PolicyType.AUTO
-            print("✓ Valid policy creation test passed")
-            
-            # Invalid expiration date
-            try:
-                invalid_policy = PolicyCreate(
-                    policy_number="POL-AUTO-002",
-                    policy_type=PolicyType.AUTO,
-                    customer_id="CUST-123456",
-                    effective_date=date(2025, 1, 1),
-                    expiration_date=date(2024, 12, 31),  # Before effective date
-                    premium_amount=150.00,
-                    coverage_amount=25000.00
-                )
-                print("✗ Date validation test failed - should have raised error")
-            except ValueError:
-                print("✓ Policy date validation test passed")
-                
-        except Exception as e:
-            print(f"✗ Policy validation tests failed: {e}")
-    
-    def test_database_connection_resilience(self):
-        """Test connection resilience and retry logic"""
-        try:
-            # Test connection with retry logic
-            test_manager = Neo4jConnectionManager(
-                uri=NEO4J_URI,
-                username=NEO4J_USERNAME,
-                password=NEO4J_PASSWORD,
-                database=NEO4J_DATABASE
-            )
-            
-            # Perform health check
-            health_status = test_manager.health_check()
-            assert health_status['status'] in ['healthy', 'unhealthy']
-            print("✓ Connection resilience test passed")
-            
-            # Test query execution with parameters
-            result = test_manager.execute_query(
-                "RETURN $test_param as result",
-                {"test_param": "test_value"}
-            )
-            assert len(result) == 1
-            assert result[0]['result'] == 'test_value'
-            print("✓ Parameterized query test passed")
-            
-            test_manager.close()
-            
-        except Exception as e:
-            print(f"✗ Connection resilience tests failed: {e}")
-    
-    def test_error_handling(self):
-        """Test comprehensive error handling"""
-        try:
-            # Test invalid customer ID format
-            try:
-                CustomerCreate(
-                    customer_id="INVALID",
-                    first_name="Test",
-                    last_name="User",
-                    email="test@example.com",
-                    date_of_birth=date(1990, 1, 1)
-                )
-                print("✗ Error handling test failed - should have raised error")
-            except ValueError as e:
-                print("✓ Customer ID validation error handling passed")
-            
-            # Test invalid claim number format
-            try:
-                ClaimCreate(
-                    claim_number="INVALID",
-                    policy_number="POL-123",
-                    claim_date=date.today(),
-                    incident_date=date.today(),
-                    claim_amount=1000.00,
-                    description="Test claim description"
-                )
-                print("✗ Claim validation test failed - should have raised error")
-            except ValueError as e:
-                print("✓ Claim number validation error handling passed")
-                
-        except Exception as e:
-            print(f"✗ Error handling tests failed: {e}")
-
-# Create test instance and run tests
-print("🧪 RUNNING TEST SUITE:")
-
-try:
-    test_suite = TestInsuranceService()
-    
-    # Run individual tests
-    test_suite.test_customer_creation_validation()
-    test_suite.test_policy_validation()
-    test_suite.test_database_connection_resilience()
-    test_suite.test_error_handling()
-    
-    print("✓ All tests completed successfully")
-    
-except Exception as e:
-    print(f"✗ Test suite execution failed: {e}")
-
-print("=" * 50)
-```
-
----
-
-## 📈 Part 6: Integration Testing & Performance Monitoring
-
-### Cell 8: Live Integration Testing
-```python
-# Cell 8: Live integration testing with actual database
-print("📈 PERFORMING INTEGRATION TESTING:")
-print("=" * 50)
-
-class IntegrationTestSuite:
-    """Live integration tests with actual Neo4j database"""
-    
-    def __init__(self, service: InsuranceService):
-        self.service = service
-        self.test_data = []
-        self.logger = logging.getLogger(self.__class__.__name__)
-    
-    def run_full_integration_test(self) -> Dict[str, Any]:
-        """Run comprehensive integration test"""
-        test_results = {
-            "customer_creation": False,
-            "policy_creation": False,
-            "claim_processing": False,
-            "risk_calculation": False,
-            "customer_360_view": False,
-            "data_consistency": False,
-            "performance_metrics": {}
-        }
-        
-        try:
-            # Test 1: Customer Creation
-            start_time = time.time()
-            customer_result = self._test_customer_creation()
-            test_results["customer_creation"] = customer_result is not None
-            test_results["performance_metrics"]["customer_creation_ms"] = round((time.time() - start_time) * 1000, 2)
-            
-            if customer_result:
-                customer_id = customer_result["customer"]["customerId"]
-                policy_number = customer_result["policy"]["policyNumber"]
-                
-                # Test 2: Claim Processing
-                start_time = time.time()
-                claim_result = self._test_claim_processing(policy_number)
-                test_results["claim_processing"] = claim_result is not None
-                test_results["performance_metrics"]["claim_processing_ms"] = round((time.time() - start_time) * 1000, 2)
-                
-                # Test 3: Risk Calculation
-                start_time = time.time()
-                risk_result = self._test_risk_calculation(customer_id)
-                test_results["risk_calculation"] = risk_result is not None
-                test_results["performance_metrics"]["risk_calculation_ms"] = round((time.time() - start_time) * 1000, 2)
-                
-                # Test 4: Customer 360 View
-                start_time = time.time()
-                view_result = self._test_customer_360_view(customer_id)
-                test_results["customer_360_view"] = view_result is not None
-                test_results["performance_metrics"]["customer_360_view_ms"] = round((time.time() - start_time) * 1000, 2)
-                
-                # Test 5: Data Consistency
-                consistency_result = self._test_data_consistency(customer_id)
-                test_results["data_consistency"] = consistency_result
-            
-            return test_results
-            
-        except Exception as e:
-            self.logger.error(f"Integration test failed: {e}")
-            return test_results
-        
-        finally:
-            # Cleanup test data
-            self._cleanup_test_data()
-    
-    def _test_customer_creation(self) -> Optional[Dict[str, Any]]:
-        """Test customer and policy creation"""
-        try:
-            customer_data = CustomerCreate(
-                customer_id=f"CUST-INTEG-{int(time.time())}",
-                first_name="Integration",
-                last_name="Test",
-                email=f"integration.test.{int(time.time())}@example.com",
-                phone="+1555123456",
-                date_of_birth=date(1985, 5, 15),
-                initial_contact_method="Integration Test",
-                referral_source="Automated Testing"
-            )
-            
-            policy_data = PolicyCreate(
-                policy_number=f"POL-INTEG-{int(time.time())}",
-                policy_type=PolicyType.AUTO,
-                customer_id=customer_data.customer_id,
-                effective_date=date.today(),
-                expiration_date=date.today() + timedelta(days=365),
-                premium_amount=125.50,
-                coverage_amount=30000.00,
-                deductible=750.00
-            )
-            
-            result = self.service.create_customer_with_policy(customer_data, policy_data)
-            self.test_data.append(customer_data.customer_id)
-            
-            print(f"✓ Customer and policy created: {customer_data.customer_id}")
-            return result
-            
-        except Exception as e:
-            print(f"✗ Customer creation test failed: {e}")
-            return None
-    
-    def _test_claim_processing(self, policy_number: str) -> Optional[Dict[str, Any]]:
-        """Test claim processing functionality"""
-        try:
-            claim_data = ClaimCreate(
-                claim_number=f"CLM-INTEG-{int(time.time())}",
-                policy_number=policy_number,
-                claim_date=date.today(),
-                incident_date=date.today() - timedelta(days=1),
-                claim_amount=2500.00,
-                description="Integration test claim for minor vehicle damage during automated testing scenario"
-            )
-            
-            result = self.service.process_claim(claim_data)
-            print(f"✓ Claim processed: {claim_data.claim_number}")
-            return result
-            
-        except Exception as e:
-            print(f"✗ Claim processing test failed: {e}")
-            return None
-    
-    def _test_risk_calculation(self, customer_id: str) -> Optional[Dict[str, Any]]:
-        """Test risk calculation functionality"""
-        try:
-            result = self.service.calculate_customer_risk_score(customer_id)
-            print(f"✓ Risk calculated: {result['risk_level']} ({result['risk_score']:.1f})")
-            return result
-            
-        except Exception as e:
-            print(f"✗ Risk calculation test failed: {e}")
-            return None
-    
-    def _test_customer_360_view(self, customer_id: str) -> Optional[Dict[str, Any]]:
-        """Test customer 360-degree view"""
-        try:
-            result = self.service.get_customer_360_view(customer_id)
-            
-            if "error" not in result:
-                summary = result['summary']
-                print(f"✓ Customer 360 view: {summary['total_policies']} policies, {summary['total_claims']} claims")
-                return result
-            else:
-                print(f"✗ Customer 360 view failed: {result['error']}")
-                return None
-                
-        except Exception as e:
-            print(f"✗ Customer 360 view test failed: {e}")
-            return None
-    
-    def _test_data_consistency(self, customer_id: str) -> bool:
-        """Test data consistency across relationships"""
-        try:
-            # Verify customer exists and has correct relationships
-            consistency_query = """
-            MATCH (c:Customer {customerId: $customer_id})
-            OPTIONAL MATCH (c)-[:HOLDS]->(p:Policy)
-            OPTIONAL MATCH (p)-[:COVERS]->(cl:Claim)
-            OPTIONAL MATCH (c)-[:HAS_RISK_ASSESSMENT]->(ra:RiskAssessment)
-            
-            RETURN c.customerId as customer_id,
-                   count(DISTINCT p) as policy_count,
-                   count(DISTINCT cl) as claim_count,
-                   count(DISTINCT ra) as risk_assessment_count,
-                   c.totalPolicies as customer_policy_count,
-                   c.totalClaims as customer_claim_count
-            """
-            
-            result = self.service.connection_manager.execute_query(
-                consistency_query, 
-                {"customer_id": customer_id}
-            )
-            
-            if result:
-                data = result[0]
-                policy_consistent = data['policy_count'] == data['customer_policy_count']
-                claim_consistent = data['claim_count'] == data['customer_claim_count']
-                
-                if policy_consistent and claim_consistent:
-                    print("✓ Data consistency verified")
-                    return True
-                else:
-                    print(f"✗ Data inconsistency detected: policies {data['policy_count']}/{data['customer_policy_count']}, claims {data['claim_count']}/{data['customer_claim_count']}")
-                    return False
-            else:
-                print("✗ Customer not found for consistency check")
-                return False
-                
-        except Exception as e:
-            print(f"✗ Data consistency test failed: {e}")
-            return False
-    
-    def _cleanup_test_data(self):
-        """Clean up test data after testing"""
-        try:
-            for customer_id in self.test_data:
-                cleanup_query = """
-                MATCH (c:Customer {customerId: $customer_id})
-                OPTIONAL MATCH (c)-[:HOLDS]->(p:Policy)
-                OPTIONAL MATCH (p)-[:COVERS]->(cl:Claim)
-                OPTIONAL MATCH (c)-[:HAS_RISK_ASSESSMENT]->(ra:RiskAssessment)
-                DETACH DELETE c, p, cl, ra
-                """
-                
-                self.service.connection_manager.execute_query(
-                    cleanup_query, 
-                    {"customer_id": customer_id}
-                )
-            
-            print(f"✓ Cleaned up {len(self.test_data)} test records")
-            
-        except Exception as e:
-            print(f"⚠ Cleanup failed: {e}")
-
-# Run integration tests
-print("📈 RUNNING LIVE INTEGRATION TESTS:")
-
-try:
-    integration_tester = IntegrationTestSuite(insurance_service)
-    test_results = integration_tester.run_full_integration_test()
-    
-    print("\n" + "="*50)
-    print("INTEGRATION TEST RESULTS:")
-    print("="*50)
-    
-    for test_name, passed in test_results.items():
-        if test_name != "performance_metrics":
-            status = "✓ PASS" if passed else "✗ FAIL"
-            print(f"{test_name.replace('_', ' ').title()}: {status}")
-    
-    print("\nPERFORMANCE METRICS:")
-    for metric, value in test_results["performance_metrics"].items():
-        print(f"├─ {metric.replace('_', ' ').title()}: {value}")
-    
-    # Calculate overall success rate
-    total_tests = len([t for t in test_results.keys() if t != "performance_metrics"])
-    passed_tests = sum([1 for k, v in test_results.items() if k != "performance_metrics" and v])
-    success_rate = (passed_tests / total_tests) * 100
-    
-    print(f"\nOVERALL SUCCESS RATE: {success_rate:.1f}% ({passed_tests}/{total_tests})")
-    
-    if success_rate >= 80:
-        print("🎉 Integration testing completed successfully!")
-    else:
-        print("⚠ Some integration tests failed - review implementation")
-    
-except Exception as e:
-    print(f"✗ Integration testing failed: {e}")
-
-print("=" * 50)
-```
-
----
-
-## 📊 Part 7: Production Monitoring & Health Checks
-
-### Cell 9: Production Monitoring System
-```python
-# Cell 9: Production monitoring and health checks
-import psutil
 import threading
-from datetime import datetime, timedelta
-from typing import Dict, List, Any
+import time
+import requests
 import json
 
-print("📊 IMPLEMENTING PRODUCTION MONITORING:")
-print("=" * 50)
-
-class ProductionMonitor:
-    """
-    Production monitoring system for Neo4j applications
-    Tracks performance, health, and operational metrics
-    """
+class APIServer:
+    """API server management class for Jupyter Lab development"""
     
-    def __init__(self, connection_manager: Neo4jConnectionManager):
-        self.connection_manager = connection_manager
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.monitoring_active = False
-        self.metrics_history = []
-        self.alert_thresholds = {
-            "response_time_ms": 1000,  # 1 second
-            "memory_usage_percent": 80,
-            "cpu_usage_percent": 85,
-            "failed_query_rate": 5.0  # 5% failure rate
-        }
+    def __init__(self):
+        self.server_thread = None
+        self.server_running = False
+        self.base_url = f"http://{CONFIG['api_host']}:{CONFIG['api_port']}"
     
-    def get_system_metrics(self) -> Dict[str, Any]:
-        """Get comprehensive system metrics"""
+    def start_server_in_notebook(self):
+        """Start FastAPI server optimized for Jupyter Lab development"""
+        if self.server_running:
+            print("⚠ Server is already running")
+            print(f"📍 Access API at: {self.base_url}")
+            print(f"📖 Documentation: {self.base_url}/docs")
+            return
+        
+        def run_server():
+            uvicorn.run(
+                app,
+                host=CONFIG['api_host'],
+                port=CONFIG['api_port'],
+                log_level="info",
+                access_log=False,
+                reload=False  # Disable reload for notebook compatibility
+            )
+        
+        self.server_thread = threading.Thread(target=run_server, daemon=True)
+        self.server_thread.start()
+        self.server_running = True
+        
+        # Wait for server to start
+        print("🚀 Starting FastAPI server in Jupyter Lab...")
+        print("📝 Server running in background thread (daemon mode)")
+        time.sleep(3)
+        
+        # Verify server is running
         try:
-            # CPU and Memory metrics
-            cpu_percent = psutil.cpu_percent(interval=1)
-            memory = psutil.virtual_memory()
-            disk = psutil.disk_usage('/')
-            
-            # Network metrics
-            network = psutil.net_io_counters()
-            
-            return {
-                "timestamp": datetime.now().isoformat(),
-                "system": {
-                    "cpu_percent": cpu_percent,
-                    "memory_percent": memory.percent,
-                    "memory_available_gb": round(memory.available / (1024**3), 2),
-                    "memory_total_gb": round(memory.total / (1024**3), 2),
-                    "disk_percent": round((disk.used / disk.total) * 100, 1),
-                    "disk_free_gb": round(disk.free / (1024**3), 2)
-                },
-                "network": {
-                    "bytes_sent": network.bytes_sent,
-                    "bytes_recv": network.bytes_recv,
-                    "packets_sent": network.packets_sent,
-                    "packets_recv": network.packets_recv
-                }
-            }
-            
+            response = requests.get(f"{self.base_url}/health", timeout=5)
+            if response.status_code == 200:
+                print(f"✅ API server running at {self.base_url}")
+                print(f"📚 Interactive docs: {self.base_url}/docs")
+                print(f"📋 ReDoc documentation: {self.base_url}/redoc")
+                print("\n💡 Jupyter Lab Integration Tips:")
+                print("   • Open docs in new tab: Right-click link → 'Open in New Tab'")
+                print("   • Use notebook cells for API testing")
+                print("   • Server runs in background - continues between cell executions")
+            else:
+                print(f"⚠ Server started but health check failed: {response.status_code}")
+        except requests.exceptions.RequestException as e:
+            print(f"✗ Failed to verify server startup: {e}")
+            print("💡 Try running the health check in the next cell manually")
+    
+    def test_in_notebook(self):
+        """Notebook-optimized API testing with rich output"""
+    def test_in_notebook(self):
+        """Notebook-optimized API testing with rich output"""
+        print("\n🧪 JUPYTER LAB API TESTING SUITE")
+        print("=" * 50)
+        print("💡 Each test shows request/response for learning")
+        
+        # Test 1: Health Check (No Auth Required)
+        print("\n🔍 Test 1: Health Check")
+        try:
+            response = requests.get(f"{self.base_url}/health")
+            print(f"   Request: GET {self.base_url}/health")
+            print(f"   Status: {response.status_code}")
+            print(f"   Response: {json.dumps(response.json(), indent=2)}")
         except Exception as e:
-            self.logger.error(f"System metrics collection failed: {e}")
-            return {"error": str(e)}
-    
-    def get_database_metrics(self) -> Dict[str, Any]:
-        """Get Neo4j database performance metrics"""
+            print(f"   ❌ Error: {e}")
+        
+        # Test 2: Authentication
+        print("\n🔐 Test 2: User Authentication")
+        login_data = {"username": "admin", "password": "admin123"}
         try:
-            # Database health check
-            health_status = self.connection_manager.health_check()
+            response = requests.post(f"{self.base_url}/auth/login", json=login_data)
+            print(f"   Request: POST {self.base_url}/auth/login")
+            print(f"   Payload: {json.dumps(login_data, indent=2)}")
+            print(f"   Status: {response.status_code}")
             
-            # Query performance metrics
-            performance_query = """
-            CALL dbms.queryJmx("org.neo4j:instance=kernel#0,name=Transactions") 
-            YIELD attributes
-            WITH attributes.NumberOfOpenTransactions.value as open_transactions,
-                 attributes.NumberOfCommittedTransactions.value as committed_transactions
-            
-            CALL dbms.queryJmx("org.neo4j:instance=kernel#0,name=Page cache")
-            YIELD attributes as page_cache_attrs
-            
-            RETURN open_transactions,
-                   committed_transactions,
-                   page_cache_attrs.Hits.value as page_cache_hits,
-                   page_cache_attrs.Faults.value as page_cache_faults
-            """
-            
-            try:
-                perf_result = self.connection_manager.execute_query(performance_query)
-                if perf_result:
-                    perf_data = perf_result[0]
-                    page_cache_hit_ratio = 0
-                    if perf_data['page_cache_hits'] and perf_data['page_cache_faults']:
-                        total_accesses = perf_data['page_cache_hits'] + perf_data['page_cache_faults']
-                        page_cache_hit_ratio = (perf_data['page_cache_hits'] / total_accesses) * 100
+            if response.status_code == 200:
+                token_data = response.json()
+                print(f"   ✅ Login Successful!")
+                print(f"   Token Type: {token_data['token_type']}")
+                print(f"   Expires In: {token_data['expires_in']} seconds")
+                token = token_data["access_token"]
+                
+                # Test 3: Protected Endpoint
+                print("\n🛡️ Test 3: Protected Endpoint (Customer List)")
+                headers = {"Authorization": f"Bearer {token}"}
+                response = requests.get(f"{self.base_url}/customers?page=1&per_page=3", headers=headers)
+                print(f"   Request: GET {self.base_url}/customers?page=1&per_page=3")
+                print(f"   Headers: Authorization: Bearer [TOKEN]")
+                print(f"   Status: {response.status_code}")
+                
+                if response.status_code == 200:
+                    customers = response.json()
+                    print(f"   ✅ Customers Retrieved: {customers.get('total', 0)} total")
+                    print(f"   Sample Response Structure:")
+                    print(f"   {json.dumps({k: v for k, v in customers.items() if k != 'items'}, indent=2)}")
                 else:
-                    perf_data = {}
-                    page_cache_hit_ratio = 0
-            except:
-                # Fallback for limited JMX access
-                perf_data = {}
-                page_cache_hit_ratio = 0
-            
-            # Basic database statistics
-            stats_query = """
-            MATCH (n) 
-            WITH count(n) as node_count
-            MATCH ()-[r]->() 
-            WITH node_count, count(r) as rel_count
-            MATCH (c:Customer) 
-            WITH node_count, rel_count, count(c) as customer_count
-            MATCH (p:Policy) 
-            WITH node_count, rel_count, customer_count, count(p) as policy_count
-            MATCH (cl:Claim) 
-            RETURN node_count, rel_count, customer_count, policy_count, count(cl) as claim_count
-            """
-            
-            stats_result = self.connection_manager.execute_query(stats_query)
-            stats_data = stats_result[0] if stats_result else {}
-            
-            return {
-                "timestamp": datetime.now().isoformat(),
-                "database": {
-                    "status": health_status.get('status', 'unknown'),
-                    "version": health_status.get('database', {}).get('version', 'unknown'),
-                    "response_time_ms": health_status.get('connection_metrics', {}).get('response_time_ms', 0)
-                },
-                "performance": {
-                    "open_transactions": perf_data.get('open_transactions', 0),
-                    "committed_transactions": perf_data.get('committed_transactions', 0),
-                    "page_cache_hit_ratio": round(page_cache_hit_ratio, 2)
-                },
-                "statistics": {
-                    "total_nodes": stats_data.get('node_count', 0),
-                    "total_relationships": stats_data.get('rel_count', 0),
-                    "customers": stats_data.get('customer_count', 0),
-                    "policies": stats_data.get('policy_count', 0),
-                    "claims": stats_data.get('claim_count', 0)
-                },
-                "connection_metrics": health_status.get('connection_metrics', {})
-            }
-            
-        except Exception as e:
-            self.logger.error(f"Database metrics collection failed: {e}")
-            return {"error": str(e)}
-    
-    def get_application_metrics(self) -> Dict[str, Any]:
-        """Get application-specific metrics"""
-        try:
-            # Query application performance
-            app_metrics_query = """
-            // Get recent audit records for activity tracking
-            MATCH (ar:AuditRecord)
-            WHERE ar.timestamp >= datetime() - duration('PT1H')
-            WITH count(ar) as recent_activity
-            
-            // Get policy distribution
-            MATCH (p:Policy)
-            WITH recent_activity, p.policyStatus as status, count(p) as count
-            
-            RETURN recent_activity,
-                   collect({status: status, count: count}) as policy_distribution
-            """
-            
-            app_result = self.connection_manager.execute_query(app_metrics_query)
-            app_data = app_result[0] if app_result else {}
-            
-            return {
-                "timestamp": datetime.now().isoformat(),
-                "application": {
-                    "recent_activity_1h": app_data.get('recent_activity', 0),
-                    "policy_distribution": app_data.get('policy_distribution', [])
-                },
-                "service_layer": {
-                    "successful_queries": self.connection_manager._successful_queries,
-                    "failed_queries": self.connection_manager._failed_queries,
-                    "connection_attempts": self.connection_manager._connection_attempts
+                    print(f"   ❌ Failed: {response.text}")
+                
+                # Test 4: Create Customer
+                print("\n👤 Test 4: Create New Customer")
+                customer_data = {
+                    "first_name": "Jane",
+                    "last_name": "Smith", 
+                    "email": f"jane.smith.{int(time.time())}@email.com",  # Unique email
+                    "phone": "+1234567890",
+                    "date_of_birth": "1985-03-20",
+                    "address": "456 Oak Avenue",
+                    "city": "Dallas",
+                    "state": "TX",
+                    "zip_code": "75202"
                 }
-            }
-            
-        except Exception as e:
-            self.logger.error(f"Application metrics collection failed: {e}")
-            return {"error": str(e)}
-    
-    def generate_comprehensive_report(self) -> Dict[str, Any]:
-        """Generate comprehensive monitoring report"""
-        try:
-            system_metrics = self.get_system_metrics()
-            database_metrics = self.get_database_metrics()
-            application_metrics = self.get_application_metrics()
-            
-            # Calculate health score
-            health_score = self._calculate_health_score(system_metrics, database_metrics, application_metrics)
-            
-            # Generate alerts
-            alerts = self._check_alert_conditions(system_metrics, database_metrics, application_metrics)
-            
-            report = {
-                "report_timestamp": datetime.now().isoformat(),
-                "health_score": health_score,
-                "system_metrics": system_metrics,
-                "database_metrics": database_metrics,
-                "application_metrics": application_metrics,
-                "alerts": alerts,
-                "summary": {
-                    "overall_status": "healthy" if health_score >= 80 else "warning" if health_score >= 60 else "critical",
-                    "alert_count": len(alerts),
-                    "database_status": database_metrics.get('database', {}).get('status', 'unknown')
-                }
-            }
-            
-            # Store in history
-            self.metrics_history.append(report)
-            
-            # Keep only last 24 hours of metrics
-            cutoff_time = datetime.now() - timedelta(hours=24)
-            self.metrics_history = [
-                m for m in self.metrics_history 
-                if datetime.fromisoformat(m['report_timestamp']) > cutoff_time
-            ]
-            
-            return report
-            
-        except Exception as e:
-            self.logger.error(f"Report generation failed: {e}")
-            return {"error": str(e)}
-    
-    def _calculate_health_score(self, system_metrics: Dict, db_metrics: Dict, app_metrics: Dict) -> float:
-        """Calculate overall system health score (0-100)"""
-        try:
-            score = 100.0
-            
-            # System health (30% weight)
-            if 'system' in system_metrics:
-                sys_data = system_metrics['system']
-                if sys_data['cpu_percent'] > 80:
-                    score -= 15
-                elif sys_data['cpu_percent'] > 60:
-                    score -= 8
                 
-                if sys_data['memory_percent'] > 85:
-                    score -= 15
-                elif sys_data['memory_percent'] > 70:
-                    score -= 8
-            
-            # Database health (50% weight)
-            if 'database' in db_metrics:
-                db_data = db_metrics['database']
-                if db_data['status'] != 'healthy':
-                    score -= 30
+                response = requests.post(f"{self.base_url}/customers", json=customer_data, headers=headers)
+                print(f"   Request: POST {self.base_url}/customers")
+                print(f"   Status: {response.status_code}")
                 
-                response_time = db_data.get('response_time_ms', 0)
-                if response_time > 1000:
-                    score -= 20
-                elif response_time > 500:
-                    score -= 10
-            
-            # Application health (20% weight)
-            if 'service_layer' in app_metrics:
-                service_data = app_metrics['service_layer']
-                total_queries = service_data['successful_queries'] + service_data['failed_queries']
-                if total_queries > 0:
-                    failure_rate = (service_data['failed_queries'] / total_queries) * 100
-                    if failure_rate > 10:
-                        score -= 20
-                    elif failure_rate > 5:
-                        score -= 10
-            
-            return max(0.0, score)
-            
+                if response.status_code == 200:
+                    new_customer = response.json()
+                    print(f"   ✅ Customer Created!")
+                    print(f"   Customer ID: {new_customer['customer_id']}")
+                    print(f"   Name: {new_customer['first_name']} {new_customer['last_name']}")
+                    print(f"   Email: {new_customer['email']}")
+                else:
+                    print(f"   ❌ Failed: {response.text}")
+                    
+            else:
+                print(f"   ❌ Login Failed: {response.text}")
+                
         except Exception as e:
-            self.logger.error(f"Health score calculation failed: {e}")
-            return 50.0  # Default moderate score
-    
-    def _check_alert_conditions(self, system_metrics: Dict, db_metrics: Dict, app_metrics: Dict) -> List[Dict[str, Any]]:
-        """Check for alert conditions"""
-        alerts = []
+            print(f"   ❌ Authentication Error: {e}")
         
-        try:
-            # System alerts
-            if 'system' in system_metrics:
-                sys_data = system_metrics['system']
-                
-                if sys_data['cpu_percent'] > self.alert_thresholds['cpu_usage_percent']:
-                    alerts.append({
-                        "type": "system",
-                        "severity": "warning",
-                        "message": f"High CPU usage: {sys_data['cpu_percent']:.1f}%",
-                        "threshold": self.alert_thresholds['cpu_usage_percent'],
-                        "current_value": sys_data['cpu_percent']
-                    })
-                
-                if sys_data['memory_percent'] > self.alert_thresholds['memory_usage_percent']:
-                    alerts.append({
-                        "type": "system", 
-                        "severity": "warning",
-                        "message": f"High memory usage: {sys_data['memory_percent']:.1f}%",
-                        "threshold": self.alert_thresholds['memory_usage_percent'],
-                        "current_value": sys_data['memory_percent']
-                    })
-            
-            # Database alerts
-            if 'database' in db_metrics:
-                db_data = db_metrics['database']
-                
-                if db_data['status'] != 'healthy':
-                    alerts.append({
-                        "type": "database",
-                        "severity": "critical",
-                        "message": f"Database status: {db_data['status']}",
-                        "threshold": "healthy",
-                        "current_value": db_data['status']
-                    })
-                
-                response_time = db_data.get('response_time_ms', 0)
-                if response_time > self.alert_thresholds['response_time_ms']:
-                    alerts.append({
-                        "type": "performance",
-                        "severity": "warning",
-                        "message": f"Slow database response: {response_time}ms",
-                        "threshold": self.alert_thresholds['response_time_ms'],
-                        "current_value": response_time
-                    })
-            
-            # Application alerts
-            if 'service_layer' in app_metrics:
-                service_data = app_metrics['service_layer']
-                total_queries = service_data['successful_queries'] + service_data['failed_queries']
-                
-                if total_queries > 0:
-                    failure_rate = (service_data['failed_queries'] / total_queries) * 100
-                    if failure_rate > self.alert_thresholds['failed_query_rate']:
-                        alerts.append({
-                            "type": "application",
-                            "severity": "warning",
-                            "message": f"High query failure rate: {failure_rate:.1f}%",
-                            "threshold": self.alert_thresholds['failed_query_rate'],
-                            "current_value": failure_rate
-                        })
-            
-        except Exception as e:
-            self.logger.error(f"Alert checking failed: {e}")
+        print("\n📊 Interactive Testing Options:")
+        print(f"   1. Open {self.base_url}/docs in new browser tab")
+        print(f"   2. Use requests library in notebook cells")
+        print(f"   3. Test endpoints with different user roles")
+        print(f"   4. Explore API responses and data structures")
         
-        return alerts
-
-# Initialize production monitor
-print("📊 INITIALIZING PRODUCTION MONITOR:")
-
-try:
-    production_monitor = ProductionMonitor(connection_manager)
+        return True
     
-    # Generate comprehensive monitoring report
-    monitoring_report = production_monitor.generate_comprehensive_report()
-    
-    print("✓ Production monitoring initialized")
-    
-    # Display monitoring results
-    print("\n" + "="*50)
-    print("PRODUCTION MONITORING REPORT")
-    print("="*50)
-    
-    summary = monitoring_report.get('summary', {})
-    print(f"Overall Status: {summary.get('overall_status', 'unknown').upper()}")
-    print(f"Health Score: {monitoring_report.get('health_score', 0):.1f}/100")
-    print(f"Database Status: {summary.get('database_status', 'unknown')}")
-    print(f"Active Alerts: {summary.get('alert_count', 0)}")
-    
-    # System metrics
-    if 'system_metrics' in monitoring_report and 'system' in monitoring_report['system_metrics']:
-        sys_data = monitoring_report['system_metrics']['system']
-        print(f"\nSYSTEM METRICS:")
-        print(f"├─ CPU Usage: {sys_data.get('cpu_percent', 0):.1f}%")
-        print(f"├─ Memory Usage: {sys_data.get('memory_percent', 0):.1f}%")
-        print(f"└─ Disk Usage: {sys_data.get('disk_percent', 0):.1f}%")
-    
-    # Database metrics
-    if 'database_metrics' in monitoring_report:
-        db_data = monitoring_report['database_metrics']
-        if 'database' in db_data:
-            print(f"\nDATABASE METRICS:")
-            print(f"├─ Status: {db_data['database'].get('status', 'unknown')}")
-            print(f"├─ Response Time: {db_data['database'].get('response_time_ms', 0)}ms")
-            print(f"└─ Version: {db_data['database'].get('version', 'unknown')}")
+    def show_notebook_examples(self):
+        """Show example code for notebook-based API interaction"""
+        print("\n📝 JUPYTER NOTEBOOK API EXAMPLES")
+        print("=" * 50)
+        print("Copy these examples into new notebook cells for interactive testing:\n")
         
-        if 'statistics' in db_data:
-            stats = db_data['statistics']
-            print(f"\nDATABASE STATISTICS:")
-            print(f"├─ Total Nodes: {stats.get('total_nodes', 0)}")
-            print(f"├─ Total Relationships: {stats.get('total_relationships', 0)}")
-            print(f"├─ Customers: {stats.get('customers', 0)}")
-            print(f"├─ Policies: {stats.get('policies', 0)}")
-            print(f"└─ Claims: {stats.get('claims', 0)}")
-    
-    # Alerts
-    alerts = monitoring_report.get('alerts', [])
-    if alerts:
-        print(f"\nACTIVE ALERTS:")
-        for alert in alerts:
-            severity_icon = "🔴" if alert['severity'] == 'critical' else "🟡"
-            print(f"{severity_icon} {alert['message']}")
-    else:
-        print(f"\n✅ NO ACTIVE ALERTS")
-    
-    print("="*50)
-    
-except Exception as e:
-    print(f"✗ Production monitoring failed: {e}")
+        example_code = '''
+# Example 1: Health Check
+import requests
+response = requests.get("http://localhost:8000/health")
+print(f"Status: {response.status_code}")
+print(f"Data: {response.json()}")
 
-print("=" * 50)
+# Example 2: Login and Get Token  
+login_data = {"username": "admin", "password": "admin123"}
+response = requests.post("http://localhost:8000/auth/login", json=login_data)
+token = response.json()["access_token"]
+print(f"Token received: {token[:50]}...")
+
+# Example 3: Use Token for Protected Endpoint
+headers = {"Authorization": f"Bearer {token}"}
+response = requests.get("http://localhost:8000/customers", headers=headers)
+print(f"Customers: {response.json()}")
+
+# Example 4: Create New Customer
+customer_data = {
+    "first_name": "Test",
+    "last_name": "User",
+    "email": "test@example.com",
+    "phone": "+1234567890", 
+    "date_of_birth": "1990-01-01",
+    "address": "123 Test St",
+    "city": "Dallas",
+    "state": "TX",
+    "zip_code": "75201"
+}
+response = requests.post("http://localhost:8000/customers", json=customer_data, headers=headers)
+print(f"New customer: {response.json()}")
+'''
+        
+        print(example_code)
+        print("\n💡 Notebook Development Tips:")
+        print("   • Run server once, test in multiple cells")
+        print("   • Use variables to store tokens between cells")
+        print("   • Print response.json() to explore data structures")
+        print("   • Create separate cells for different API operations")
+        
+    def jupyter_lab_integration_guide(self):
+        """Guide for optimal Jupyter Lab usage"""
+        print("\n🎯 JUPYTER LAB INTEGRATION GUIDE")
+        print("=" * 50)
+        
+        print("\n📚 Browser Tab Management:")
+        print("   • Keep Jupyter Lab in main tab")
+        print("   • Open API docs (/docs) in second tab")
+        print("   • Use side-by-side windows for development + testing")
+        
+        print("\n📝 Notebook Organization:")
+        print("   • Cell 1-5: Setup and configuration")
+        print("   • Cell 6-10: API endpoint definitions")
+        print("   • Cell 11+: Testing and validation")
+        print("   • Use markdown cells for documentation")
+        
+        print("\n🔄 Development Workflow:")
+        print("   1. Modify API code in notebook cell")
+        print("   2. Restart server (re-run server cell)")
+        print("   3. Test changes in separate cells")
+        print("   4. Verify in browser documentation")
+        
+        print("\n🛠️ Debugging in Jupyter Lab:")
+        print("   • Use print() statements for debugging")
+        print("   • Check server output in terminal tab")
+        print("   • Test individual functions in separate cells")
+        print("   • Use jupyter debugger for complex issues")
+
+# Initialize API server for Jupyter Lab
+api_server = APIServer()
+api_server.start_server_in_notebook()
+
+# Show integration guide
+api_server.jupyter_lab_integration_guide()
+
+# Run notebook-optimized tests
+api_server.test_in_notebook()
+
+# Show example code for students
+api_server.show_notebook_examples()
 ```
 
----
-
-## 🎯 Part 8: Lab Completion & Verification
-
-### Cell 10: Final Verification and Summary
+### Cell 12: Database State Enhancement and API Endpoints Creation
 ```python
-# Cell 10: Final lab verification and summary
-print("🎯 LAB 12 COMPLETION VERIFICATION:")
-print("=" * 50)
+# Cell 12: Enhanced database state for Lab 12 completion
+def enhance_database_for_api():
+    """Add API-specific entities and relationships to complete Lab 12 database state"""
+    
+    print("🔧 ENHANCING DATABASE FOR API ENDPOINTS:")
+    print("=" * 50)
+    
+    # Create API endpoint entities (representing the API infrastructure)
+    api_endpoints = [
+        {
+            "endpoint_id": "ep_001",
+            "endpoint_path": "/auth/login",
+            "http_method": "POST",
+            "rate_limit": 100,
+            "authentication_required": False,
+            "response_format": "JSON",
+            "cache_ttl": 0,
+            "monitoring_enabled": True
+        },
+        {
+            "endpoint_id": "ep_002", 
+            "endpoint_path": "/customers",
+            "http_method": "GET",
+            "rate_limit": 1000,
+            "authentication_required": True,
+            "response_format": "JSON",
+            "cache_ttl": 300,
+            "monitoring_enabled": True
+        },
+        {
+            "endpoint_id": "ep_003",
+            "endpoint_path": "/customers",
+            "http_method": "POST", 
+            "rate_limit": 500,
+            "authentication_required": True,
+            "response_format": "JSON",
+            "cache_ttl": 0,
+            "monitoring_enabled": True
+        },
+        {
+            "endpoint_id": "ep_004",
+            "endpoint_path": "/policies",
+            "http_method": "POST",
+            "rate_limit": 200,
+            "authentication_required": True,
+            "response_format": "JSON",
+            "cache_ttl": 0,
+            "monitoring_enabled": True
+        },
+        {
+            "endpoint_id": "ep_005",
+            "endpoint_path": "/claims",
+            "http_method": "POST",
+            "rate_limit": 100,
+            "authentication_required": True,
+            "response_format": "JSON", 
+            "cache_ttl": 0,
+            "monitoring_enabled": True
+        },
+        {
+            "endpoint_id": "ep_006",
+            "endpoint_path": "/analytics/customers",
+            "http_method": "GET",
+            "rate_limit": 50,
+            "authentication_required": True,
+            "response_format": "JSON",
+            "cache_ttl": 600,
+            "monitoring_enabled": True
+        }
+    ]
+    
+    # Create API Service entity and endpoints
+    create_api_service_query = """
+    CREATE (api:APIService {
+        service_id: 'insurance_api_v1',
+        service_name: 'Insurance Management API',
+        version: '1.0.0',
+        framework: 'FastAPI',
+        language: 'Python',
+        database: 'Neo4j',
+        created_date: datetime(),
+        status: 'Active',
+        base_url: 'http://localhost:8000',
+        documentation_url: 'http://localhost:8000/docs'
+    })
+    RETURN api.service_id as service_id
+    """
+    
+    result = connection_manager.execute_write_query(create_api_service_query, {})
+    print(f"✓ API Service entity created: {result[0]['service_id']}")
+    
+    # Create API endpoints
+    for endpoint_data in api_endpoints:
+        create_endpoint_query = """
+        MATCH (api:APIService {service_id: 'insurance_api_v1'})
+        CREATE (ep:APIEndpoint {
+            endpoint_id: $endpoint_id,
+            endpoint_path: $endpoint_path,
+            http_method: $http_method,
+            rate_limit: $rate_limit,
+            authentication_required: $authentication_required,
+            response_format: $response_format,
+            cache_ttl: $cache_ttl,
+            monitoring_enabled: $monitoring_enabled,
+            created_date: datetime()
+        })
+        CREATE (api)-[:EXPOSES]->(ep)
+        RETURN ep.endpoint_id as endpoint_id
+        """
+        
+        result = connection_manager.execute_write_query(create_endpoint_query, endpoint_data)
+        print(f"✓ API endpoint created: {endpoint_data['http_method']} {endpoint_data['endpoint_path']}")
+    
+    # Create API documentation entities
+    create_documentation_query = """
+    MATCH (api:APIService {service_id: 'insurance_api_v1'})
+    CREATE (doc:Documentation {
+        doc_id: 'openapi_spec',
+        doc_type: 'OpenAPI Specification',
+        format: 'JSON',
+        version: '3.0.0',
+        auto_generated: true,
+        url: '/openapi.json',
+        created_date: datetime()
+    })
+    CREATE (swagger:Documentation {
+        doc_id: 'swagger_ui',
+        doc_type: 'Interactive Documentation',
+        format: 'HTML',
+        version: '1.0.0',
+        auto_generated: true,
+        url: '/docs',
+        created_date: datetime()
+    })
+    CREATE (redoc:Documentation {
+        doc_id: 'redoc',
+        doc_type: 'API Reference',
+        format: 'HTML', 
+        version: '1.0.0',
+        auto_generated: true,
+        url: '/redoc',
+        created_date: datetime()
+    })
+    CREATE (api)-[:HAS_DOCUMENTATION]->(doc)
+    CREATE (api)-[:HAS_DOCUMENTATION]->(swagger)
+    CREATE (api)-[:HAS_DOCUMENTATION]->(redoc)
+    RETURN count(*) as docs_created
+    """
+    
+    result = connection_manager.execute_write_query(create_documentation_query, {})
+    print(f"✓ API documentation entities created: {result[0]['docs_created']}")
+    
+    # Create security configuration
+    create_security_query = """
+    MATCH (api:APIService {service_id: 'insurance_api_v1'})
+    CREATE (auth:AuthenticationConfig {
+        config_id: 'jwt_auth',
+        auth_type: 'JWT',
+        algorithm: 'HS256',
+        token_expiry_minutes: 30,
+        refresh_enabled: false,
+        created_date: datetime()
+    })
+    CREATE (cors:CORSConfig {
+        config_id: 'cors_policy',
+        allow_credentials: true,
+        allow_origins: ['http://localhost:3000', 'http://localhost:8080'],
+        allow_methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        allow_headers: ['*'],
+        created_date: datetime()
+    })
+    CREATE (api)-[:USES_AUTHENTICATION]->(auth)
+    CREATE (api)-[:HAS_CORS_POLICY]->(cors)
+    RETURN count(*) as security_configs
+    """
+    
+    result = connection_manager.execute_write_query(create_security_query, {})
+    print(f"✓ Security configurations created: {result[0]['security_configs']}")
+    
+    # Connect API service to existing insurance entities
+    connect_api_query = """
+    MATCH (api:APIService {service_id: 'insurance_api_v1'})
+    MATCH (c:Customer), (p:Policy), (cl:Claim)
+    WITH api, collect(DISTINCT c)[0..5] as customers, 
+         collect(DISTINCT p)[0..5] as policies,
+         collect(DISTINCT cl)[0..3] as claims
+    
+    UNWIND customers as customer
+    CREATE (api)-[:MANAGES_ENTITY]->(customer)
+    
+    WITH api, policies, claims
+    UNWIND policies as policy  
+    CREATE (api)-[:MANAGES_ENTITY]->(policy)
+    
+    WITH api, claims
+    UNWIND claims as claim
+    CREATE (api)-[:MANAGES_ENTITY]->(claim)
+    
+    RETURN count(*) as connections_created
+    """
+    
+    result = connection_manager.execute_write_query(connect_api_query, {})
+    print(f"✓ API connections to business entities: {result[0]['connections_created']}")
 
-def verify_lab_completion():
+# Execute database enhancement
+enhance_database_for_api()
+```
+
+### Cell 13: Lab Completion Verification and Summary
+```python
+# Cell 13: Final lab verification and comprehensive summary
+def verify_lab_13_completion():
     """Comprehensive verification of Lab 12 completion"""
     
+    print("\n🎯 LAB 13 COMPLETION VERIFICATION:")
+    print("=" * 50)
+    
     verification_results = {
-        "environment_setup": False,
-        "connection_management": False,
-        "data_models": False,
-        "repository_pattern": False,
-        "service_layer": False,
-        "error_handling": False,
-        "testing_framework": False,
-        "monitoring_system": False,
-        "database_state": False
+        "api_framework": False,
+        "authentication": False,
+        "customer_apis": False,
+        "policy_apis": False,
+        "claims_apis": False,
+        "analytics_apis": False,
+        "documentation": False,
+        "database_state": False,
+        "api_endpoints": False
     }
     
     try:
-        # 1. Environment Setup Verification
-        print("1. ENVIRONMENT SETUP VERIFICATION:")
+        # 1. API Framework Verification
+        print("1. API FRAMEWORK VERIFICATION:")
         try:
-            import neo4j, pydantic, pytest, dotenv
-            print("   ✓ All required dependencies installed")
-            verification_results["environment_setup"] = True
+            from fastapi import FastAPI
+            from uvicorn import run
+            print("   ✓ FastAPI framework properly configured")
+            print("   ✓ Uvicorn ASGI server available")
+            verification_results["api_framework"] = True
         except ImportError as e:
-            print(f"   ✗ Missing dependencies: {e}")
+            print(f"   ✗ API framework issue: {e}")
         
-        # 2. Connection Management Verification
-        print("2. CONNECTION MANAGEMENT VERIFICATION:")
+        # 2. Authentication System Verification
+        print("2. AUTHENTICATION SYSTEM VERIFICATION:")
         try:
-            health_check = connection_manager.health_check()
-            if health_check['status'] == 'healthy':
-                print("   ✓ Neo4j connection established")
-                print(f"   ✓ Database version: {health_check['database']['version']}")
-                verification_results["connection_management"] = True
-            else:
-                print(f"   ✗ Connection issue: {health_check.get('error', 'Unknown')}")
-        except Exception as e:
-            print(f"   ✗ Connection verification failed: {e}")
-        
-        # 3. Data Models Verification
-        print("3. DATA MODELS VERIFICATION:")
-        try:
-            # Test model creation
-            test_customer = Customer(
-                customer_id="CUST-VERIFY-001",
-                first_name="Verify",
-                last_name="Test",
-                email="verify@test.com",
-                date_of_birth=date(1990, 1, 1)
-            )
-            print("   ✓ Pydantic models working correctly")
-            print("   ✓ Data validation implemented")
-            verification_results["data_models"] = True
-        except Exception as e:
-            print(f"   ✗ Data model verification failed: {e}")
-        
-        # 4. Repository Pattern Verification
-        print("4. REPOSITORY PATTERN VERIFICATION:")
-        try:
-            if hasattr(customer_repo, 'create') and hasattr(customer_repo, 'get_by_id'):
-                print("   ✓ Repository pattern implemented")
-                print("   ✓ CRUD operations available")
-                verification_results["repository_pattern"] = True
-            else:
-                print("   ✗ Repository pattern incomplete")
-        except Exception as e:
-            print(f"   ✗ Repository verification failed: {e}")
-        
-        # 5. Service Layer Verification
-        print("5. SERVICE LAYER VERIFICATION:")
-        try:
-            if hasattr(insurance_service, 'create_customer_with_policy') and \
-               hasattr(insurance_service, 'process_claim'):
-                print("   ✓ Service layer implemented")
-                print("   ✓ Business logic encapsulated")
-                verification_results["service_layer"] = True
-            else:
-                print("   ✗ Service layer incomplete")
-        except Exception as e:
-            print(f"   ✗ Service layer verification failed: {e}")
-        
-        # 6. Error Handling Verification
-        print("6. ERROR HANDLING VERIFICATION:")
-        try:
-            # Test error handling with invalid data
-            try:
-                invalid_customer = CustomerCreate(
-                    customer_id="INVALID",  # Should trigger validation error
-                    first_name="Test",
-                    last_name="User",
-                    email="test@example.com",
-                    date_of_birth=date(1990, 1, 1)
-                )
-                print("   ✗ Error handling not working")
-            except ValueError:
-                print("   ✓ Data validation errors handled")
-                verification_results["error_handling"] = True
-        except Exception as e:
-            print(f"   ✗ Error handling verification failed: {e}")
-        
-        # 7. Testing Framework Verification
-        print("7. TESTING FRAMEWORK VERIFICATION:")
-        try:
-            if 'TestInsuranceService' in globals():
-                print("   ✓ Test classes implemented")
-                print("   ✓ Integration testing available")
-                verification_results["testing_framework"] = True
-            else:
-                print("   ✗ Testing framework incomplete")
-        except Exception as e:
-            print(f"   ✗ Testing framework verification failed: {e}")
-        
-        # 8. Monitoring System Verification
-        print("8. MONITORING SYSTEM VERIFICATION:")
-        try:
-            if 'production_monitor' in globals():
-                print("   ✓ Production monitoring implemented")
-                print("   ✓ Health checks available")
-                verification_results["monitoring_system"] = True
-            else:
-                print("   ✗ Monitoring system incomplete")
-        except Exception as e:
-            print(f"   ✗ Monitoring verification failed: {e}")
-        
-        # 9. Database State Verification
-        print("9. DATABASE STATE VERIFICATION:")
-        try:
-            # Check current database state
-            state_query = """
-            MATCH (n) 
-            WITH labels(n)[0] as label, count(n) as count
-            RETURN label, count
-            ORDER BY count DESC
-            """
-            
-            relationship_query = """
-            MATCH ()-[r]->() 
-            RETURN count(r) as total_relationships
-            """
-            
-            node_result = connection_manager.execute_query(state_query)
-            rel_result = connection_manager.execute_query(relationship_query)
-            
-            total_nodes = sum([record['count'] for record in node_result])
-            total_relationships = rel_result[0]['total_relationships'] if rel_result else 0
-            
-            print(f"   ✓ Total Nodes: {total_nodes}")
-            print(f"   ✓ Total Relationships: {total_relationships}")
-            
-            # Check for expected entity types
-            expected_labels = ['Customer', 'Policy', 'Claim', 'RiskAssessment', 'AuditRecord']
-            found_labels = [record['label'] for record in node_result if record['label']]
-            
-            for label in expected_labels:
-                if label in found_labels:
-                    count = next((r['count'] for r in node_result if r['label'] == label), 0)
-                    print(f"   ✓ {label}: {count} entities")
+            # Test JWT creation
+            test_token = auth_manager.create_access_token({"sub": "test_user", "role": "admin"})
+            if test_token and "access_token" in test_token:
+                print("   ✓ JWT token generation working")
+                
+                # Test token verification
+                payload = auth_manager.verify_token(test_token["access_token"])
+                if payload.get("sub") == "test_user":
+                    print("   ✓ JWT token verification working")
+                    verification_results["authentication"] = True
                 else:
-                    print(f"   ⚠ {label}: Not found (may be created during testing)")
+                    print("   ✗ JWT token verification failed")
+            else:
+                print("   ✗ JWT token generation failed")
+        except Exception as e:
+            print(f"   ✗ Authentication system error: {e}")
+        
+        # 3. Database State Verification
+        print("3. DATABASE STATE VERIFICATION:")
+        stats_query = """
+        MATCH (n) 
+        OPTIONAL MATCH ()-[r]->()
+        RETURN count(DISTINCT n) as total_nodes,
+               count(DISTINCT r) as total_relationships,
+               count(DISTINCT CASE WHEN 'Customer' IN labels(n) THEN n END) as customers,
+               count(DISTINCT CASE WHEN 'Policy' IN labels(n) THEN n END) as policies,
+               count(DISTINCT CASE WHEN 'Claim' IN labels(n) THEN n END) as claims,
+               count(DISTINCT CASE WHEN 'User' IN labels(n) THEN n END) as users,
+               count(DISTINCT CASE WHEN 'APIEndpoint' IN labels(n) THEN n END) as api_endpoints,
+               count(DISTINCT CASE WHEN 'APIService' IN labels(n) THEN n END) as api_services
+        """
+        
+        result = connection_manager.execute_query(stats_query)
+        if result:
+            stats = result[0]
+            print(f"   📊 Total Nodes: {stats['total_nodes']}")
+            print(f"   📊 Total Relationships: {stats['total_relationships']}")
+            print(f"   📊 Customers: {stats['customers']}")
+            print(f"   📊 Policies: {stats['policies']}")
+            print(f"   📊 Claims: {stats['claims']}")
+            print(f"   📊 Users: {stats['users']}")
+            print(f"   📊 API Endpoints: {stats['api_endpoints']}")
+            print(f"   📊 API Services: {stats['api_services']}")
             
-            # Target verification (650 nodes, 800 relationships)
-            target_nodes = 650
-            target_relationships = 800
+            # Check if we meet the target state
+            target_nodes = 720
+            target_relationships = 900
             
-            if total_relationships >= target_relationships * 0.9:  # 90% threshold
-                print(f"   ✓ Target state achieved: {total_relationships}/{target_relationships} relationships")
+            if stats['total_nodes'] >= target_nodes * 0.9:  # Allow 10% variance
+                print(f"   ✓ Database node count meets target (~{target_nodes})")
                 verification_results["database_state"] = True
             else:
-                print(f"   ⚠ Approaching target: {total_relationships}/{target_relationships} relationships")
-                verification_results["database_state"] = total_relationships > 0
+                print(f"   ⚠ Database node count below target: {stats['total_nodes']} < {target_nodes}")
             
-        except Exception as e:
-            print(f"   ✗ Database state verification failed: {e}")
+            if stats['api_endpoints'] >= 6:
+                print("   ✓ API endpoints properly created")
+                verification_results["api_endpoints"] = True
+            else:
+                print(f"   ⚠ Insufficient API endpoints: {stats['api_endpoints']} < 6")
         
-        # Calculate overall completion percentage
+        # 4. API Endpoints Functionality Verification
+        print("4. API ENDPOINTS FUNCTIONALITY:")
+        
+        # Check if server is accessible
+        try:
+            health_response = requests.get(f"{api_server.base_url}/health", timeout=5)
+            if health_response.status_code == 200:
+                print("   ✓ Health endpoint accessible")
+                
+                # Check OpenAPI documentation
+                docs_response = requests.get(f"{api_server.base_url}/openapi.json", timeout=5)
+                if docs_response.status_code == 200:
+                    openapi_spec = docs_response.json()
+                    endpoint_count = len(openapi_spec.get("paths", {}))
+                    print(f"   ✓ OpenAPI documentation available ({endpoint_count} paths)")
+                    verification_results["documentation"] = True
+                else:
+                    print("   ✗ OpenAPI documentation not accessible")
+                
+                # Verify specific endpoint categories
+                if "/customers" in str(docs_response.text):
+                    print("   ✓ Customer management endpoints available")
+                    verification_results["customer_apis"] = True
+                
+                if "/policies" in str(docs_response.text):
+                    print("   ✓ Policy management endpoints available")
+                    verification_results["policy_apis"] = True
+                
+                if "/claims" in str(docs_response.text):
+                    print("   ✓ Claims processing endpoints available")
+                    verification_results["claims_apis"] = True
+                
+                if "/analytics" in str(docs_response.text):
+                    print("   ✓ Analytics endpoints available")
+                    verification_results["analytics_apis"] = True
+                    
+            else:
+                print(f"   ✗ API server not accessible: {health_response.status_code}")
+                
+        except requests.exceptions.RequestException as e:
+            print(f"   ✗ API server connection failed: {e}")
+        
+        # 5. Calculate completion percentage
         completed_components = sum(verification_results.values())
         total_components = len(verification_results)
         completion_percentage = (completed_components / total_components) * 100
         
-        print(f"\n" + "="*50)
-        print("LAB 12 COMPLETION SUMMARY:")
-        print("="*50)
-        print(f"Completed Components: {completed_components}/{total_components}")
-        print(f"Completion Percentage: {completion_percentage:.1f}%")
+        print(f"\n📈 LAB COMPLETION STATUS:")
+        print(f"   Completed Components: {completed_components}/{total_components}")
+        print(f"   Completion Percentage: {completion_percentage:.1f}%")
         
         if completion_percentage >= 90:
-            print("🎉 LAB 12 SUCCESSFULLY COMPLETED!")
-            print("✓ Ready for Lab 13: Insurance API Development")
+            print("\n🎉 LAB 13 SUCCESSFULLY COMPLETED!")
+            print("✓ Ready for Lab 7: Interactive Web Applications")
         elif completion_percentage >= 75:
-            print("⚠ LAB 12 MOSTLY COMPLETED")
+            print("\n⚠ LAB 13 MOSTLY COMPLETED")
             print("Review failed components before proceeding")
         else:
-            print("❌ LAB 12 INCOMPLETE")
+            print("\n❌ LAB 13 INCOMPLETE")
             print("Please address failed components")
         
         print("\nNEXT STEPS:")
         print("1. Review any failed verification components")
-        print("2. Test your Python service integration")
-        print("3. Proceed to Lab 13: Insurance API Development")
-        print("4. Begin building RESTful APIs with FastAPI")
+        print("2. Test your API endpoints using the interactive documentation")
+        print("3. Proceed to Lab 7: Interactive Web Applications")
+        print("4. Begin building full-stack applications with real-time features")
         
         return verification_results
         
@@ -2467,21 +2311,43 @@ def verify_lab_completion():
         return verification_results
 
 # Run final verification
-final_results = verify_lab_completion()
+final_results = verify_lab_13_completion()
 
 print("\n" + "="*50)
-print("🎓 NEO4J LAB 12 COMPLETED")
-print("Python Driver & Service Architecture")
+print("🎓 NEO4J LAB 13 COMPLETED")
+print("Production Insurance API Development")
 print("="*50)
 
-# Close connections
+# Final database state summary
 try:
-    connection_manager.close()
-    print("✓ Database connections closed properly")
-except:
-    print("⚠ Connection cleanup completed")
+    final_stats_query = """
+    CALL apoc.meta.stats() YIELD nodeCount, relCount, labelCount, relTypeCount
+    RETURN nodeCount, relCount, labelCount, relTypeCount
+    """
+    
+    stats_result = connection_manager.execute_query(final_stats_query)
+    if stats_result:
+        stats = stats_result[0]
+        print(f"📊 FINAL DATABASE STATE:")
+        print(f"   Nodes: {stats['nodeCount']}")
+        print(f"   Relationships: {stats['relCount']}")
+        print(f"   Labels: {stats['labelCount']}")
+        print(f"   Relationship Types: {stats['relTypeCount']}")
+        
+except Exception as e:
+    print(f"Could not retrieve final stats: {e}")
 
-print("Ready for Lab 13: Insurance API Development!")
+print("\n🌐 ACCESS YOUR API:")
+print(f"   Swagger UI: {api_server.base_url}/docs")
+print(f"   ReDoc Documentation: {api_server.base_url}/redoc")
+print(f"   Health Check: {api_server.base_url}/health")
+
+print("\n🔐 TEST CREDENTIALS:")
+print("   Admin: admin / admin123")
+print("   Agent: agent1 / agent123") 
+print("   Customer: customer1 / customer123")
+
+print("\nReady for Lab 7: Interactive Web Applications!")
 ```
 
 ---
@@ -2490,53 +2356,55 @@ print("Ready for Lab 13: Insurance API Development!")
 
 **🎯 What You've Accomplished:**
 
-### **Neo4j Python Driver Integration**
-- ✅ **Enterprise connection management** with retry logic, connection pooling, and error handling
-- ✅ **Production-grade driver configuration** with timeout management and connection optimization  
-- ✅ **Connection verification** with comprehensive health checks and performance monitoring
-- ✅ **Cross-platform compatibility** ensuring consistent behavior on Windows and Mac environments
+### **Production API Development**
+- ✅ **FastAPI framework integration** with comprehensive insurance domain endpoints
+- ✅ **JWT authentication system** with role-based access control and scope management
+- ✅ **RESTful API design** following industry best practices and OpenAPI standards
+- ✅ **Comprehensive error handling** with proper HTTP status codes and error responses
 
-### **Service Architecture Implementation**
-- ✅ **Repository pattern** with abstract base classes and consistent data access patterns
-- ✅ **Pydantic data models** with comprehensive validation, type safety, and serialization support
-- ✅ **Service layer development** implementing insurance business logic with proper separation of concerns
-- ✅ **Dependency injection** patterns enabling testable and maintainable code architecture
+### **Customer Management APIs**
+- ✅ **Complete CRUD operations** for customer data with validation and business rules
+- ✅ **Advanced search and filtering** with pagination support for large datasets
+- ✅ **Data validation** using Pydantic models with type safety and error reporting
+- ✅ **Customer analytics** with 360-degree view and relationship insights
 
-### **Error Handling & Resilience**
-- ✅ **Comprehensive exception management** with specific handling for validation, database, and system errors
-- ✅ **Retry mechanisms** with exponential backoff for transient failures and network issues
-- ✅ **Transaction management** ensuring data consistency and atomic operations
-- ✅ **Graceful degradation** with fallback mechanisms and error recovery strategies
+### **Policy Administration**
+- ✅ **Policy lifecycle management** from creation to renewal and cancellation
+- ✅ **Business rule enforcement** for coverage limits, premium calculations, and compliance
+- ✅ **Policy relationship tracking** linking customers, products, and claims
+- ✅ **Automated policy numbering** and date calculations for terms and renewals
 
-### **Testing & Quality Assurance**
-- ✅ **Integration testing framework** with pytest and mock frameworks for comprehensive coverage
-- ✅ **Data validation testing** ensuring model integrity and business rule compliance
-- ✅ **Performance testing** with query optimization and response time monitoring
-- ✅ **Health check implementation** providing real-time system status and diagnostics
+### **Claims Processing**
+- ✅ **Claims submission workflow** with incident validation and policy verification
+- ✅ **Status tracking system** for claims lifecycle management
+- ✅ **Adjuster assignment** and workload distribution capabilities
+- ✅ **Claims analytics** for fraud detection and settlement optimization
 
-### **Production Readiness Features**
-- ✅ **Monitoring and observability** with structured logging and performance metrics
-- ✅ **Configuration management** using environment variables and secure credential handling
-- ✅ **Type safety enforcement** with Pydantic models and TypeScript-style type hints
-- ✅ **Documentation patterns** with comprehensive docstrings and API documentation support
+### **Security & Documentation**
+- ✅ **Enterprise security patterns** with JWT tokens, role-based access, and CORS policies
+- ✅ **Interactive API documentation** with Swagger UI and ReDoc for developer experience
+- ✅ **OpenAPI specification** for integration with other systems and code generation
+- ✅ **Rate limiting and monitoring** for production-grade API management
 
-### **Database State:** 650 nodes, 800 relationships with Python service integration
+### **Database Integration**
+- ✅ **Production connection management** with connection pooling and retry logic
+- ✅ **Transaction handling** for data consistency and ACID compliance
+- ✅ **Performance optimization** with query caching and batch operations
+- ✅ **Health monitoring** with comprehensive database metrics and alerting
 
-### **Enterprise Architecture Achieved**
-- ✅ **Clean architecture patterns** with proper layer separation and dependency management
-- ✅ **Scalable service design** supporting high-volume operations and concurrent access
-- ✅ **Maintainable codebase** with proper abstractions and extensible design patterns
-- ✅ **Production deployment readiness** with containerization support and environment configuration
+**📈 Database State Achievement:**
+- **Target:** 720 nodes, 900 relationships
+- **Delivered:** Production-ready API platform with comprehensive insurance coverage
+- **Next Lab:** Lab 13 - Interactive Web Applications with real-time features
 
----
+**🛠️ Development Tools Mastered:**
+- **FastAPI Framework** - Modern Python web framework for APIs
+- **Pydantic Models** - Data validation and serialization
+- **JWT Authentication** - Secure token-based authentication
+- **OpenAPI/Swagger** - API documentation and testing
+- **Uvicorn ASGI Server** - High-performance async server
+- **Requests Library** - HTTP client for API testing
+- **Python Virtual Environments** - Isolated development environments
+- **Jupyter Notebooks** - Interactive development and testing
 
-## Next Steps
-
-You're now ready for **Session 3 - Lab 13: Insurance API Development**, where you'll:
-- Build RESTful APIs using FastAPI framework with Neo4j integration
-- Implement authentication, authorization, and security middleware for production systems
-- Create comprehensive API documentation with OpenAPI and interactive testing interfaces
-- Design customer management, policy administration, and claims processing endpoints
-- **Database Evolution:** 650 nodes → 720 nodes, 800 relationships → 900 relationships
-
-**Congratulations!** You've successfully implemented a production-ready Python service architecture with Neo4j integration, featuring comprehensive error handling, testing frameworks, and enterprise-grade patterns that provide the foundation for building scalable insurance applications.
+Your insurance API platform is now ready for integration with frontend applications, mobile apps, and third-party systems. The robust authentication, comprehensive validation, and detailed documentation make it suitable for enterprise deployment and team collaboration.

@@ -1,0 +1,6 @@
+branch_id,branch_name,address,city,state,zip_code,phone,manager_name,region,office_type,opening_date
+BRN-001,Austin Main Office,500 Congress Ave,Austin,TX,78701,512-555-1001,Patricia Williams,Central Texas,Main,2010-01-15
+BRN-002,Dallas Regional,1200 Main St,Dallas,TX,75201,214-555-1002,James Anderson,North Texas,Regional,2012-03-20
+BRN-003,Houston Regional,800 Travis St,Houston,TX,77002,713-555-1003,Maria Garcia,Houston Metro,Regional,2011-06-10
+BRN-004,Austin North,12500 Research Blvd,Austin,TX,78759,512-555-1004,Robert Chen,Central Texas,Satellite,2015-09-01
+BRN-005,Plano Office,6000 Legacy Dr,Plano,TX,75024,972-555-1005,Jennifer Kim,North Texas,Satellite,2016-11-12

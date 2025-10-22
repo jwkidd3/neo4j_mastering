@@ -1,10 +1,10 @@
-# Neo4j Lab 11: Predictive Analytics & Machine Learning
+# Neo4j Lab 10: Predictive Analytics & Machine Learning
 
 ## Overview
 **Duration:** 45 minutes  
 **Objective:** Implement machine learning models and predictive analytics for churn prediction, claims forecasting, risk scoring, and premium optimization using graph-enhanced features
 
-Building on Lab 10's compliance systems, you'll now create sophisticated predictive models that leverage graph relationships and network features to forecast customer behavior, predict claims patterns, and optimize business operations through advanced analytics.
+Building on Lab 7's compliance systems, you'll now create sophisticated predictive models that leverage graph relationships and network features to forecast customer behavior, predict claims patterns, and optimize business operations through advanced analytics.
 
 ---
 
@@ -1031,7 +1031,7 @@ RETURN "Predictive Analytics System Validation" AS status,
 
 ---
 
-## Neo4j Lab 11 Summary
+## Neo4j Lab 10 Summary
 
 **🎯 What You've Accomplished:**
 
@@ -1071,7 +1071,7 @@ RETURN "Predictive Analytics System Validation" AS status,
 
 ## Next Steps
 
-You're now ready for **Session 3 - Lab 12: Python Integration & Service Architecture**, where you'll:
+You're now ready for **Session 3 - Lab 7: Python Integration & Service Architecture**, where you'll:
 - Build Python applications with Neo4j driver integration and proper architecture patterns
 - Implement service layers with error handling and data mapping for insurance operations
 - Create automated testing frameworks for graph operations and business logic

@@ -1,10 +1,10 @@
-# Neo4j Lab 9: Advanced Fraud Detection & Investigation Tools
+# Neo4j Lab 8: Advanced Fraud Detection & Investigation Tools
 
 ## Overview
 **Duration:** 45 minutes  
 **Objective:** Build comprehensive fraud detection capabilities using network analysis, pattern recognition, and real-time scoring systems for insurance operations
 
-Building on Lab 8's performance optimization, you'll now implement sophisticated fraud detection algorithms that leverage graph relationships to identify suspicious patterns, fraud rings, and anomalous behavior in real-time insurance operations.
+Building on Lab 7's performance optimization, you'll now implement sophisticated fraud detection algorithms that leverage graph relationships to identify suspicious patterns, fraud rings, and anomalous behavior in real-time insurance operations.
 
 ---
 
@@ -786,7 +786,7 @@ RETURN prevention_plan
 
 ---
 
-## Neo4j Lab 9 Summary
+## Neo4j Lab 8 Summary
 
 **🎯 What You've Accomplished:**
 
@@ -826,7 +826,7 @@ RETURN prevention_plan
 
 ## Next Steps
 
-You're now ready for **Lab 10: Enterprise Compliance & Audit Systems**, where you'll:
+You're now ready for **Lab 7: Enterprise Compliance & Audit Systems**, where you'll:
 - Implement comprehensive regulatory compliance tracking for insurance operations
 - Create audit trail systems with complete data lineage and change management
 - Build automated compliance reporting for state and federal insurance regulations

@@ -40,7 +40,7 @@ docker exec neo4j neo4j version
 ```
 
 ### Step 3: Confirm Enterprise Features Available
-Verify that APOC and Graph Data Science are available:
+Verify that APOC is available:
 
 ```bash
 # List installed plugins
@@ -48,7 +48,6 @@ docker exec neo4j ls /var/lib/neo4j/plugins/
 
 # Should show:
 # apoc-[version].jar
-# neo4j-graph-data-science-[version].jar
 ```
 
 **✅ Verification Complete:** You now have Neo4j Enterprise 2025.06.0 running in Docker with enterprise features enabled.
@@ -139,35 +138,6 @@ RETURN datetime() AS created_at,
        date() AS policy_effective_date,
        date() + duration({years: 1}) AS policy_expiration_date
 ```
-
-### Step 10: Preview Graph Data Science for Insurance Analytics
-
-**⚠️ Note for Windows Users:** The Graph Data Science (GDS) plugin may not work on Windows. If you encounter issues with GDS, skip this step and refer to **Lab 7** which provides complete alternatives using native Cypher queries.
-
-**If GDS is available:**
-```cypher
-// List Graph Data Science algorithms relevant to insurance
-CALL gds.list() YIELD name, description
-WHERE name CONTAINS "centrality" OR name CONTAINS "community" OR name CONTAINS "similarity"
-RETURN name, description
-LIMIT 8
-```
-
-**If GDS is NOT available (Windows users):**
-```cypher
-// Explore graph patterns using native Cypher instead
-MATCH (n)
-WITH labels(n) AS nodeTypes, count(n) AS nodeCount
-RETURN nodeTypes[0] AS node_type, nodeCount
-ORDER BY nodeCount DESC
-
-// Note: Lab 7 provides complete alternatives for:
-// - PageRank → Manual influence scoring via relationship counts
-// - Community Detection → Territory analysis via agent groupings
-// - Betweenness Centrality → Bridge analysis via path patterns
-```
-
-**Insurance Enterprise Advantage:** These algorithms power fraud detection, customer segmentation, risk assessment, and claims network analysis in production insurance systems.
 
 ---
 
@@ -612,7 +582,7 @@ RETURN c, r1, p, r2, prod, a, r3
 - ✅ **Docker Neo4j Enterprise 2025.06.0** running with full enterprise features for insurance operations
 - ✅ **Professional client-server architecture** using Neo4j Desktop remote connections for insurance environments
 - ✅ **Multi-database environment** with dedicated insurance database for regulatory compliance
-- ✅ **Enterprise features verification** with APOC and Graph Data Science for insurance analytics
+- ✅ **Enterprise features verification** with APOC for insurance analytics
 
 ### **Insurance Domain Modeling**
 - ✅ **Customer lifecycle management** with comprehensive policyholder data and risk assessments

@@ -1,0 +1,21 @@
+customer_number,first_name,last_name,email,phone,date_of_birth,ssn_last_four,address,city,state,zip_code,credit_score,risk_tier,customer_since,lifetime_value,preferred_contact,customer_status
+CUST-001001,John,Smith,john.smith@email.com,512-555-0101,1985-03-15,1234,123 Main St,Austin,TX,78701,720,Preferred,2020-01-15,45000.00,Email,Active
+CUST-001002,Sarah,Johnson,sarah.j@email.com,512-555-0102,1990-07-22,2345,456 Oak Ave,Austin,TX,78702,690,Standard,2019-05-20,32000.00,Phone,Active
+CUST-001003,Michael,Williams,m.williams@email.com,214-555-0103,1978-11-30,3456,789 Elm St,Dallas,TX,75201,750,Preferred,2018-03-10,67000.00,Email,Active
+CUST-001004,Emma,Brown,emma.brown@email.com,713-555-0104,1995-02-14,4567,321 Pine Rd,Houston,TX,77002,680,Standard,2021-08-05,28000.00,SMS,Active
+CUST-001005,James,Davis,james.davis@email.com,512-555-0105,1982-09-18,5678,654 Cedar Ln,Austin,TX,78703,710,Preferred,2019-11-22,51000.00,Email,Active
+CUST-001006,Lisa,Martinez,lisa.m@email.com,214-555-0106,1988-06-25,6789,987 Birch Blvd,Dallas,TX,75202,665,Standard,2020-04-18,29500.00,Phone,Active
+CUST-001007,Robert,Garcia,robert.g@email.com,713-555-0107,1975-12-08,7890,147 Maple Dr,Houston,TX,77003,740,Preferred,2017-09-30,72000.00,Email,Active
+CUST-001008,Jennifer,Rodriguez,jen.rod@email.com,512-555-0108,1992-04-03,8901,258 Walnut Way,Austin,TX,78704,670,Standard,2021-02-14,26000.00,SMS,Active
+CUST-001009,David,Wilson,david.w@email.com,214-555-0109,1980-08-20,9012,369 Spruce St,Dallas,TX,75203,730,Preferred,2018-07-25,58000.00,Email,Active
+CUST-001010,Mary,Anderson,mary.a@email.com,713-555-0110,1987-01-12,0123,741 Ash Ct,Houston,TX,77004,685,Standard,2020-10-08,31000.00,Phone,Active
+CUST-001011,Christopher,Thomas,chris.t@email.com,512-555-0111,1983-05-28,1235,852 Poplar Pl,Austin,TX,78705,715,Preferred,2019-03-16,48000.00,Email,Active
+CUST-001012,Patricia,Taylor,patricia.t@email.com,214-555-0112,1991-10-15,2346,963 Willow Ave,Dallas,TX,75204,660,Standard,2021-05-22,27500.00,SMS,Active
+CUST-001013,Daniel,Moore,daniel.m@email.com,713-555-0113,1976-07-09,3457,159 Cherry Ln,Houston,TX,77005,745,Preferred,2017-12-18,69000.00,Email,Active
+CUST-001014,Linda,Jackson,linda.j@email.com,512-555-0114,1989-03-31,4568,357 Beech Rd,Austin,TX,78706,675,Standard,2020-08-11,30000.00,Phone,Active
+CUST-001015,Matthew,White,matt.white@email.com,214-555-0115,1984-11-23,5679,468 Hickory Dr,Dallas,TX,75205,725,Preferred,2018-11-05,54000.00,Email,Active
+CUST-001016,Barbara,Harris,barb.h@email.com,713-555-0116,1993-02-07,6780,579 Sycamore Blvd,Houston,TX,77006,655,Standard,2021-09-20,25500.00,SMS,Active
+CUST-001017,Joseph,Martin,joe.martin@email.com,512-555-0117,1977-08-14,7891,680 Dogwood Way,Austin,TX,78707,735,Preferred,2017-06-28,63000.00,Email,Active
+CUST-001018,Susan,Thompson,susan.t@email.com,214-555-0118,1986-12-19,8902,791 Magnolia St,Dallas,TX,75206,670,Standard,2020-01-30,29000.00,Phone,Active
+CUST-001019,Charles,Garcia,charles.g@email.com,713-555-0119,1981-04-26,9013,802 Cottonwood Ct,Houston,TX,77007,720,Preferred,2018-08-22,56000.00,Email,Active
+CUST-001020,Jessica,Martinez,jessica.m@email.com,512-555-0120,1994-09-11,0124,913 Redwood Pl,Austin,TX,78708,665,Standard,2021-11-15,28500.00,SMS,Active

@@ -1,10 +1,10 @@
-# Neo4j Lab 10: Enterprise Compliance & Audit Systems
+# Neo4j Lab 9: Enterprise Compliance & Audit Systems
 
 ## Overview
 **Duration:** 45 minutes  
 **Objective:** Implement comprehensive regulatory compliance tracking, audit trail systems, and automated reporting for enterprise insurance operations with complete data lineage and privacy protection
 
-Building on Lab 9's fraud detection systems, you'll now create enterprise-grade compliance and audit capabilities that ensure regulatory adherence, complete data traceability, and automated reporting for state and federal insurance requirements.
+Building on Lab 7's fraud detection systems, you'll now create enterprise-grade compliance and audit capabilities that ensure regulatory adherence, complete data traceability, and automated reporting for state and federal insurance requirements.
 
 ---
 
@@ -1095,7 +1095,7 @@ RETURN "Compliance System Validation" AS status,
 
 ---
 
-## Neo4j Lab 10 Summary
+## Neo4j Lab 9 Summary
 
 **🎯 What You've Accomplished:**
 
@@ -1135,7 +1135,7 @@ RETURN "Compliance System Validation" AS status,
 
 ## Next Steps
 
-You're now ready for **Lab 11: Predictive Analytics & Machine Learning**, where you'll:
+You're now ready for **Lab 7: Predictive Analytics & Machine Learning**, where you'll:
 - Implement churn prediction models using customer behavior patterns
 - Build claims prediction algorithms with severity and frequency modeling  
 - Create risk scoring systems with dynamic assessment capabilities

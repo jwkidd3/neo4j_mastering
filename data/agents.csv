@@ -1,0 +1,11 @@
+agent_id,first_name,last_name,email,phone,territory,license_number,hire_date,total_sales_ytd,performance_rating,branch_id
+AGT-001,Michael,Thompson,m.thompson@insurance.com,512-555-0201,Central Texas,TX-LIC-12345,2015-03-15,450000.00,Excellent,BRN-001
+AGT-002,Jennifer,Martinez,j.martinez@insurance.com,214-555-0202,North Texas,TX-LIC-23456,2017-06-20,380000.00,Very Good,BRN-002
+AGT-003,Robert,Chen,r.chen@insurance.com,713-555-0203,Houston Metro,TX-LIC-34567,2016-09-10,420000.00,Excellent,BRN-003
+AGT-004,Emily,Rodriguez,e.rodriguez@insurance.com,512-555-0204,Central Texas,TX-LIC-45678,2018-01-08,320000.00,Good,BRN-001
+AGT-005,David,Kim,d.kim@insurance.com,214-555-0205,North Texas,TX-LIC-56789,2019-04-12,290000.00,Good,BRN-002
+AGT-006,Amanda,Patel,a.patel@insurance.com,713-555-0206,Houston Metro,TX-LIC-67890,2020-02-14,265000.00,Very Good,BRN-003
+AGT-007,Christopher,Brown,c.brown@insurance.com,512-555-0207,Central Texas,TX-LIC-78901,2016-11-22,410000.00,Excellent,BRN-001
+AGT-008,Sarah,Wilson,s.wilson@insurance.com,214-555-0208,North Texas,TX-LIC-89012,2018-08-30,340000.00,Very Good,BRN-002
+AGT-009,James,Garcia,j.garcia@insurance.com,713-555-0209,Houston Metro,TX-LIC-90123,2017-05-18,395000.00,Excellent,BRN-003
+AGT-010,Lisa,Anderson,l.anderson@insurance.com,512-555-0210,Central Texas,TX-LIC-01234,2021-03-01,215000.00,Good,BRN-001

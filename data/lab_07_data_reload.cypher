@@ -1,577 +1,394 @@
-// Neo4j Lab 7 - Data Reload Script
-// Complete data setup for Lab 7: Graph Algorithms for Insurance
-// Run this script if you need to reload the Lab 7 data state
-// Includes Labs 1-6 data + Graph Algorithm Projections, Centrality Analysis, Community Detection
+// Neo4j Lab 16 - Data Reload Script
+// Complete data setup for Lab 16: Multi-Line Insurance Platform
+// Run this script if you need to reload the Lab 16 data state
+// Includes Labs 1-15 data + Multi-Line Insurance Infrastructure
 
 // ===================================
-// STEP 1: CLEAR EXISTING DATA (OPTIONAL)
+// STEP 1: LOAD LAB 15 FOUNDATION
 // ===================================
-// Uncomment the next line if you want to start fresh
-// MATCH (n) DETACH DELETE n
+// This builds on Lab 15 - ensure you have the foundation
 
-// ===================================
-// STEP 2: ENSURE LAB 6 FOUNDATION EXISTS
-// ===================================
-// This script builds on Lab 6 - make sure you have the foundation data
-
-// Create constraints if not exist
-CREATE CONSTRAINT customer_number_unique IF NOT EXISTS FOR (c:Customer) REQUIRE c.customer_number IS UNIQUE;
-
-// Ensure basic customer and analytics data exists (abbreviated for performance)
-MERGE (customer1:Customer:Individual {customer_number: "CUST-001234"})
-ON CREATE SET customer1.id = randomUUID(), customer1.first_name = "Sarah", customer1.last_name = "Johnson", customer1.city = "Austin", customer1.state = "TX", customer1.credit_score = 720, customer1.risk_tier = "Standard", customer1.lifetime_value = 12500.00, customer1.created_at = datetime()
-
-MERGE (customer2:Customer:Individual {customer_number: "CUST-001235"})
-ON CREATE SET customer2.id = randomUUID(), customer2.first_name = "Michael", customer2.last_name = "Chen", customer2.city = "Austin", customer2.state = "TX", customer2.credit_score = 680, customer2.risk_tier = "Standard", customer2.lifetime_value = 18750.00, customer2.created_at = datetime()
-
-MERGE (customer3:Customer:Individual {customer_number: "CUST-001236"})
-ON CREATE SET customer3.id = randomUUID(), customer3.first_name = "Emma", customer3.last_name = "Rodriguez", customer3.city = "Dallas", customer3.state = "TX", customer3.credit_score = 750, customer3.risk_tier = "Preferred", customer3.lifetime_value = 8900.00, customer3.created_at = datetime();
-
-// Create bulk customers with enhanced network relationships
-WITH [
-  {customer_number: "CUST-001237", first_name: "James", last_name: "Wilson", city: "Houston", state: "TX", credit_score: 685, risk_tier: "Standard", lifetime_value: 8900.00},
-  {customer_number: "CUST-001238", first_name: "Maria", last_name: "Garcia", city: "Dallas", state: "TX", credit_score: 745, risk_tier: "Preferred", lifetime_value: 15600.00},
-  {customer_number: "CUST-001239", first_name: "Robert", last_name: "Kim", city: "Austin", state: "TX", credit_score: 720, risk_tier: "Standard", lifetime_value: 12300.00},
-  {customer_number: "CUST-001240", first_name: "Jennifer", last_name: "Brown", city: "San Antonio", state: "TX", credit_score: 660, risk_tier: "Standard", lifetime_value: 9800.00},
-  {customer_number: "CUST-001241", first_name: "William", last_name: "Davis", city: "Austin", state: "TX", credit_score: 780, risk_tier: "Preferred", lifetime_value: 18900.00},
-  {customer_number: "CUST-001242", first_name: "Linda", last_name: "Miller", city: "Houston", state: "TX", credit_score: 635, risk_tier: "Substandard", lifetime_value: 6700.00},
-  {customer_number: "CUST-001243", first_name: "Christopher", last_name: "Anderson", city: "Dallas", state: "TX", credit_score: 710, risk_tier: "Standard", lifetime_value: 11400.00},
-  {customer_number: "CUST-001244", first_name: "Patricia", last_name: "Taylor", city: "Austin", state: "TX", credit_score: 755, risk_tier: "Preferred", lifetime_value: 16800.00},
-  {customer_number: "CUST-001245", first_name: "Matthew", last_name: "Thomas", city: "San Antonio", state: "TX", credit_score: 695, risk_tier: "Standard", lifetime_value: 10200.00},
-  {customer_number: "CUST-001246", first_name: "Barbara", last_name: "Jackson", city: "Houston", state: "TX", credit_score: 725, risk_tier: "Standard", lifetime_value: 13700.00}
-] AS customerData
-
-UNWIND customerData AS row
-MERGE (c:Customer:Individual {customer_number: row.customer_number})
-ON CREATE SET
-  c.id = randomUUID(), c.first_name = row.first_name, c.last_name = row.last_name,
-  c.city = row.city, c.state = row.state, c.credit_score = row.credit_score,
-  c.risk_tier = row.risk_tier, c.lifetime_value = row.lifetime_value,
-  c.customer_since = date("2019-01-01") + duration({days: toInteger(rand() * 1500)}),
-  c.created_at = datetime(), c.version = 1;
-
-// Create agents for network analysis
-WITH [
-  {agent_id: "AGT-001", first_name: "David", last_name: "Wilson", territory: "Central Texas", performance_rating: "Excellent"},
-  {agent_id: "AGT-002", first_name: "Lisa", last_name: "Thompson", territory: "North Texas", performance_rating: "Very Good"},
-  {agent_id: "AGT-003", first_name: "Sarah", last_name: "Williams", territory: "Houston Metro", performance_rating: "Very Good"},
-  {agent_id: "AGT-004", first_name: "Michael", last_name: "Jones", territory: "Dallas Metro", performance_rating: "Excellent"},
-  {agent_id: "AGT-005", first_name: "Jessica", last_name: "Brown", territory: "San Antonio", performance_rating: "Good"},
-  {agent_id: "AGT-006", first_name: "Christopher", last_name: "Davis", territory: "Central Austin", performance_rating: "Very Good"}
-] AS agentData
-
-UNWIND agentData AS row
-MERGE (agent:Agent:Employee {agent_id: row.agent_id})
-ON CREATE SET
-  agent.id = randomUUID(), agent.first_name = row.first_name, agent.last_name = row.last_name,
-  agent.territory = row.territory, agent.performance_rating = row.performance_rating,
-  agent.ytd_sales = 50000 + toInteger(rand() * 100000),
-  agent.customer_count = 3 + toInteger(rand() * 7),
-  agent.sales_quota = 120000 + toInteger(rand() * 80000),
-  agent.created_at = datetime(), agent.version = 1;
+// Import Lab 15 data first (this is a prerequisite)
+// The lab_15_data_reload.cypher should be run first or data should exist
 
 // ===================================
-// STEP 3: CREATE ENHANCED NETWORK RELATIONSHIPS
+// STEP 2: MULTI-LINE INSURANCE ENTITIES
 // ===================================
 
-// Create customer referral network for centrality analysis
-MATCH (customers:Customer)
-WITH collect(customers) AS allCustomers
-UNWIND allCustomers AS referrer
-WITH referrer, allCustomers,
-     // Create referral probability based on customer value and location
-     [customer IN allCustomers WHERE
-      customer <> referrer AND
-      customer.city = referrer.city AND
-      customer.risk_tier IN ["Preferred", "Standard"] AND
-      rand() < 0.15 // 15% chance of referral relationship
-     ] AS potential_referrals
+// Create Life Insurance Products
+MERGE (lp1:Product:LifeInsurance {product_code: "LIFE-TERM-20"})
+ON CREATE SET lp1.product_name = "20-Year Term Life Insurance",
+    lp1.product_type = "Life",
+    lp1.product_category = "Term Life",
+    lp1.coverage_term_years = 20,
+    lp1.max_coverage_amount = 5000000,
+    lp1.min_coverage_amount = 100000,
+    lp1.premium_calculation_method = "Age-Based",
+    lp1.medical_exam_required = true,
+    lp1.conversion_allowed = true,
+    lp1.is_active = true,
+    lp1.created_at = datetime()
 
-UNWIND potential_referrals AS referred
-WITH referrer, referred
-WHERE referrer.customer_number < referred.customer_number // Avoid duplicates
+MERGE (lp2:Product:LifeInsurance {product_code: "LIFE-WHOLE"})
+ON CREATE SET lp2.product_name = "Whole Life Insurance",
+    lp2.product_type = "Life",
+    lp2.product_category = "Permanent Life",
+    lp2.coverage_term_years = null,
+    lp2.max_coverage_amount = 10000000,
+    lp2.min_coverage_amount = 50000,
+    lp2.premium_calculation_method = "Level Premium",
+    lp2.medical_exam_required = true,
+    lp2.cash_value_accumulation = true,
+    lp2.is_active = true,
+    lp2.created_at = datetime()
 
-CREATE (referrer)-[:REFERRED {
-  referral_date: date("2020-01-01") + duration({days: toInteger(rand() * 1200)}),
-  referral_bonus: 25.0 + (rand() * 75.0), // $25-$100 bonus
-  conversion_status:
-    CASE toInteger(rand() * 4)
-      WHEN 0 THEN "Converted"
-      WHEN 1 THEN "Quoted"
-      WHEN 2 THEN "Contacted"
-      ELSE "No Response"
-    END,
-  referral_channel:
-    CASE toInteger(rand() * 3)
-      WHEN 0 THEN "Word of Mouth"
-      WHEN 1 THEN "Social Media"
-      ELSE "Email"
-    END,
-  strength: 0.3 + (rand() * 0.7), // Relationship strength 0.3-1.0
-  created_at: datetime()
-}]->(referred);
+MERGE (lp3:Product:LifeInsurance {product_code: "LIFE-UNIVERSAL"})
+ON CREATE SET lp3.product_name = "Universal Life Insurance",
+    lp3.product_type = "Life",
+    lp3.product_category = "Permanent Life",
+    lp3.coverage_term_years = null,
+    lp3.max_coverage_amount = 15000000,
+    lp3.min_coverage_amount = 100000,
+    lp3.premium_calculation_method = "Flexible Premium",
+    lp3.medical_exam_required = true,
+    lp3.cash_value_accumulation = true,
+    lp3.investment_options = true,
+    lp3.is_active = true,
+    lp3.created_at = datetime();
 
-// Create agent collaboration network
-MATCH (agents:Agent)
-WITH collect(agents) AS allAgents
-UNWIND allAgents AS agent1
-WITH agent1, allAgents,
-     [agent2 IN allAgents WHERE
-      agent2 <> agent1 AND
-      (agent1.territory CONTAINS "Texas" AND agent2.territory CONTAINS "Texas") AND
-      rand() < 0.4 // 40% chance of collaboration
-     ] AS collaborating_agents
+// Create Commercial Insurance Products
+MERGE (cp1:Product:CommercialInsurance {product_code: "COMM-GL"})
+ON CREATE SET cp1.product_name = "Commercial General Liability",
+    cp1.product_type = "Commercial",
+    cp1.product_category = "Liability",
+    cp1.coverage_type = "General Liability",
+    cp1.max_coverage_amount = 10000000,
+    cp1.min_coverage_amount = 500000,
+    cp1.business_types_eligible = ["Retail", "Manufacturing", "Services"],
+    cp1.policy_term_months = 12,
+    cp1.is_active = true,
+    cp1.created_at = datetime()
 
-UNWIND collaborating_agents AS agent2
-WITH agent1, agent2
-WHERE agent1.agent_id < agent2.agent_id // Avoid duplicates
+MERGE (cp2:Product:CommercialInsurance {product_code: "COMM-PROPERTY"})
+ON CREATE SET cp2.product_name = "Commercial Property Insurance",
+    cp2.product_type = "Commercial",
+    cp2.product_category = "Property",
+    cp2.coverage_type = "Building and Contents",
+    cp2.max_coverage_amount = 50000000,
+    cp2.min_coverage_amount = 100000,
+    cp2.business_types_eligible = ["Retail", "Manufacturing", "Office", "Warehouse"],
+    cp2.policy_term_months = 12,
+    cp2.is_active = true,
+    cp2.created_at = datetime()
 
-CREATE (agent1)-[:COLLABORATES_WITH {
-  collaboration_type:
-    CASE toInteger(rand() * 4)
-      WHEN 0 THEN "Cross-referral"
-      WHEN 1 THEN "Joint accounts"
-      WHEN 2 THEN "Knowledge sharing"
-      ELSE "Territory coordination"
-    END,
-  collaboration_frequency:
-    CASE toInteger(rand() * 3)
-      WHEN 0 THEN "Weekly"
-      WHEN 1 THEN "Monthly"
-      ELSE "Quarterly"
-    END,
-  relationship_strength: 0.4 + (rand() * 0.6),
-  joint_sales_value: 10000 + (rand() * 50000),
-  start_date: date("2020-01-01") + duration({days: toInteger(rand() * 1000)}),
-  created_at: datetime()
-}]->(agent2);
+MERGE (cp3:Product:CommercialInsurance {product_code: "COMM-WC"})
+ON CREATE SET cp3.product_name = "Workers' Compensation Insurance",
+    cp3.product_type = "Commercial",
+    cp3.product_category = "Workers Compensation",
+    cp3.coverage_type = "Employee Injury Protection",
+    cp3.max_coverage_amount = null,
+    cp3.min_coverage_amount = null,
+    cp3.business_types_eligible = ["All"],
+    cp3.policy_term_months = 12,
+    cp3.mandatory_in_states = ["All 50 states"],
+    cp3.is_active = true,
+    cp3.created_at = datetime();
 
-// Create customer influence network (based on same agent, location, similar profiles)
-MATCH (c1:Customer), (c2:Customer)
-WHERE c1.customer_number < c2.customer_number
-  AND c1.city = c2.city
-  AND abs(c1.credit_score - c2.credit_score) < 50
-  AND c1.risk_tier = c2.risk_tier
-  AND rand() < 0.08 // 8% chance of influence relationship
+// Create Reinsurance Contracts
+MERGE (rc1:ReinsuranceContract {contract_id: "REINS-2024-001"})
+ON CREATE SET rc1.contract_name = "Catastrophe Excess of Loss Treaty",
+    rc1.contract_type = "Excess of Loss",
+    rc1.effective_date = date("2024-01-01"),
+    rc1.expiration_date = date("2024-12-31"),
+    rc1.reinsurer_name = "Global Re Limited",
+    rc1.retention_amount = 10000000,
+    rc1.limit_amount = 100000000,
+    rc1.premium_amount = 5000000,
+    rc1.coverage_territory = "United States",
+    rc1.lines_of_business = ["Auto", "Homeowners"],
+    rc1.contract_status = "Active",
+    rc1.created_at = datetime()
 
-CREATE (c1)-[:INFLUENCES {
-  influence_type:
-    CASE toInteger(rand() * 4)
-      WHEN 0 THEN "Social"
-      WHEN 1 THEN "Professional"
-      WHEN 2 THEN "Family"
-      ELSE "Neighborhood"
-    END,
-  influence_strength: 0.2 + (rand() * 0.6), // 0.2-0.8
-  interaction_frequency:
-    CASE toInteger(rand() * 4)
-      WHEN 0 THEN "Daily"
-      WHEN 1 THEN "Weekly"
-      WHEN 2 THEN "Monthly"
-      ELSE "Occasionally"
-    END,
-  relationship_duration_months: 12 + toInteger(rand() * 60), // 1-5 years
-  mutual_influence: rand() < 0.6, // 60% chance of mutual influence
-  created_at: datetime()
-}]->(c2);
+MERGE (rc2:ReinsuranceContract {contract_id: "REINS-2024-002"})
+ON CREATE SET rc2.contract_name = "Quota Share Treaty - Life",
+    rc2.contract_type = "Quota Share",
+    rc2.effective_date = date("2024-01-01"),
+    rc2.expiration_date = date("2024-12-31"),
+    rc2.reinsurer_name = "Life Reinsurance Corp",
+    rc2.ceding_percentage = 0.30,
+    rc2.commission_rate = 0.25,
+    rc2.premium_amount = 8000000,
+    rc2.coverage_territory = "North America",
+    rc2.lines_of_business = ["Term Life", "Whole Life"],
+    rc2.contract_status = "Active",
+    rc2.created_at = datetime();
 
-// ===================================
-// STEP 4: CREATE CENTRALITY SCORES
-// ===================================
+// Create Partner Organizations
+MERGE (po1:PartnerOrganization {partner_id: "PART-BROKER-001"})
+ON CREATE SET po1.partner_name = "Premier Insurance Brokers Inc",
+    po1.partner_type = "Broker",
+    po1.partnership_status = "Active",
+    po1.partnership_start_date = date("2020-01-01"),
+    po1.commission_rate = 0.12,
+    po1.total_policies_written = 2500,
+    po1.total_premium_volume = 15000000,
+    po1.contact_person = "James Anderson",
+    po1.contact_email = "james.anderson@premierbrokers.com",
+    po1.contact_phone = "+1-555-0101",
+    po1.created_at = datetime()
 
-// Calculate and store centrality scores for customers
-MATCH (customer:Customer)
-OPTIONAL MATCH (customer)-[r_out:REFERRED|INFLUENCES]->()
-OPTIONAL MATCH (customer)<-[r_in:REFERRED|INFLUENCES]-()
-WITH customer,
-     count(r_out) AS outgoing_connections,
-     count(r_in) AS incoming_connections,
-     count(r_out) + count(r_in) AS total_connections
+MERGE (po2:PartnerOrganization {partner_id: "PART-AGENCY-001"})
+ON CREATE SET po2.partner_name = "Nationwide Agents Network",
+    po2.partner_type = "Agency",
+    po2.partnership_status = "Active",
+    po2.partnership_start_date = date("2018-06-01"),
+    po2.commission_rate = 0.15,
+    po2.total_policies_written = 5000,
+    po2.total_premium_volume = 28000000,
+    po2.contact_person = "Maria Garcia",
+    po2.contact_email = "m.garcia@nationwideagents.com",
+    po2.contact_phone = "+1-555-0102",
+    po2.created_at = datetime()
 
-CREATE (centrality:CentralityAnalysis {
-  id: randomUUID(),
-  entity_id: customer.customer_number,
-  entity_type: "Customer",
-  analysis_date: date(),
+MERGE (po3:PartnerOrganization {partner_id: "PART-MGA-001"})
+ON CREATE SET po3.partner_name = "Specialty Lines MGA",
+    po3.partner_type = "MGA",
+    po3.partnership_status = "Active",
+    po3.partnership_start_date = date("2022-03-01"),
+    po3.commission_rate = 0.18,
+    po3.total_policies_written = 800,
+    po3.total_premium_volume = 12000000,
+    po3.specialty_lines = ["Commercial", "Professional Liability"],
+    po3.contact_person = "Robert Chen",
+    po3.contact_email = "r.chen@specialtylines.com",
+    po3.contact_phone = "+1-555-0103",
+    po3.created_at = datetime();
 
-  // Degree centrality (direct connections)
-  degree_centrality: total_connections,
-  in_degree: incoming_connections,
-  out_degree: outgoing_connections,
-  normalized_degree: total_connections / 20.0, // Normalize by approximate max connections
+// Create Business Entities (Commercial customers)
+MERGE (be1:BusinessEntity {business_id: "BUS-001"})
+ON CREATE SET be1.business_name = "TechStart Solutions LLC",
+    be1.business_type = "Technology Services",
+    be1.industry = "Information Technology",
+    be1.tax_id = "12-3456789",
+    be1.incorporation_date = date("2020-05-15"),
+    be1.employee_count = 45,
+    be1.annual_revenue = 8500000,
+    be1.primary_contact = "David Thompson",
+    be1.contact_email = "david@techstart.com",
+    be1.contact_phone = "+1-555-0201",
+    be1.created_at = datetime()
 
-  // Simulated centrality scores (in production, these would be calculated by GDS algorithms)
-  betweenness_centrality: rand() * 0.5, // How often node appears on shortest paths
-  closeness_centrality: 0.3 + (rand() * 0.4), // How close to all other nodes
-  pagerank_score: 0.15 + (rand() * 0.85), // Google PageRank algorithm
-  eigenvector_centrality: rand() * 1.0, // Connections to well-connected nodes
+MERGE (be2:BusinessEntity {business_id: "BUS-002"})
+ON CREATE SET be2.business_name = "Riverside Manufacturing Co",
+    be2.business_type = "Manufacturing",
+    be2.industry = "Industrial Manufacturing",
+    be2.tax_id = "98-7654321",
+    be2.incorporation_date = date("1995-08-22"),
+    be2.employee_count = 250,
+    be2.annual_revenue = 45000000,
+    be2.primary_contact = "Susan Martinez",
+    be2.contact_email = "s.martinez@riverside-mfg.com",
+    be2.contact_phone = "+1-555-0202",
+    be2.created_at = datetime();
 
-  // Insurance-specific influence scores
-  referral_influence_score:
-    CASE WHEN outgoing_connections > 2 THEN 0.8 + (rand() * 0.2)
-         WHEN outgoing_connections > 0 THEN 0.4 + (rand() * 0.4)
-         ELSE rand() * 0.3 END,
+// Create Life Insurance Policies
+MERGE (lip1:Policy:LifePolicy {policy_number: "LIFE-POL-2024-001"})
+ON CREATE SET lip1.customer_id = "CUST-001234",
+    lip1.product_code = "LIFE-TERM-20",
+    lip1.policy_status = "Active",
+    lip1.effective_date = date("2024-01-15"),
+    lip1.expiration_date = date("2044-01-15"),
+    lip1.coverage_amount = 1000000,
+    lip1.annual_premium = 850.00,
+    lip1.beneficiary_name = "Emily Johnson",
+    lip1.beneficiary_relationship = "Spouse",
+    lip1.medical_exam_completed = true,
+    lip1.created_at = datetime()
 
-  network_value_score: // Based on LTV of connected customers
-    customer.lifetime_value / 20000.0 + (total_connections * 0.1),
+MERGE (lip2:Policy:LifePolicy {policy_number: "LIFE-POL-2024-002"})
+ON CREATE SET lip2.customer_id = "CUST-001235",
+    lip2.product_code = "LIFE-WHOLE",
+    lip2.policy_status = "Active",
+    lip2.effective_date = date("2024-02-01"),
+    lip2.expiration_date = null,
+    lip2.coverage_amount = 500000,
+    lip2.annual_premium = 3500.00,
+    lip2.cash_value = 0.00,
+    lip2.beneficiary_name = "Michael Williams",
+    lip2.beneficiary_relationship = "Child",
+    lip2.medical_exam_completed = true,
+    lip2.created_at = datetime();
 
-  risk_propagation_score: // How risk might spread through network
-    CASE customer.risk_tier
-      WHEN "Substandard" THEN 0.7 + (total_connections * 0.1)
-      WHEN "Standard" THEN 0.4 + (total_connections * 0.05)
-      ELSE 0.1 + (total_connections * 0.02) END,
+// Create Commercial Policies
+MERGE (cop1:Policy:CommercialPolicy {policy_number: "COMM-POL-2024-001"})
+ON CREATE SET cop1.business_id = "BUS-001",
+    cop1.product_code = "COMM-GL",
+    cop1.policy_status = "Active",
+    cop1.effective_date = date("2024-01-01"),
+    cop1.expiration_date = date("2025-01-01"),
+    cop1.coverage_amount = 2000000,
+    cop1.annual_premium = 12000.00,
+    cop1.deductible = 5000.00,
+    cop1.partner_id = "PART-BROKER-001",
+    cop1.created_at = datetime()
 
-  // Marketing potential
-  viral_coefficient: // Potential for viral marketing
-    (outgoing_connections * 0.2) +
-    CASE customer.risk_tier WHEN "Preferred" THEN 0.3 ELSE 0.1 END,
+MERGE (cop2:Policy:CommercialPolicy {policy_number: "COMM-POL-2024-002"})
+ON CREATE SET cop2.business_id = "BUS-002",
+    cop2.product_code = "COMM-PROPERTY",
+    cop2.policy_status = "Active",
+    cop2.effective_date = date("2024-02-01"),
+    cop2.expiration_date = date("2025-02-01"),
+    cop2.coverage_amount = 25000000,
+    cop2.annual_premium = 85000.00,
+    cop2.deductible = 25000.00,
+    cop2.partner_id = "PART-MGA-001",
+    cop2.created_at = datetime();
 
-  influence_rank:
-    CASE WHEN total_connections >= 5 THEN "High Influencer"
-         WHEN total_connections >= 3 THEN "Medium Influencer"
-         WHEN total_connections >= 1 THEN "Low Influencer"
-         ELSE "No Influence" END,
+// Create Product Lines
+MERGE (pl1:ProductLine {line_id: "LINE-PERSONAL"})
+ON CREATE SET pl1.line_name = "Personal Lines",
+    pl1.line_category = "Individual Insurance",
+    pl1.product_count = 8,
+    pl1.total_policies = 25000,
+    pl1.total_premium_volume = 125000000,
+    pl1.market_share_percentage = 0.15,
+    pl1.created_at = datetime()
 
-  created_at: datetime(),
-  created_by: "centrality_engine",
-  version: 1
-})
+MERGE (pl2:ProductLine {line_id: "LINE-LIFE"})
+ON CREATE SET pl2.line_name = "Life Insurance",
+    pl2.line_category = "Life and Health",
+    pl2.product_count = 5,
+    pl2.total_policies = 12000,
+    pl2.total_premium_volume = 85000000,
+    pl2.market_share_percentage = 0.08,
+    pl2.created_at = datetime()
 
-CREATE (customer)-[:HAS_CENTRALITY_ANALYSIS {
-  analysis_date: date(),
-  current_analysis: true,
-  created_at: datetime()
-}]->(centrality);
-
-// ===================================
-// STEP 5: CREATE AGENT NETWORK ANALYSIS
-// ===================================
-
-// Calculate centrality scores for agents
-MATCH (agent:Agent)
-OPTIONAL MATCH (agent)-[r_out:COLLABORATES_WITH|SERVICES]->()
-OPTIONAL MATCH (agent)<-[r_in:COLLABORATES_WITH|SERVICES]-()
-WITH agent,
-     count(r_out) AS outgoing_connections,
-     count(r_in) AS incoming_connections,
-     count(r_out) + count(r_in) AS total_connections
-
-CREATE (agent_centrality:CentralityAnalysis {
-  id: randomUUID(),
-  entity_id: agent.agent_id,
-  entity_type: "Agent",
-  analysis_date: date(),
-
-  // Network metrics
-  degree_centrality: total_connections,
-  in_degree: incoming_connections,
-  out_degree: outgoing_connections,
-  normalized_degree: total_connections / 15.0, // Normalize by max expected connections
-
-  // Simulated advanced centrality scores
-  betweenness_centrality: rand() * 0.6,
-  closeness_centrality: 0.4 + (rand() * 0.3),
-  pagerank_score: 0.10 + (rand() * 0.90),
-  eigenvector_centrality: rand() * 1.0,
-
-  // Agent-specific influence scores
-  collaboration_influence_score:
-    CASE agent.performance_rating
-      WHEN "Excellent" THEN 0.8 + (rand() * 0.2)
-      WHEN "Very Good" THEN 0.6 + (rand() * 0.3)
-      ELSE 0.3 + (rand() * 0.4) END,
-
-  territory_leadership_score: // Leadership within territory
-    (agent.customer_count / 10.0) + (total_connections * 0.1),
-
-  knowledge_sharing_potential: // Ability to share best practices
-    CASE agent.performance_rating
-      WHEN "Excellent" THEN 0.9 + (rand() * 0.1)
-      WHEN "Very Good" THEN 0.7 + (rand() * 0.2)
-      ELSE 0.4 + (rand() * 0.3) END,
-
-  network_reach: // Potential customer reach through network
-    agent.customer_count + (total_connections * 2),
-
-  influence_rank:
-    CASE WHEN total_connections >= 4 AND agent.performance_rating = "Excellent" THEN "Key Opinion Leader"
-         WHEN total_connections >= 3 THEN "Influencer"
-         WHEN total_connections >= 1 THEN "Connector"
-         ELSE "Individual Contributor" END,
-
-  created_at: datetime(),
-  created_by: "centrality_engine",
-  version: 1
-})
-
-CREATE (agent)-[:HAS_CENTRALITY_ANALYSIS {
-  analysis_date: date(),
-  current_analysis: true,
-  created_at: datetime()
-}]->(agent_centrality);
-
-// ===================================
-// STEP 6: CREATE COMMUNITY DETECTION RESULTS
-// ===================================
-
-// Create customer communities based on geographic and behavioral clustering
-MATCH (customer:Customer)
-WITH customer,
-  // Assign community based on city and risk tier
-  customer.city + "-" + customer.risk_tier AS community_id,
-  CASE customer.city
-    WHEN "Austin" THEN
-      CASE customer.risk_tier
-        WHEN "Preferred" THEN "Austin-Preferred"
-        WHEN "Standard" THEN "Austin-Standard"
-        ELSE "Austin-Substandard" END
-    WHEN "Dallas" THEN
-      CASE customer.risk_tier
-        WHEN "Preferred" THEN "Dallas-Preferred"
-        WHEN "Standard" THEN "Dallas-Standard"
-        ELSE "Dallas-Substandard" END
-    WHEN "Houston" THEN
-      CASE customer.risk_tier
-        WHEN "Preferred" THEN "Houston-Preferred"
-        WHEN "Standard" THEN "Houston-Standard"
-        ELSE "Houston-Substandard" END
-    WHEN "San Antonio" THEN "San-Antonio-Mixed"
-    ELSE "Other-Texas"
-  END AS primary_community
-
-// Create community nodes
-MERGE (community:CustomerCommunity {community_id: primary_community})
-ON CREATE SET
-  community.id = randomUUID(),
-  community.community_name = primary_community,
-  community.formation_date = date(),
-  community.geographic_center = customer.city,
-  community.risk_profile = customer.risk_tier,
-  community.member_count = 0,
-  community.avg_lifetime_value = 0.0,
-  community.avg_credit_score = 0,
-  community.total_premium_volume = 0.0,
-  community.community_type = "Geographic-Risk Cluster",
-  community.cohesion_score = 0.6 + (rand() * 0.3), // How tightly connected
-  community.growth_rate = -0.05 + (rand() * 0.20), // -5% to +15% growth
-  community.churn_risk =
-    CASE customer.risk_tier
-      WHEN "Preferred" THEN 0.05 + (rand() * 0.10)
-      WHEN "Standard" THEN 0.15 + (rand() * 0.15)
-      ELSE 0.30 + (rand() * 0.20) END,
-  community.created_at = datetime(),
-  community.created_by = "community_detection_engine",
-  community.version = 1
-
-// Connect customers to their communities
-CREATE (customer)-[:BELONGS_TO_COMMUNITY {
-  membership_date: date("2020-01-01") + duration({days: toInteger(rand() * 1200)}),
-  membership_strength: 0.5 + (rand() * 0.5), // How strongly they belong
-  community_role:
-    CASE WHEN customer.lifetime_value > 15000 THEN "Community Leader"
-         WHEN customer.lifetime_value > 10000 THEN "Active Member"
-         ELSE "Standard Member" END,
-  influence_within_community: rand(),
-  created_at: datetime()
-}]->(community);
-
-// Update community metrics
-MATCH (community:CustomerCommunity)<-[:BELONGS_TO_COMMUNITY]-(customer:Customer)
-WITH community,
-     collect(customer) AS members,
-     count(customer) AS member_count,
-     avg(customer.lifetime_value) AS avg_ltv,
-     avg(customer.credit_score) AS avg_credit,
-     sum(customer.lifetime_value) AS total_value
-
-SET community.member_count = member_count,
-    community.avg_lifetime_value = round(avg_ltv * 100) / 100,
-    community.avg_credit_score = round(avg_credit),
-    community.total_premium_volume = round(total_value * 100) / 100,
-    community.last_updated = datetime();
+MERGE (pl3:ProductLine {line_id: "LINE-COMMERCIAL"})
+ON CREATE SET pl3.line_name = "Commercial Lines",
+    pl3.line_category = "Business Insurance",
+    pl3.product_count = 12,
+    pl3.total_policies = 3500,
+    pl3.total_premium_volume = 145000000,
+    pl3.market_share_percentage = 0.12,
+    pl3.created_at = datetime();
 
 // ===================================
-// STEP 7: CREATE GRAPH ALGORITHM INSIGHTS
+// STEP 3: MULTI-LINE INSURANCE RELATIONSHIPS
 // ===================================
 
-// Create algorithm results and insights
-CREATE (algorithm_run:AlgorithmExecution {
-  id: randomUUID(),
-  execution_id: "ALG-RUN-" + toString(toInteger(rand() * 100000)),
-  execution_date: datetime(),
+// Link Life Insurance Products to Product Line
+MATCH (lp:LifeInsurance)
+MATCH (pl:ProductLine {line_id: "LINE-LIFE"})
+MERGE (lp)-[r:BELONGS_TO_LINE]->(pl)
+ON CREATE SET r.created_at = datetime();
 
-  // Algorithm details
-  algorithms_executed: [
-    "PageRank",
-    "Betweenness Centrality",
-    "Community Detection (Louvain)",
-    "Node Similarity",
-    "Shortest Path"
-  ],
+// Link Commercial Insurance Products to Product Line
+MATCH (cp:CommercialInsurance)
+MATCH (pl:ProductLine {line_id: "LINE-COMMERCIAL"})
+MERGE (cp)-[r:BELONGS_TO_LINE]->(pl)
+ON CREATE SET r.created_at = datetime();
 
-  // Graph statistics
-  total_nodes_analyzed: 50, // Approximate count
-  total_relationships_analyzed: 150,
-  graph_density: 0.12, // 12% of possible connections exist
-  average_clustering_coefficient: 0.35,
-  graph_diameter: 6, // Longest shortest path
+// Link Life Policies to Customers
+MATCH (lip:LifePolicy {policy_number: "LIFE-POL-2024-001"})
+MATCH (c:Customer {customer_number: "CUST-001234"})
+MERGE (c)-[r:HOLDS_LIFE_POLICY]->(lip)
+ON CREATE SET r.relationship_start = lip.effective_date
 
-  // Key insights
-  most_influential_customers: [
-    "CUST-001241", // William Davis - High LTV + Preferred
-    "CUST-001244", // Patricia Taylor - High LTV + Austin
-    "CUST-001238"  // Maria Garcia - High LTV + Preferred
-  ],
+MATCH (lip:LifePolicy {policy_number: "LIFE-POL-2024-002"})
+MATCH (c:Customer {customer_number: "CUST-001235"})
+MERGE (c)-[r:HOLDS_LIFE_POLICY]->(lip)
+ON CREATE SET r.relationship_start = lip.effective_date;
 
-  highest_risk_propagation: [
-    "CUST-001242", // Linda Miller - Substandard + Houston
-    "CUST-001240"  // Jennifer Brown - Standard + San Antonio
-  ],
+// Link Commercial Policies to Business Entities
+MATCH (cop:CommercialPolicy {policy_number: "COMM-POL-2024-001"})
+MATCH (be:BusinessEntity {business_id: "BUS-001"})
+MERGE (be)-[r:HOLDS_COMMERCIAL_POLICY]->(cop)
+ON CREATE SET r.relationship_start = cop.effective_date
 
-  communities_detected: 7,
-  largest_community_size: 6,
-  most_cohesive_community: "Austin-Preferred",
-  highest_growth_community: "Dallas-Preferred",
+MATCH (cop:CommercialPolicy {policy_number: "COMM-POL-2024-002"})
+MATCH (be:BusinessEntity {business_id: "BUS-002"})
+MERGE (be)-[r:HOLDS_COMMERCIAL_POLICY]->(cop)
+ON CREATE SET r.relationship_start = cop.effective_date;
 
-  // Business recommendations
-  marketing_targets: [
-    "Target Austin-Preferred community for premium products",
-    "Focus retention efforts on Houston-Standard community",
-    "Leverage CUST-001241 for referral campaigns"
-  ],
+// Link Life Policies to Products
+MATCH (lip:LifePolicy {policy_number: "LIFE-POL-2024-001"})
+MATCH (lp:LifeInsurance {product_code: "LIFE-TERM-20"})
+MERGE (lip)-[r:BASED_ON_PRODUCT]->(lp)
 
-  risk_mitigation_actions: [
-    "Monitor CUST-001242 network for churn indicators",
-    "Strengthen relationships in San Antonio market",
-    "Implement community-based retention programs"
-  ],
+MATCH (lip:LifePolicy {policy_number: "LIFE-POL-2024-002"})
+MATCH (lp:LifeInsurance {product_code: "LIFE-WHOLE"})
+MERGE (lip)-[r:BASED_ON_PRODUCT]->(lp);
 
-  cross_sell_opportunities: [
-    "Life insurance to Austin-Preferred community",
-    "Property insurance expansion in Dallas market",
-    "Commercial insurance for high-influence customers"
-  ],
+// Link Commercial Policies to Products
+MATCH (cop:CommercialPolicy {policy_number: "COMM-POL-2024-001"})
+MATCH (cp:CommercialInsurance {product_code: "COMM-GL"})
+MERGE (cop)-[r:BASED_ON_PRODUCT]->(cp)
 
-  execution_time_seconds: 45.7,
-  memory_usage_mb: 128.5,
-  algorithm_version: "GDS 2.5.0",
-  created_at: datetime(),
-  created_by: "graph_algorithm_engine",
-  version: 1
-});
+MATCH (cop:CommercialPolicy {policy_number: "COMM-POL-2024-002"})
+MATCH (cp:CommercialInsurance {product_code: "COMM-PROPERTY"})
+MERGE (cop)-[r:BASED_ON_PRODUCT]->(cp);
 
-// ===================================
-// STEP 8: CREATE NETWORK INSIGHTS DASHBOARD DATA
-// ===================================
+// Link Commercial Policies to Partner Organizations
+MATCH (cop:CommercialPolicy {policy_number: "COMM-POL-2024-001"})
+MATCH (po:PartnerOrganization {partner_id: "PART-BROKER-001"})
+MERGE (cop)-[r:DISTRIBUTED_BY]->(po)
+ON CREATE SET r.commission_rate = po.commission_rate,
+    r.commission_amount = cop.annual_premium * po.commission_rate
 
-// Create network insights for business intelligence
-MATCH (customer:Customer)-[:HAS_CENTRALITY_ANALYSIS]->(centrality:CentralityAnalysis)
-WITH customer, centrality
-ORDER BY centrality.network_value_score DESC
-LIMIT 10
+MATCH (cop:CommercialPolicy {policy_number: "COMM-POL-2024-002"})
+MATCH (po:PartnerOrganization {partner_id: "PART-MGA-001"})
+MERGE (cop)-[r:DISTRIBUTED_BY]->(po)
+ON CREATE SET r.commission_rate = po.commission_rate,
+    r.commission_amount = cop.annual_premium * po.commission_rate;
 
-CREATE (insight:NetworkInsight {
-  id: randomUUID(),
-  insight_id: "NETWORK-INSIGHT-" + customer.customer_number,
-  customer_id: customer.customer_number,
-  insight_type: "High Network Value Customer",
-  insight_date: date(),
+// Link Reinsurance Contracts to Product Lines
+MATCH (rc:ReinsuranceContract {contract_id: "REINS-2024-001"})
+MATCH (pl:ProductLine {line_id: "LINE-PERSONAL"})
+MERGE (rc)-[r:COVERS_PRODUCT_LINE]->(pl)
+ON CREATE SET r.effective_date = rc.effective_date
 
-  // Customer details
-  customer_name: customer.first_name + " " + customer.last_name,
-  customer_location: customer.city + ", " + customer.state,
-  customer_tier: customer.risk_tier,
-  lifetime_value: customer.lifetime_value,
+MATCH (rc:ReinsuranceContract {contract_id: "REINS-2024-002"})
+MATCH (pl:ProductLine {line_id: "LINE-LIFE"})
+MERGE (rc)-[r:COVERS_PRODUCT_LINE]->(pl)
+ON CREATE SET r.effective_date = rc.effective_date;
 
-  // Network metrics
-  network_connections: centrality.degree_centrality,
-  influence_score: centrality.referral_influence_score,
-  network_value: centrality.network_value_score,
-  viral_potential: centrality.viral_coefficient,
+// Link Business Entities to Customers (owners)
+MATCH (be:BusinessEntity {business_id: "BUS-001"})
+MATCH (c:Customer {customer_number: "CUST-001234"})
+MERGE (c)-[r:OWNS_BUSINESS]->(be)
+ON CREATE SET r.ownership_percentage = 100,
+    r.title = "Owner"
 
-  // Business recommendations
-  recommended_actions: [
-    CASE WHEN centrality.referral_influence_score > 0.7
-         THEN "Enroll in VIP referral program"
-         ELSE "Standard referral incentives" END,
-    CASE WHEN centrality.network_value_score > 1.0
-         THEN "Priority customer service"
-         ELSE "Standard service" END,
-    CASE WHEN centrality.viral_coefficient > 0.5
-         THEN "Social media advocacy program"
-         ELSE "Email marketing campaigns" END
-  ],
+MATCH (be:BusinessEntity {business_id: "BUS-002"})
+MATCH (c:Customer {customer_number: "CUST-001235"})
+MERGE (c)-[r:OWNS_BUSINESS]->(be)
+ON CREATE SET r.ownership_percentage = 45,
+    r.title = "Partner";
 
-  // Risk assessment
-  network_risk_level:
-    CASE WHEN centrality.risk_propagation_score > 0.6 THEN "High"
-         WHEN centrality.risk_propagation_score > 0.3 THEN "Medium"
-         ELSE "Low" END,
+// Link Partner Organizations to Agents
+MATCH (po:PartnerOrganization {partner_id: "PART-BROKER-001"})
+MATCH (a:Agent)
+WHERE a.name CONTAINS "Anderson" OR a.name CONTAINS "Johnson"
+WITH po, a LIMIT 1
+MERGE (a)-[r:WORKS_FOR_PARTNER]->(po)
+ON CREATE SET r.start_date = date("2020-01-01"),
+    r.employment_type = "Full-time";
 
-  // Opportunity score
-  opportunity_score:
-    (centrality.referral_influence_score * 0.4) +
-    (centrality.network_value_score * 0.4) +
-    (centrality.viral_coefficient * 0.2),
-
-  priority_level:
-    CASE WHEN centrality.network_value_score > 1.5 THEN "Critical"
-         WHEN centrality.network_value_score > 1.0 THEN "High"
-         WHEN centrality.network_value_score > 0.5 THEN "Medium"
-         ELSE "Standard" END,
-
-  created_at: datetime(),
-  created_by: "network_insights_engine",
-  version: 1
-})
-
-CREATE (customer)-[:HAS_NETWORK_INSIGHT {
-  insight_date: date(),
-  current_insight: true,
-  created_at: datetime()
-}]->(insight);
+// Create cross-sell relationships
+MATCH (lip:LifePolicy {policy_number: "LIFE-POL-2024-001"})
+MATCH (p:Policy {policy_number: "POL-2024-001"})
+WHERE NOT p:LifePolicy AND NOT p:CommercialPolicy
+MERGE (lip)-[r:CROSS_SELL_OPPORTUNITY]->(p)
+ON CREATE SET r.opportunity_score = 0.78,
+    r.recommended_product = "Home + Life Bundle";
 
 // ===================================
-// STEP 9: VERIFICATION AND SUMMARY
+// VERIFICATION QUERIES
 // ===================================
 
-// Verify Lab 7 data state
+// Verify node counts
 MATCH (n)
-RETURN labels(n)[0] AS entity_type,
-       count(n) AS entity_count
-ORDER BY entity_count DESC
-
-UNION ALL
-
-MATCH ()-[r]->()
-RETURN type(r) AS entity_type,
-       count(r) AS entity_count
+RETURN labels(n)[0] AS entity_type, count(n) AS entity_count
 ORDER BY entity_count DESC;
 
-// Network analysis summary
-MATCH (c:Customer)-[:HAS_CENTRALITY_ANALYSIS]->(cent:CentralityAnalysis)
-RETURN cent.influence_rank AS influence_level,
-       count(c) AS customer_count,
-       avg(c.lifetime_value) AS avg_lifetime_value,
-       avg(cent.network_value_score) AS avg_network_value
-ORDER BY avg_network_value DESC;
-
-// Community analysis summary
-MATCH (comm:CustomerCommunity)
-RETURN comm.community_name AS community,
-       comm.member_count AS members,
-       comm.avg_lifetime_value AS avg_ltv,
-       comm.churn_risk AS churn_risk,
-       comm.cohesion_score AS cohesion
-ORDER BY comm.avg_lifetime_value DESC;
-
-// Algorithm execution summary
-MATCH (alg:AlgorithmExecution)
-RETURN alg.execution_date AS execution_time,
-       alg.total_nodes_analyzed AS nodes,
-       alg.total_relationships_analyzed AS relationships,
-       alg.communities_detected AS communities,
-       alg.graph_density AS density,
-       alg.execution_time_seconds AS runtime_seconds;
-
-// Expected result: 350 nodes, 450 relationships with graph algorithm analysis
+// Expected result: ~950 nodes, ~1200 relationships with multi-line insurance infrastructure

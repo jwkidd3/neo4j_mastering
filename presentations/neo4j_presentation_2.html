@@ -219,7 +219,7 @@
                 <div class="title-slide">
                     <h1>Neo4j Session 2</h1>
                     <h2>Advanced Analytics & Business Intelligence</h2>
-                    <p><strong>Graph Data Science | Customer Analytics | Fraud Detection</strong></p>
+                    <p><strong>Customer Analytics | Fraud Detection</strong></p>
                 </div>
             </section>
 
@@ -255,9 +255,7 @@
                 <div class="two-column">
                     <div class="column">
                         <h3>Data Science Pipeline</h3>
-                        <ul>
-                            <li><strong>GDS Library:</strong> Production algorithms</li>
-                            <li><strong>Memory Management:</strong> Efficient projections</li>
+                        <ul>                            <li><strong>Memory Management:</strong> Efficient projections</li>
                             <li><strong>Workflow Integration:</strong> Multi-step analytics</li>
                         </ul>
                     </div>
@@ -314,7 +312,6 @@
                         </ul>
                     </div>
                     <div class="column">
-                        <h3>Graph Data Science</h3>
                         <ul>
                             <li><strong>Centrality:</strong> PageRank and betweenness</li>
                             <li><strong>Community Detection:</strong> Louvain segmentation</li>
@@ -457,7 +454,6 @@ RETURN a.agent_id,
             <!-- Session 7: Graph Algorithms -->
             <section>
                 <div class="session-header">
-                    <h2>📊 Session 7: Graph Data Science & Machine Learning</h2>
                 </div>
                 <div class="algorithm-showcase">
                     <h3>Enterprise Graph Algorithms</h3>
@@ -517,7 +513,6 @@ RETURN a.agent_id,
                 </div>
             </section>
 
-            <!-- Graph Path Functions for Lab 7 -->
             <section>
                 <h2>Graph Path Functions - shortestPath()</h2>
                 <h3>Part 1: Basic shortestPath Syntax</h3>
@@ -591,11 +586,10 @@ WITH c, count(r) AS degree
 RETURN avg(degree) AS avg_centrality,
        max(degree) AS max_centrality</code></pre>
                 <div class="enterprise-highlight">
-                    <p><strong>Lab 7 Application:</strong> You'll use these patterns for network analysis, centrality calculations, and community detection</p>
+                    <p></p>
                 </div>
             </section>
 
-            <!-- Lab 7 Introduction -->
             <section>
                 <div class="lab-intro">
                     <h2>🔧 Lab Introduction: Graph Algorithms for Insurance</h2>
@@ -659,7 +653,7 @@ RETURN avg(degree) AS avg_centrality,
                 </div>
             </section>
 
-            <!-- Database Schema Commands for Lab 8 -->
+            <!-- Database Schema Commands for Lab 7 -->
             <section>
                 <h2>SHOW Commands - Database Inspection</h2>
                 <h3>Part 1: SHOW INDEXES</h3>
@@ -723,11 +717,11 @@ PROFILE
 MATCH (c:Customer {customer_number: 'C001'})
 RETURN c</code></pre>
                 <div class="enterprise-highlight">
-                    <p><strong>Lab 8 Application:</strong> You'll use SHOW, EXPLAIN, and PROFILE to optimize query performance and verify index usage</p>
+                    <p><strong>Lab 7 Application:</strong> You'll use SHOW, EXPLAIN, and PROFILE to optimize query performance and verify index usage</p>
                 </div>
             </section>
 
-            <!-- Lab 8 Introduction -->
+            <!-- Lab 7 Introduction -->
             <section>
                 <div class="lab-intro">
                     <h2>🔧 Lab Introduction: Performance Optimization</h2>
@@ -814,7 +808,7 @@ RETURN c</code></pre>
                 </div>
             </section>
 
-            <!-- Lab 9 Introduction -->
+            <!-- Lab 8 Introduction -->
             <section>
                 <div class="lab-intro">
                     <h2>🔧 Lab Introduction: Fraud Detection Networks</h2>
@@ -876,7 +870,7 @@ RETURN c</code></pre>
                 </div>
             </section>
 
-            <!-- Temporal Functions for Lab 10 -->
+            <!-- Temporal Functions for Lab 9 -->
             <section>
                 <h2>Date and Duration Functions</h2>
                 <h3>Part 1: date() Function</h3>
@@ -949,11 +943,11 @@ RETURN n.created_by AS source,
        date(n.created_at) AS date,
        count(n) AS entities_created</code></pre>
                 <div class="enterprise-highlight">
-                    <p><strong>Lab 10 Application:</strong> You'll use date() and duration() for compliance reporting, audit trails, and regulatory analysis</p>
+                    <p><strong>Lab 9 Application:</strong> You'll use date() and duration() for compliance reporting, audit trails, and regulatory analysis</p>
                 </div>
             </section>
 
-            <!-- Lab 10 Introduction -->
+            <!-- Lab 9 Introduction -->
             <section>
                 <div class="lab-intro">
                     <h2>🔧 Lab Introduction: Compliance Automation</h2>
@@ -1028,7 +1022,7 @@ RETURN n.created_by AS source,
                 </div>
             </section>
 
-            <!-- ML Concepts for Lab 11 -->
+            <!-- ML Concepts for Lab 10 -->
             <section>
                 <h2>Machine Learning Feature Engineering</h2>
                 <h3>Part 1: Feature Extraction Patterns</h3>
@@ -1118,11 +1112,11 @@ RETURN c.customer_segment,
        count(pm) AS prediction_count
 ORDER BY avg_confidence DESC</code></pre>
                 <div class="enterprise-highlight">
-                    <p><strong>Lab 11 Application:</strong> You'll engineer features from graph data and evaluate model confidence for production ML systems</p>
+                    <p><strong>Lab 10 Application:</strong> You'll engineer features from graph data and evaluate model confidence for production ML systems</p>
                 </div>
             </section>
 
-            <!-- Lab 11 Introduction -->
+            <!-- Lab 10 Introduction -->
             <section>
                 <div class="lab-intro">
                     <h2>🔧 Lab Introduction: Predictive Analytics</h2>
@@ -1311,7 +1305,7 @@ ORDER BY avg_confidence DESC</code></pre>
                     <h2>Advanced Analytics & Business Intelligence Mastery</h2>
                     <p><strong>Ready for Next Session: Python Integration & Production Deployment</strong></p>
                     <div class="enterprise-highlight" style="margin-top: 2rem;">
-                        <p><em>You've successfully built enterprise-grade analytics systems with graph algorithms, fraud detection, and predictive capabilities. In the next session, we'll integrate these systems with Python applications and deploy them to production environments.</em></p>
+                        <p><em>You've successfully built enterprise-grade analytics systems with fraud detection and predictive capabilities. In the next session, we'll integrate these systems with Python applications and deploy them to production environments.</em></p>
                     </div>
                 </div>
             </section>

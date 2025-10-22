@@ -1,4 +1,4 @@
-# Neo4j Lab 8: Performance Optimization for Production Insurance Systems
+# Neo4j Lab 7: Performance Optimization for Production Insurance Systems
 
 ## Overview
 **Duration:** 45 minutes  
@@ -484,7 +484,7 @@ RETURN stats.nodes AS total_nodes,
 
 ---
 
-## Neo4j Lab 8 Summary
+## Neo4j Lab 7 Summary
 
 **🎯 What You've Accomplished:**
 
@@ -524,7 +524,7 @@ RETURN stats.nodes AS total_nodes,
 
 ## Next Steps
 
-You're now ready for **Lab 9: Fraud Detection Systems**, where you'll:
+You're now ready for **Lab 7: Fraud Detection Systems**, where you'll:
 - Implement advanced fraud detection algorithms using optimized performance patterns
 - Build real-time scoring systems with efficient query execution
 - Create investigation workflows using the performance-optimized database

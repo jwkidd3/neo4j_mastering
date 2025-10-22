@@ -1,0 +1,9 @@
+product_code,product_name,product_type,coverage_category,base_rate,risk_multiplier,min_coverage,max_coverage,deductible_options,description
+PROD-AUTO-001,Auto Standard,Auto,Liability,850.00,1.0,50000,100000,"250,500,1000",Standard auto insurance with liability coverage
+PROD-AUTO-002,Auto Premium,Auto,Full Coverage,1250.00,1.2,100000,300000,"500,1000,2000",Comprehensive and collision coverage with roadside assistance
+PROD-AUTO-003,Auto Basic,Auto,Liability,650.00,0.8,25000,50000,"500,1000",Basic liability-only coverage
+PROD-HOME-001,Homeowners Standard,Property,Dwelling,1500.00,1.0,150000,500000,"1000,2500,5000",Standard homeowners insurance with dwelling protection
+PROD-HOME-002,Homeowners Premium,Property,Full Coverage,2200.00,1.3,250000,1000000,"1000,2500,5000,10000",Premium coverage including personal property and liability
+PROD-HOME-003,Renters Basic,Property,Personal Property,350.00,0.7,15000,50000,"250,500,1000",Basic renters insurance for personal belongings
+PROD-CONDO-001,Condo Standard,Property,Unit Coverage,800.00,0.9,100000,300000,"500,1000,2000",Standard condo insurance covering unit and improvements
+PROD-UMBRELLA-001,Personal Umbrella,Liability,Excess Liability,450.00,1.5,1000000,5000000,"0",Additional liability coverage beyond standard policies

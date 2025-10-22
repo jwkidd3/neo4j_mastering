@@ -1,2158 +1,1494 @@
-# Neo4j Lab 15: Production Deployment
+# Neo4j Lab 15: Multi-Line Insurance Platform
 
 **Duration:** 45 minutes  
-**Prerequisites:** Completion of Lab 14 (Interactive Insurance Web Application)  
-**Database State:** Starting with 800 nodes, 1000 relationships → Ending with 850 nodes, 1100 relationships  
+**Difficulty:** Advanced  
+**Prerequisites:** Labs 1-15 completed successfully  
+
+In this lab, you'll expand your insurance database to a comprehensive multi-line platform supporting life insurance, commercial coverage, specialty products, and global reinsurance operations. You'll implement advanced enterprise features including multi-currency support, international regulations, and complex partner ecosystems.
+
+---
 
 ## Learning Objectives
 
 By the end of this lab, you will be able to:
-- Configure multi-environment deployment strategies with development, staging, and production environments
-- Implement enterprise security hardening including authentication, authorization, and data encryption
-- Set up comprehensive monitoring, logging, and alerting systems for production operations
-- Configure backup automation, disaster recovery procedures, and high availability architectures
-- Deploy applications using container orchestration and CI/CD pipeline automation
+- ✅ **Implement life insurance products** with beneficiaries, cash values, and term structures
+- ✅ **Build commercial insurance systems** supporting general liability, workers compensation, and cyber coverage
+- ✅ **Design specialty insurance products** including professional liability and umbrella policies
+- ✅ **Create reinsurance networks** with treaty management and risk distribution
+- ✅ **Implement global operations** with multi-country compliance and currency management
+- ✅ **Build partner ecosystems** including brokers, reinsurers, and specialty providers
 
 ---
 
-## Lab Overview
+## Lab Environment Setup
 
-In this lab, you'll deploy your insurance web application to a production environment using enterprise-grade deployment patterns. You'll implement security hardening, monitoring systems, backup automation, and high availability configurations that ensure your Neo4j applications meet enterprise operational standards.
+### Step 1: Verify Docker Environment
+```bash
+# Ensure Neo4j Enterprise container is running
+docker ps | grep neo4j
 
----
-
-## Part 1: Environment Setup and Production Infrastructure
-
-### Install Production Dependencies
-```python
-# Install production deployment dependencies
-import subprocess
-import sys
-import os
-from datetime import datetime, timedelta
-import json
-import logging
-
-def install_package(package_name):
-    """Install package with error handling"""
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package_name], 
-                            capture_output=True, text=True)
-        print(f"✓ {package_name} installed successfully")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"✗ Failed to install {package_name}: {e}")
-        return False
-    except Exception as e:
-        print(f"✗ Error installing {package_name}: {e}")
-        return False
-
-# Production deployment packages
-packages = [
-    "docker==6.1.3",
-    "kubernetes==27.2.0", 
-    "prometheus-client==0.17.1",
-    "psutil==5.9.5",
-    "cryptography==41.0.4",
-    "pyjwt==2.8.0",
-    "schedule==1.2.0",
-    "paramiko==3.3.1"
-]
-
-# Install packages
-print("📦 Installing production deployment dependencies...")
-successful_installs = 0
-for package in packages:
-    if install_package(package):
-        successful_installs += 1
-
-print(f"\n✓ Production dependencies installed: {successful_installs}/{len(packages)} successful")
-
-if successful_installs < len(packages):
-    print("⚠️ Some packages failed to install - continuing with available dependencies")
-else:
-    print("✅ All production deployment dependencies installed successfully")
+# Container should show: neo4j (Neo4j/2025.06.0 neo4j:enterprise)
 ```
 
-### Import Production Libraries
+### Step 2: Connect to Neo4j
 ```python
-# Import production libraries with error handling
-print("📚 Importing production libraries...")
+# In Jupyter, verify connection
+from neo4j import GraphDatabase
+import pandas as pd
+from datetime import datetime, date
+import uuid
 
-# Standard library imports
-import time
-import hashlib
-import secrets
-import threading
-import subprocess
-import shutil
-import json
-import logging
-from datetime import datetime, timedelta
+# Connect to Neo4j Enterprise instance
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
 
-# Try importing optional dependencies with fallbacks
-try:
-    import docker
-    DOCKER_AVAILABLE = True
-    print("✓ Docker library imported")
-except ImportError:
-    DOCKER_AVAILABLE = False
-    print("⚠️ Docker library not available - container operations will be simulated")
+def run_query(query, parameters=None):
+    with driver.session(database="insurance") as session:
+        result = session.run(query, parameters)
+        return [record.data() for record in result]
 
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-    print("✓ Psutil library imported")
-except ImportError:
-    PSUTIL_AVAILABLE = False
-    print("⚠️ Psutil not available - system metrics will be simulated")
+# Verify current database state
+current_state = run_query("""
+MATCH (n) 
+RETURN labels(n)[0] AS node_type, count(n) AS count
+ORDER BY count DESC
+""")
 
-try:
-    import jwt
-    JWT_AVAILABLE = True
-    print("✓ JWT library imported")
-except ImportError:
-    JWT_AVAILABLE = False
-    print("⚠️ JWT not available - using basic token generation")
-
-try:
-    from cryptography.fernet import Fernet
-    CRYPTOGRAPHY_AVAILABLE = True
-    print("✓ Cryptography library imported")
-except ImportError:
-    CRYPTOGRAPHY_AVAILABLE = False
-    print("⚠️ Cryptography not available - using basic encryption")
-
-try:
-    from prometheus_client import Counter, Histogram, Gauge, start_http_server
-    PROMETHEUS_AVAILABLE = True
-    print("✓ Prometheus client imported")
-except ImportError:
-    PROMETHEUS_AVAILABLE = False
-    print("⚠️ Prometheus client not available - metrics will be simulated")
-
-try:
-    import schedule
-    SCHEDULE_AVAILABLE = True
-    print("✓ Schedule library imported")
-except ImportError:
-    SCHEDULE_AVAILABLE = False
-    print("⚠️ Schedule not available - using basic scheduling")
-
-try:
-    import paramiko
-    PARAMIKO_AVAILABLE = True
-    print("✓ Paramiko library imported")
-except ImportError:
-    PARAMIKO_AVAILABLE = False
-    print("⚠️ Paramiko not available - remote operations will be simulated")
-
-# Neo4j import (should be available from previous labs)
-try:
-    from neo4j import GraphDatabase
-    NEO4J_AVAILABLE = True
-    print("✓ Neo4j driver imported")
-except ImportError:
-    NEO4J_AVAILABLE = False
-    print("❌ Neo4j driver not available - this is required for the lab")
-    raise ImportError("Neo4j driver is required - please install with: pip install neo4j")
-
-print("✅ Production libraries imported successfully (with available dependencies)")
-```
-
-### Production Configuration Management
-```python
-class ProductionConfig:
-    """Production environment configuration management"""
-    
-    def __init__(self):
-        self.environments = {
-            "development": {
-                "neo4j_uri": "bolt://localhost:7687",
-                "neo4j_user": "neo4j",
-                "neo4j_password": "password",
-                "security_level": "basic",
-                "monitoring_enabled": False,
-                "backup_enabled": False
-            },
-            "staging": {
-                "neo4j_uri": "bolt://staging-neo4j:7687",
-                "neo4j_user": "neo4j_staging",
-                "neo4j_password": "staging_secure_password_123",
-                "security_level": "enhanced",
-                "monitoring_enabled": True,
-                "backup_enabled": True
-            },
-            "production": {
-                "neo4j_uri": "bolt://prod-neo4j-cluster:7687",
-                "neo4j_user": "neo4j_prod",
-                "neo4j_password": "prod_ultra_secure_password_456",
-                "security_level": "maximum",
-                "monitoring_enabled": True,
-                "backup_enabled": True,
-                "encryption_enabled": True,
-                "audit_logging": True,
-                "high_availability": True
-            }
-        }
-        
-        self.current_environment = "production"
-        self.deployment_id = f"deploy_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    
-    def get_config(self, environment=None):
-        """Get configuration for specified environment"""
-        env = environment or self.current_environment
-        return self.environments.get(env, {})
-    
-    def validate_environment(self, environment):
-        """Validate environment configuration"""
-        config = self.get_config(environment)
-        
-        required_fields = ["neo4j_uri", "neo4j_user", "neo4j_password"]
-        missing_fields = [field for field in required_fields if not config.get(field)]
-        
-        if missing_fields:
-            raise ValueError(f"Missing required configuration: {missing_fields}")
-        
-        return True
-
-# Initialize production configuration
-prod_config = ProductionConfig()
-print("✓ Production configuration initialized")
+print("Current Database State:")
+for record in current_state:
+    print(f"  {record['node_type']}: {record['count']} nodes")
 ```
 
 ---
 
-## Part 2: Security Hardening and Authentication
+## Part 1: Life Insurance Integration (12 minutes)
 
-### Security Manager Implementation
+### Step 3: Life Insurance Products and Policies
 ```python
-class SecurityManager:
-    """Enterprise security manager for production deployment"""
-    
-    def __init__(self):
-        # Initialize encryption with fallback
-        if CRYPTOGRAPHY_AVAILABLE:
-            self.encryption_key = Fernet.generate_key()
-            self.cipher_suite = Fernet(self.encryption_key)
-        else:
-            # Basic encryption fallback
-            self.encryption_key = secrets.token_bytes(32)
-            self.cipher_suite = None
-            print("⚠️ Using basic encryption - install cryptography for production security")
-        
-        self.failed_login_attempts = {}
-        self.max_login_attempts = 3
-        self.lockout_duration = 300  # 5 minutes
-    
-    def hash_password(self, password: str) -> str:
-        """Hash password using secure algorithm"""
-        salt = secrets.token_hex(16)
-        password_hash = hashlib.pbkdf2_hmac('sha256', 
-                                           password.encode('utf-8'), 
-                                           salt.encode('utf-8'), 
-                                           100000)
-        return f"{salt}:{password_hash.hex()}"
-    
-    def verify_password(self, password: str, hashed: str) -> bool:
-        """Verify password against hash"""
-        try:
-            salt, stored_hash = hashed.split(':')
-            password_hash = hashlib.pbkdf2_hmac('sha256',
-                                               password.encode('utf-8'),
-                                               salt.encode('utf-8'),
-                                               100000)
-            return password_hash.hex() == stored_hash
-        except ValueError:
-            return False
-    
-    def generate_jwt_token(self, user_data: dict, expiry_hours: int = 8) -> str:
-        """Generate secure JWT token with fallback"""
-        payload = {
-            'user_id': user_data.get('user_id'),
-            'role': user_data.get('role'),
-            'permissions': user_data.get('permissions', []),
-            'exp': datetime.utcnow() + timedelta(hours=expiry_hours),
-            'iat': datetime.utcnow(),
-            'deployment_id': prod_config.deployment_id
-        }
-        
-        if JWT_AVAILABLE:
-            return jwt.encode(payload, str(self.encryption_key), algorithm='HS256')
-        else:
-            # Basic token fallback
-            import base64
-            token_data = json.dumps(payload, default=str)
-            return base64.b64encode(token_data.encode()).decode()
-    
-    def verify_jwt_token(self, token: str) -> dict:
-        """Verify and decode JWT token with fallback"""
-        try:
-            if JWT_AVAILABLE:
-                payload = jwt.decode(token, str(self.encryption_key), algorithms=['HS256'])
-                return payload
-            else:
-                # Basic token verification fallback
-                import base64
-                token_data = base64.b64decode(token.encode()).decode()
-                payload = json.loads(token_data)
-                
-                # Check expiration
-                exp_time = datetime.fromisoformat(payload['exp'].replace('Z', '+00:00'))
-                if datetime.utcnow() > exp_time.replace(tzinfo=None):
-                    raise ValueError("Token has expired")
-                
-                return payload
-        except jwt.ExpiredSignatureError if JWT_AVAILABLE else ValueError:
-            raise ValueError("Token has expired")
-        except (jwt.InvalidTokenError if JWT_AVAILABLE else Exception):
-            raise ValueError("Invalid token")
-    
-    def check_rate_limiting(self, client_ip: str) -> bool:
-        """Check if client is rate limited"""
-        now = datetime.now()
-        
-        if client_ip in self.failed_login_attempts:
-            attempts, last_attempt = self.failed_login_attempts[client_ip]
-            
-            # Reset if lockout period has passed
-            if (now - last_attempt).seconds > self.lockout_duration:
-                del self.failed_login_attempts[client_ip]
-                return True
-            
-            # Check if still locked out
-            if attempts >= self.max_login_attempts:
-                return False
-        
-        return True
-    
-    def record_failed_login(self, client_ip: str):
-        """Record failed login attempt"""
-        now = datetime.now()
-        
-        if client_ip in self.failed_login_attempts:
-            attempts, _ = self.failed_login_attempts[client_ip]
-            self.failed_login_attempts[client_ip] = (attempts + 1, now)
-        else:
-            self.failed_login_attempts[client_ip] = (1, now)
-    
-    def encrypt_sensitive_data(self, data: str) -> str:
-        """Encrypt sensitive data with fallback"""
-        if CRYPTOGRAPHY_AVAILABLE and self.cipher_suite:
-            return self.cipher_suite.encrypt(data.encode()).decode()
-        else:
-            # Basic encoding fallback (NOT secure for production)
-            import base64
-            return base64.b64encode(data.encode()).decode()
-    
-    def decrypt_sensitive_data(self, encrypted_data: str) -> str:
-        """Decrypt sensitive data with fallback"""
-        if CRYPTOGRAPHY_AVAILABLE and self.cipher_suite:
-            return self.cipher_suite.decrypt(encrypted_data.encode()).decode()
-        else:
-            # Basic decoding fallback
-            import base64
-            return base64.b64decode(encrypted_data.encode()).decode()
+# Create life insurance products and policies
+life_insurance_query = """
+// Create Life Insurance Products
+CREATE (term_life:Product:Insurance:Life {
+  id: randomUUID(),
+  product_id: "PROD-LIFE-001",
+  product_name: "Term Life Plus",
+  product_type: "Life",
+  insurance_line: "Individual Life",
+  coverage_type: "Term Life",
+  
+  // Product details
+  term_options: [10, 15, 20, 25, 30],
+  min_coverage: 25000.00,
+  max_coverage: 2000000.00,
+  age_range: "18-70",
+  medical_exam_required: true,
+  
+  // Underwriting
+  health_questions: 15,
+  simplified_issue: false,
+  guaranteed_issue: false,
+  
+  created_at: datetime(),
+  created_by: "product_management",
+  version: 1
+})
 
-# Initialize security manager
-security_manager = SecurityManager()
-print("✓ Security manager initialized with enterprise-grade protection")
+CREATE (whole_life:Product:Insurance:Life {
+  id: randomUUID(),
+  product_id: "PROD-LIFE-002",
+  product_name: "Whole Life Builder",
+  product_type: "Life",
+  insurance_line: "Individual Life",
+  coverage_type: "Whole Life",
+  
+  // Product details
+  min_coverage: 50000.00,
+  max_coverage: 1000000.00,
+  age_range: "0-85",
+  cash_value_growth: 0.04,
+  dividend_option: true,
+  
+  // Features
+  loan_option: true,
+  paid_up_option: true,
+  surrender_charges: [0.15, 0.12, 0.10, 0.08, 0.05, 0.03, 0.01, 0.00],
+  
+  created_at: datetime(),
+  created_by: "product_management",
+  version: 1
+})
+
+// Create Life Insurance Policies
+CREATE (mike:Customer:Person {
+  id: randomUUID(),
+  customer_id: "CUST-LIFE-001",
+  first_name: "Michael",
+  last_name: "Thompson",
+  full_name: "Michael Thompson",
+  date_of_birth: date("1985-03-15"),
+  age: 40,
+  gender: "Male",
+  
+  // Contact information
+  email: "mike.thompson@email.com",
+  phone: "214-555-0180",
+  
+  // Address
+  street_address: "1847 Oak Valley Drive",
+  city: "Dallas",
+  state: "TX",
+  postal_code: "75201",
+  country: "USA",
+  
+  // Life insurance specific
+  smoking_status: false,
+  health_status: "Excellent",
+  occupation: "Software Engineer",
+  annual_income: 95000.00,
+  
+  created_at: datetime(),
+  created_by: "underwriting",
+  version: 1
+})
+
+CREATE (term_policy:Policy:Life:Active {
+  id: randomUUID(),
+  policy_number: "POL-TERM-001847",
+  product_type: "Life",
+  policy_type: "Term Life",
+  
+  // Coverage details
+  face_value: 500000.00,
+  term_length: 20,
+  premium_mode: "Annual",
+  annual_premium: 485.00,
+  
+  // Policy dates
+  effective_date: date("2024-01-15"),
+  expiration_date: date("2044-01-15"),
+  
+  // Life specific fields
+  cash_value: 0.00,
+  beneficiaries: ["Jennifer Thompson (Spouse) - 100%"],
+  medical_exam_date: date("2023-12-20"),
+  medical_exam_results: "Approved - Standard",
+  
+  // Status
+  policy_status: "Active",
+  premium_status: "Current",
+  last_payment_date: date("2024-01-15"),
+  next_payment_due: date("2025-01-15"),
+  
+  created_at: datetime(),
+  created_by: "underwriting",
+  version: 1
+})
+
+CREATE (sarah:Customer:Person {
+  id: randomUUID(),
+  customer_id: "CUST-LIFE-002",
+  first_name: "Sarah",
+  last_name: "Chen",
+  full_name: "Sarah Chen",
+  date_of_birth: date("1978-08-22"),
+  age: 46,
+  gender: "Female",
+  
+  // Contact information
+  email: "sarah.chen@email.com",
+  phone: "972-555-0165",
+  
+  // Address
+  street_address: "2934 Maple Ridge Lane",
+  city: "Plano",
+  state: "TX",
+  postal_code: "75023",
+  country: "USA",
+  
+  // Life insurance specific
+  smoking_status: false,
+  health_status: "Good",
+  occupation: "Physician",
+  annual_income: 285000.00,
+  
+  created_at: datetime(),
+  created_by: "underwriting",
+  version: 1
+})
+
+CREATE (whole_policy:Policy:Life:Active {
+  id: randomUUID(),
+  policy_number: "POL-WHOLE-002934",
+  product_type: "Life",
+  policy_type: "Whole Life",
+  
+  // Coverage details
+  face_value: 750000.00,
+  premium_mode: "Annual",
+  annual_premium: 8950.00,
+  
+  // Policy dates
+  effective_date: date("2019-03-01"),
+  
+  // Whole life specific fields
+  cash_value: 42850.00,
+  cash_surrender_value: 38950.00,
+  dividend_option: "Paid-up Additions",
+  annual_dividend: 1250.00,
+  beneficiaries: ["David Chen (Spouse) - 60%", "Emma Chen (Child) - 20%", "Alex Chen (Child) - 20%"],
+  
+  // Status
+  policy_status: "Active",
+  premium_status: "Current",
+  last_payment_date: date("2024-03-01"),
+  next_payment_due: date("2025-03-01"),
+  
+  created_at: datetime(),
+  created_by: "underwriting",
+  version: 1
+})
+
+// Create Beneficiaries
+CREATE (jennifer:Beneficiary:Person {
+  id: randomUUID(),
+  beneficiary_id: "BEN-001",
+  first_name: "Jennifer",
+  last_name: "Thompson",
+  full_name: "Jennifer Thompson",
+  relationship: "Spouse",
+  beneficiary_type: "Primary",
+  percentage: 100.00,
+  
+  // Contact information
+  email: "jennifer.thompson@email.com",
+  phone: "214-555-0181",
+  date_of_birth: date("1987-07-10"),
+  
+  // Verification
+  identity_verified: true,
+  verification_date: date("2024-01-10"),
+  verification_method: "Government ID",
+  
+  created_at: datetime(),
+  created_by: "underwriting",
+  version: 1
+})
+
+CREATE (david:Beneficiary:Person {
+  id: randomUUID(),
+  beneficiary_id: "BEN-002",
+  first_name: "David",
+  last_name: "Chen",
+  full_name: "David Chen",
+  relationship: "Spouse",
+  beneficiary_type: "Primary",
+  percentage: 60.00,
+  
+  // Contact information
+  email: "david.chen@email.com",
+  phone: "972-555-0166",
+  date_of_birth: date("1975-12-15"),
+  
+  // Verification
+  identity_verified: true,
+  verification_date: date("2019-02-20"),
+  verification_method: "Government ID",
+  
+  created_at: datetime(),
+  created_by: "underwriting",
+  version: 1
+})
+
+// Create Relationships
+CREATE (mike)-[:HOLDS_POLICY {
+  start_date: term_policy.effective_date,
+  policy_role: "Owner/Insured"
+}]->(term_policy)
+
+CREATE (sarah)-[:HOLDS_POLICY {
+  start_date: whole_policy.effective_date,
+  policy_role: "Owner/Insured"
+}]->(whole_policy)
+
+CREATE (term_policy)-[:BASED_ON {
+  underwriting_date: term_policy.effective_date,
+  risk_assessment: "Standard - Non-smoker"
+}]->(term_life)
+
+CREATE (whole_policy)-[:BASED_ON {
+  underwriting_date: whole_policy.effective_date,
+  risk_assessment: "Standard - Professional"
+}]->(whole_life)
+
+CREATE (term_policy)-[:HAS_BENEFICIARY {
+  designation_date: term_policy.effective_date,
+  percentage: 100.00,
+  beneficiary_type: "Primary"
+}]->(jennifer)
+
+CREATE (whole_policy)-[:HAS_BENEFICIARY {
+  designation_date: whole_policy.effective_date,
+  percentage: 60.00,
+  beneficiary_type: "Primary"
+}]->(david)
+
+RETURN term_policy.policy_number AS term,
+       whole_policy.policy_number AS whole,
+       mike.full_name AS term_holder,
+       sarah.full_name AS whole_holder
+"""
+
+life_results = run_query(life_insurance_query)
+print("Life Insurance Products and Policies Created:")
+for record in life_results:
+    print(f"  Term Policy: {record['term']} (Holder: {record['term_holder']})")
+    print(f"  Whole Life Policy: {record['whole']} (Holder: {record['whole_holder']})")
 ```
 
-### User Authentication System
+### Step 4: Commercial Insurance Integration
 ```python
-class UserAuthenticationSystem:
-    """Production user authentication with role-based access control"""
-    
-    def __init__(self, security_manager: SecurityManager):
-        self.security_manager = security_manager
-        self.users = {}
-        self.roles = {
-            "admin": ["read", "write", "delete", "manage_users", "system_admin"],
-            "agent": ["read", "write", "customer_management", "policy_management"],
-            "adjuster": ["read", "write", "claims_management", "investigation"],
-            "customer": ["read", "self_service"],
-            "auditor": ["read", "audit_access", "compliance_reports"]
-        }
-        
-        # Create default production users
-        self._create_default_users()
-    
-    def _create_default_users(self):
-        """Create default production users"""
-        default_users = [
-            {
-                "user_id": "prod_admin",
-                "username": "production_admin",
-                "password": "ProdAdmin@2024!",
-                "role": "admin",
-                "email": "admin@insurance-company.com",
-                "department": "IT Operations"
-            },
-            {
-                "user_id": "lead_agent",
-                "username": "lead_agent_001",
-                "password": "Agent@Secure123",
-                "role": "agent",
-                "email": "lead.agent@insurance-company.com",
-                "department": "Sales"
-            },
-            {
-                "user_id": "senior_adjuster",
-                "username": "senior_adjuster_001",
-                "password": "Adjuster@Pro456",
-                "role": "adjuster",
-                "email": "senior.adjuster@insurance-company.com",
-                "department": "Claims"
-            },
-            {
-                "user_id": "compliance_auditor",
-                "username": "compliance_audit",
-                "password": "Audit@Secure789",
-                "role": "auditor",
-                "email": "compliance@insurance-company.com",
-                "department": "Compliance"
-            }
-        ]
-        
-        for user_data in default_users:
-            self.create_user(user_data)
-    
-    def create_user(self, user_data: dict) -> bool:
-        """Create new user with secure password hashing"""
-        try:
-            user_id = user_data['user_id']
-            
-            # Hash password
-            hashed_password = self.security_manager.hash_password(user_data['password'])
-            
-            # Store user data
-            self.users[user_id] = {
-                'user_id': user_id,
-                'username': user_data['username'],
-                'password_hash': hashed_password,
-                'role': user_data['role'],
-                'permissions': self.roles.get(user_data['role'], []),
-                'email': user_data['email'],
-                'department': user_data.get('department'),
-                'created_at': datetime.now().isoformat(),
-                'last_login': None,
-                'active': True
-            }
-            
-            return True
-            
-        except Exception as e:
-            print(f"Error creating user: {e}")
-            return False
-    
-    def authenticate_user(self, username: str, password: str, client_ip: str) -> dict:
-        """Authenticate user with rate limiting and security checks"""
-        
-        # Check rate limiting
-        if not self.security_manager.check_rate_limiting(client_ip):
-            raise ValueError("Too many failed login attempts. Please try again later.")
-        
-        # Find user by username
-        user = None
-        for user_data in self.users.values():
-            if user_data['username'] == username:
-                user = user_data
-                break
-        
-        if not user or not user['active']:
-            self.security_manager.record_failed_login(client_ip)
-            raise ValueError("Invalid credentials")
-        
-        # Verify password
-        if not self.security_manager.verify_password(password, user['password_hash']):
-            self.security_manager.record_failed_login(client_ip)
-            raise ValueError("Invalid credentials")
-        
-        # Update last login
-        user['last_login'] = datetime.now().isoformat()
-        
-        # Generate JWT token
-        token = self.security_manager.generate_jwt_token(user)
-        
-        return {
-            'user_id': user['user_id'],
-            'username': user['username'],
-            'role': user['role'],
-            'permissions': user['permissions'],
-            'token': token,
-            'expires_at': (datetime.utcnow() + timedelta(hours=8)).isoformat()
-        }
-    
-    def verify_token_and_permissions(self, token: str, required_permission: str) -> bool:
-        """Verify token and check permissions"""
-        try:
-            payload = self.security_manager.verify_jwt_token(token)
-            user_permissions = payload.get('permissions', [])
-            return required_permission in user_permissions
-        except ValueError:
-            return False
+# Create commercial insurance products and business customers
+commercial_query = """
+// Create Commercial Insurance Products
+CREATE (general_liability:Product:Insurance:Commercial {
+  id: randomUUID(),
+  product_id: "PROD-COMM-001",
+  product_name: "Business General Liability",
+  product_type: "Commercial",
+  insurance_line: "General Liability",
+  coverage_type: "Occurrence",
+  
+  // Coverage details
+  min_coverage: 500000.00,
+  max_coverage: 10000000.00,
+  aggregate_limit: 2000000.00,
+  deductible_options: [1000, 2500, 5000, 10000],
+  
+  // Commercial specific
+  industry_codes: ["541511", "541512", "541519"], // Computer Systems Design
+  territory: "Texas",
+  policy_term: 12, // months
+  
+  created_at: datetime(),
+  created_by: "commercial_products",
+  version: 1
+})
 
-# Initialize authentication system
-auth_system = UserAuthenticationSystem(security_manager)
-print("✓ User authentication system configured with RBAC")
-```
+CREATE (workers_comp:Product:Insurance:Commercial {
+  id: randomUUID(),
+  product_id: "PROD-COMM-002",
+  product_name: "Workers Compensation",
+  product_type: "Commercial",
+  insurance_line: "Workers Compensation",
+  coverage_type: "Statutory",
+  
+  // Coverage details
+  experience_modification: 1.0,
+  classification_codes: ["8810", "8820"], // Clerical, Software Development
+  payroll_basis: "Per $100 of payroll",
+  
+  // State specific
+  state_jurisdiction: "Texas",
+  twcc_approved: true,
+  return_to_work: true,
+  
+  created_at: datetime(),
+  created_by: "commercial_products",
+  version: 1
+})
 
----
+CREATE (cyber_insurance:Product:Insurance:Commercial {
+  id: randomUUID(),
+  product_id: "PROD-COMM-003",
+  product_name: "CyberGuard Pro",
+  product_type: "Commercial",
+  insurance_line: "Cyber Liability",
+  coverage_type: "Claims Made",
+  
+  // Cyber specific coverage
+  data_breach_coverage: 5000000.00,
+  business_interruption: 2000000.00,
+  cyber_extortion: 1000000.00,
+  regulatory_fines: 1000000.00,
+  
+  // Features
+  breach_response_services: true,
+  forensic_investigation: true,
+  credit_monitoring: true,
+  pr_crisis_management: true,
+  
+  created_at: datetime(),
+  created_by: "cyber_products",
+  version: 1
+})
 
-## Part 3: Monitoring and Observability
+// Create Business Customers
+CREATE (tech_corp:Customer:Business {
+  id: randomUUID(),
+  customer_id: "CUST-BUS-001",
+  business_name: "Innovative Tech Solutions LLC",
+  business_type: "LLC",
+  dba_name: "TechSolutions",
+  
+  // Business details
+  industry: "Computer Systems Design",
+  naics_code: "541511",
+  sic_code: "7371",
+  years_in_business: 8,
+  
+  // Contact information
+  business_phone: "214-555-0250",
+  business_email: "info@techsolutions.com",
+  website: "www.techsolutions.com",
+  
+  // Address
+  street_address: "1500 Technology Drive, Suite 200",
+  city: "Dallas",
+  state: "TX",
+  postal_code: "75201",
+  country: "USA",
+  
+  // Financial information
+  annual_revenue: 12500000.00,
+  employee_count: 85,
+  payroll: 6800000.00,
+  
+  // Risk factors
+  data_classification: "Confidential/PII",
+  security_certifications: ["SOC 2", "ISO 27001"],
+  previous_claims: 0,
+  
+  created_at: datetime(),
+  created_by: "commercial_underwriting",
+  version: 1
+})
 
-### Production Monitoring System
-```python
-class ProductionMonitoringSystem:
-    """Comprehensive monitoring system for production deployment"""
-    
-    def __init__(self):
-        # Initialize Prometheus metrics with fallback
-        if PROMETHEUS_AVAILABLE:
-            self.request_count = Counter('neo4j_app_requests_total', 'Total app requests', ['method', 'endpoint'])
-            self.request_duration = Histogram('neo4j_app_request_duration_seconds', 'Request duration')
-            self.active_connections = Gauge('neo4j_app_active_connections', 'Active database connections')
-            self.error_count = Counter('neo4j_app_errors_total', 'Total errors', ['error_type'])
-            
-            # System metrics
-            self.cpu_usage = Gauge('system_cpu_usage_percent', 'CPU usage percentage')
-            self.memory_usage = Gauge('system_memory_usage_percent', 'Memory usage percentage')
-            self.disk_usage = Gauge('system_disk_usage_percent', 'Disk usage percentage')
-            
-            # Neo4j specific metrics
-            self.neo4j_query_count = Counter('neo4j_queries_total', 'Total Neo4j queries', ['query_type'])
-            self.neo4j_query_duration = Histogram('neo4j_query_duration_seconds', 'Neo4j query duration')
-            self.neo4j_connection_errors = Counter('neo4j_connection_errors_total', 'Neo4j connection errors')
-            
-            # Health status
-            self.service_health = Gauge('service_health_status', 'Service health status (1=healthy, 0=unhealthy)')
-            
-            # Start metrics server
-            try:
-                start_http_server(9090)
-                print("✓ Prometheus metrics server started on port 9090")
-            except Exception as e:
-                print(f"⚠️ Could not start Prometheus server: {e}")
-        else:
-            # Mock metrics for fallback
-            self.metrics_data = {
-                'requests_total': 0,
-                'errors_total': 0,
-                'active_connections': 0,
-                'service_health': 1
-            }
-            print("⚠️ Using simulated metrics - install prometheus-client for production monitoring")
-    
-    def collect_system_metrics(self):
-        """Collect system performance metrics with fallback"""
-        try:
-            if PSUTIL_AVAILABLE:
-                # Real system metrics
-                cpu_percent = psutil.cpu_percent(interval=1)
-                memory = psutil.virtual_memory()
-                disk = psutil.disk_usage('/')
-                disk_percent = (disk.used / disk.total) * 100
-                
-                if PROMETHEUS_AVAILABLE:
-                    self.cpu_usage.set(cpu_percent)
-                    self.memory_usage.set(memory.percent)
-                    self.disk_usage.set(disk_percent)
-                
-                return {
-                    'cpu_percent': cpu_percent,
-                    'memory_percent': memory.percent,
-                    'disk_percent': disk_percent,
-                    'timestamp': datetime.now().isoformat()
-                }
-            else:
-                # Simulated metrics
-                import random
-                cpu_percent = random.uniform(15, 45)
-                memory_percent = random.uniform(40, 70)
-                disk_percent = random.uniform(25, 60)
-                
-                return {
-                    'cpu_percent': cpu_percent,
-                    'memory_percent': memory_percent,
-                    'disk_percent': disk_percent,
-                    'timestamp': datetime.now().isoformat(),
-                    'simulated': True
-                }
-                
-        except Exception as e:
-            print(f"Error collecting system metrics: {e}")
-            return {
-                'cpu_percent': 0,
-                'memory_percent': 0,
-                'disk_percent': 0,
-                'timestamp': datetime.now().isoformat(),
-                'error': str(e)
-            }
-    
-    def collect_neo4j_metrics(self, driver):
-        """Collect Neo4j database metrics"""
-        try:
-            with driver.session() as session:
-                # Database statistics
-                stats_query = """
-                CALL apoc.monitor.kernel()
-                YIELD kernelStartTime, kernelVersion, storeId
-                RETURN kernelStartTime, kernelVersion, storeId
-                """
-                
-                # Query performance
-                perf_query = """
-                CALL dbms.listQueries()
-                YIELD queryId, query, runtime, status
-                RETURN count(*) as active_queries,
-                       avg(runtime) as avg_runtime
-                """
-                
-                # Connection pool status
-                pool_query = """
-                CALL dbms.cluster.overview()
-                YIELD id, role, addresses, database
-                RETURN count(*) as cluster_members
-                """
-                
-                metrics = {}
-                
-                # Execute queries safely
-                try:
-                    result = session.run("MATCH (n) RETURN count(n) as node_count")
-                    metrics['node_count'] = result.single()['node_count']
-                except:
-                    metrics['node_count'] = 0
-                
-                try:
-                    result = session.run("MATCH ()-[r]->() RETURN count(r) as rel_count")
-                    metrics['relationship_count'] = result.single()['rel_count']
-                except:
-                    metrics['relationship_count'] = 0
-                
-                # Test query performance
-                start_time = time.time()
-                session.run("RETURN 1").consume()
-                query_time = time.time() - start_time
-                
-                metrics.update({
-                    'query_response_time': query_time,
-                    'timestamp': datetime.now().isoformat(),
-                    'database_status': 'healthy' if query_time < 1.0 else 'degraded'
-                })
-                
-                return metrics
-                
-        except Exception as e:
-            print(f"Error collecting Neo4j metrics: {e}")
-            if PROMETHEUS_AVAILABLE:
-                self.neo4j_connection_errors.inc()
-            return {'database_status': 'unhealthy', 'error': str(e)}
-    
-    def generate_health_report(self, driver):
-        """Generate comprehensive health report"""
-        try:
-            system_metrics = self.collect_system_metrics()
-            neo4j_metrics = self.collect_neo4j_metrics(driver)
-            
-            # Determine overall health
-            health_status = 1  # healthy
-            alerts = []
-            
-            # System health checks
-            if system_metrics.get('cpu_percent', 0) > 80:
-                health_status = 0
-                alerts.append({
-                    'severity': 'critical',
-                    'message': f"High CPU usage: {system_metrics['cpu_percent']:.1f}%"
-                })
-            
-            if system_metrics.get('memory_percent', 0) > 85:
-                health_status = 0
-                alerts.append({
-                    'severity': 'critical',
-                    'message': f"High memory usage: {system_metrics['memory_percent']:.1f}%"
-                })
-            
-            if system_metrics.get('disk_percent', 0) > 90:
-                health_status = 0
-                alerts.append({
-                    'severity': 'critical',
-                    'message': f"High disk usage: {system_metrics['disk_percent']:.1f}%"
-                })
-            
-            # Database health checks
-            if neo4j_metrics.get('database_status') != 'healthy':
-                health_status = 0
-                alerts.append({
-                    'severity': 'critical',
-                    'message': f"Database unhealthy: {neo4j_metrics.get('error', 'Unknown error')}"
-                })
-            
-            if neo4j_metrics.get('query_response_time', 0) > 0.5:
-                alerts.append({
-                    'severity': 'warning',
-                    'message': f"Slow query response: {neo4j_metrics['query_response_time']:.3f}s"
-                })
-            
-            if PROMETHEUS_AVAILABLE:
-                self.service_health.set(health_status)
-            
-            return {
-                'overall_health': 'healthy' if health_status == 1 else 'unhealthy',
-                'system_metrics': system_metrics,
-                'database_metrics': neo4j_metrics,
-                'alerts': alerts,
-                'timestamp': datetime.now().isoformat()
-            }
-            
-        except Exception as e:
-            print(f"Error generating health report: {e}")
-            return {
-                'overall_health': 'unhealthy',
-                'error': str(e),
-                'timestamp': datetime.now().isoformat()
-            }
+CREATE (consulting_firm:Customer:Business {
+  id: randomUUID(),
+  customer_id: "CUST-BUS-002",
+  business_name: "Strategic Business Advisors Inc",
+  business_type: "Corporation",
+  dba_name: "SBA Consulting",
+  
+  // Business details
+  industry: "Management Consulting",
+  naics_code: "541611",
+  sic_code: "8742",
+  years_in_business: 15,
+  
+  // Contact information
+  business_phone: "972-555-0290",
+  business_email: "contact@sbaconsulting.com",
+  website: "www.sbaconsulting.com",
+  
+  // Address
+  street_address: "8900 Business Center Drive",
+  city: "Plano",
+  state: "TX",
+  postal_code: "75024",
+  country: "USA",
+  
+  // Financial information
+  annual_revenue: 5800000.00,
+  employee_count: 42,
+  payroll: 3200000.00,
+  
+  // Risk factors
+  professional_services: true,
+  errors_omissions_exposure: "High",
+  client_contracts: "Fortune 500",
+  
+  created_at: datetime(),
+  created_by: "commercial_underwriting",
+  version: 1
+})
 
-# Initialize monitoring system
-monitoring_system = ProductionMonitoringSystem()
-print("✓ Production monitoring system initialized")
-```
+// Create Commercial Policies
+CREATE (gl_policy:Policy:Commercial:Active {
+  id: randomUUID(),
+  policy_number: "POL-GL-001500",
+  product_type: "Commercial",
+  business_type: "General Liability",
+  
+  // Coverage details
+  coverage_limit: 2000000.00,
+  aggregate_limit: 4000000.00,
+  deductible: 2500.00,
+  annual_premium: 3850.00,
+  
+  // Policy dates
+  effective_date: date("2024-06-01"),
+  expiration_date: date("2025-06-01"),
+  
+  // Commercial specific
+  coverage_territory: "Texas",
+  industry_code: "541511",
+  employee_coverage: 85,
+  payroll: 6800000.00,
+  gross_receipts: 12500000.00,
+  
+  // Property locations
+  property_locations: ["1500 Technology Drive, Dallas, TX"],
+  building_construction: "Steel Frame - Fire Resistive",
+  security_features: ["24/7 Security", "Access Controls", "CCTV"],
+  
+  // Status
+  policy_status: "Active",
+  premium_status: "Current",
+  last_payment_date: date("2024-06-01"),
+  next_payment_due: date("2024-12-01"),
+  
+  created_at: datetime(),
+  created_by: "commercial_underwriting",
+  version: 1
+})
 
-### Logging and Audit System
-```python
-class ProductionLoggingSystem:
-    """Enterprise logging and audit system"""
-    
-    def __init__(self):
-        # Configure logging
-        self.setup_logging()
-        self.audit_log = []
-        self.max_audit_entries = 10000
-    
-    def setup_logging(self):
-        """Configure production logging"""
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler('/var/log/neo4j_insurance_app.log'),
-                logging.StreamHandler()
-            ]
-        )
-        
-        # Create specialized loggers
-        self.app_logger = logging.getLogger('insurance_app')
-        self.security_logger = logging.getLogger('security')
-        self.audit_logger = logging.getLogger('audit')
-        self.performance_logger = logging.getLogger('performance')
-    
-    def log_user_action(self, user_id: str, action: str, resource: str, details: dict = None):
-        """Log user actions for audit trail"""
-        audit_entry = {
-            'timestamp': datetime.now().isoformat(),
-            'user_id': user_id,
-            'action': action,
-            'resource': resource,
-            'details': details or {},
-            'ip_address': details.get('ip_address') if details else None,
-            'user_agent': details.get('user_agent') if details else None
-        }
-        
-        self.audit_log.append(audit_entry)
-        
-        # Maintain audit log size
-        if len(self.audit_log) > self.max_audit_entries:
-            self.audit_log = self.audit_log[-self.max_audit_entries:]
-        
-        # Log to file
-        self.audit_logger.info(f"User action: {json.dumps(audit_entry)}")
-    
-    def log_security_event(self, event_type: str, details: dict):
-        """Log security-related events"""
-        security_entry = {
-            'timestamp': datetime.now().isoformat(),
-            'event_type': event_type,
-            'details': details,
-            'severity': details.get('severity', 'medium')
-        }
-        
-        self.security_logger.warning(f"Security event: {json.dumps(security_entry)}")
-    
-    def log_performance_metric(self, metric_name: str, value: float, context: dict = None):
-        """Log performance metrics"""
-        perf_entry = {
-            'timestamp': datetime.now().isoformat(),
-            'metric': metric_name,
-            'value': value,
-            'context': context or {}
-        }
-        
-        self.performance_logger.info(f"Performance: {json.dumps(perf_entry)}")
-    
-    def get_audit_trail(self, user_id: str = None, hours: int = 24) -> list:
-        """Get audit trail for specified user and time period"""
-        cutoff_time = datetime.now() - timedelta(hours=hours)
-        
-        filtered_entries = []
-        for entry in self.audit_log:
-            entry_time = datetime.fromisoformat(entry['timestamp'])
-            
-            if entry_time >= cutoff_time:
-                if user_id is None or entry['user_id'] == user_id:
-                    filtered_entries.append(entry)
-        
-        return sorted(filtered_entries, key=lambda x: x['timestamp'], reverse=True)
+CREATE (wc_policy:Policy:Commercial:Active {
+  id: randomUUID(),
+  policy_number: "POL-WC-001500",
+  product_type: "Commercial",
+  business_type: "Workers Compensation",
+  
+  // Coverage details
+  coverage_limit: 1000000.00,
+  deductible: 0.00,
+  annual_premium: 18750.00,
+  
+  // Policy dates
+  effective_date: date("2024-06-01"),
+  expiration_date: date("2025-06-01"),
+  
+  // Workers comp specific
+  payroll: 6800000.00,
+  employee_count: 85,
+  experience_mod: 0.95,
+  classification_codes: ["8810 - Clerical: $2,400,000", "8820 - Software Dev: $4,400,000"],
+  rates: ["8810: $0.35 per $100", "8820: $0.28 per $100"],
+  
+  // State compliance
+  state_jurisdiction: "Texas",
+  twcc_coverage: "Yes",
+  return_to_work_program: true,
+  
+  // Status
+  policy_status: "Active",
+  premium_status: "Current",
+  last_payment_date: date("2024-06-01"),
+  next_payment_due: date("2024-12-01"),
+  
+  created_at: datetime(),
+  created_by: "commercial_underwriting",
+  version: 1
+})
 
-# Initialize logging system
-logging_system = ProductionLoggingSystem()
-print("✓ Production logging and audit system configured")
-```
+CREATE (cyber_policy:Policy:Commercial:Active {
+  id: randomUUID(),
+  policy_number: "POL-CYB-001500",
+  product_type: "Commercial",
+  business_type: "Cyber Liability",
+  
+  // Coverage details
+  coverage_limit: 5000000.00,
+  deductible: 10000.00,
+  annual_premium: 12500.00,
+  
+  // Policy dates
+  effective_date: date("2024-06-01"),
+  expiration_date: date("2025-06-01"),
+  
+  // Cyber specific coverage
+  data_breach_limit: 5000000.00,
+  business_interruption_limit: 2000000.00,
+  cyber_extortion_limit: 1000000.00,
+  regulatory_fines_limit: 1000000.00,
+  
+  // Risk profile
+  data_records: 125000,
+  pii_records: 85000,
+  pci_compliance: true,
+  security_training: "Annual",
+  incident_response_plan: true,
+  
+  // Features included
+  breach_coach: "24/7 Hotline",
+  forensic_services: "Included",
+  credit_monitoring: "2 Years",
+  pr_services: "Included",
+  
+  // Status
+  policy_status: "Active",
+  premium_status: "Current",
+  last_payment_date: date("2024-06-01"),
+  next_payment_due: date("2024-12-01"),
+  
+  created_at: datetime(),
+  created_by: "cyber_underwriting",
+  version: 1
+})
 
----
+// Create Relationships
+CREATE (tech_corp)-[:HOLDS_POLICY {
+  start_date: gl_policy.effective_date,
+  policy_role: "Named Insured"
+}]->(gl_policy)
 
-## Part 4: Backup and Disaster Recovery
+CREATE (tech_corp)-[:HOLDS_POLICY {
+  start_date: wc_policy.effective_date,
+  policy_role: "Named Insured"
+}]->(wc_policy)
 
-### Backup Automation System
-```python
-class BackupAutomationSystem:
-    """Automated backup and disaster recovery system"""
-    
-    def __init__(self, neo4j_config: dict):
-        self.neo4j_config = neo4j_config
-        self.backup_directory = "/var/backups/neo4j"
-        self.retention_days = 30
-        self.backup_schedule = "daily"
-        
-        # Create backup directory
-        os.makedirs(self.backup_directory, exist_ok=True)
-        
-        # Initialize backup history
-        self.backup_history = []
-    
-    def create_database_backup(self) -> dict:
-        """Create comprehensive database backup"""
-        try:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            backup_name = f"neo4j_backup_{timestamp}"
-            backup_path = os.path.join(self.backup_directory, backup_name)
-            
-            # Create backup directory
-            os.makedirs(backup_path, exist_ok=True)
-            
-            # Database dump using neo4j-admin
-            dump_command = [
-                "docker", "exec", "neo4j",
-                "neo4j-admin", "database", "dump",
-                "--database", "neo4j",
-                "--to-path", "/var/lib/neo4j/backups",
-                "--verbose"
-            ]
-            
-            print(f"Creating database backup: {backup_name}")
-            
-            # Simulate backup process (in real environment, this would execute the actual command)
-            backup_info = {
-                'backup_id': backup_name,
-                'timestamp': datetime.now().isoformat(),
-                'status': 'completed',
-                'backup_path': backup_path,
-                'size_mb': 250.5,  # Simulated size
-                'duration_seconds': 45.2,
-                'database_state': {
-                    'nodes': 850,
-                    'relationships': 1100,
-                    'labels': 15,
-                    'relationship_types': 12
-                }
-            }
-            
-            # Copy application configuration
-            self._backup_application_config(backup_path)
-            
-            # Backup security configurations
-            self._backup_security_config(backup_path)
-            
-            # Record backup in history
-            self.backup_history.append(backup_info)
-            
-            # Clean old backups
-            self._cleanup_old_backups()
-            
-            logging_system.app_logger.info(f"Backup completed successfully: {backup_name}")
-            
-            return backup_info
-            
-        except Exception as e:
-            error_info = {
-                'backup_id': f"failed_{timestamp}",
-                'timestamp': datetime.now().isoformat(),
-                'status': 'failed',
-                'error': str(e)
-            }
-            
-            logging_system.app_logger.error(f"Backup failed: {str(e)}")
-            return error_info
-    
-    def _backup_application_config(self, backup_path: str):
-        """Backup application configuration files"""
-        config_backup_path = os.path.join(backup_path, "application_config")
-        os.makedirs(config_backup_path, exist_ok=True)
-        
-        # Save production configuration
-        config_file = os.path.join(config_backup_path, "production_config.json")
-        with open(config_file, 'w') as f:
-            json.dump(prod_config.environments, f, indent=2)
-        
-        # Save environment variables (sanitized)
-        env_file = os.path.join(config_backup_path, "environment.json")
-        sanitized_env = {k: v for k, v in os.environ.items() 
-                        if not any(secret in k.lower() for secret in ['password', 'key', 'secret', 'token'])}
-        
-        with open(env_file, 'w') as f:
-            json.dump(sanitized_env, f, indent=2)
-    
-    def _backup_security_config(self, backup_path: str):
-        """Backup security configuration (encrypted)"""
-        security_backup_path = os.path.join(backup_path, "security_config")
-        os.makedirs(security_backup_path, exist_ok=True)
-        
-        # Backup user roles and permissions (passwords excluded)
-        users_backup = {}
-        for user_id, user_data in auth_system.users.items():
-            users_backup[user_id] = {
-                'user_id': user_data['user_id'],
-                'username': user_data['username'],
-                'role': user_data['role'],
-                'permissions': user_data['permissions'],
-                'email': user_data['email'],
-                'department': user_data.get('department'),
-                'created_at': user_data['created_at'],
-                'active': user_data['active']
-            }
-        
-        users_file = os.path.join(security_backup_path, "users_config.json")
-        with open(users_file, 'w') as f:
-            json.dump(users_backup, f, indent=2)
-    
-    def _cleanup_old_backups(self):
-        """Remove backups older than retention period"""
-        cutoff_date = datetime.now() - timedelta(days=self.retention_days)
-        
-        # Filter backup history
-        self.backup_history = [
-            backup for backup in self.backup_history
-            if datetime.fromisoformat(backup['timestamp']) >= cutoff_date
-        ]
-        
-        # Remove old backup directories
-        try:
-            for item in os.listdir(self.backup_directory):
-                item_path = os.path.join(self.backup_directory, item)
-                if os.path.isdir(item_path):
-                    # Parse timestamp from directory name
-                    try:
-                        timestamp_str = item.split('_')[-2] + '_' + item.split('_')[-1]
-                        backup_date = datetime.strptime(timestamp_str, '%Y%m%d_%H%M%S')
-                        
-                        if backup_date < cutoff_date:
-                            shutil.rmtree(item_path)
-                            print(f"Removed old backup: {item}")
-                    except (ValueError, IndexError):
-                        continue
-        except Exception as e:
-            logging_system.app_logger.warning(f"Error cleaning old backups: {e}")
-    
-    def restore_from_backup(self, backup_id: str) -> dict:
-        """Restore database from backup"""
-        try:
-            # Find backup in history
-            backup_info = None
-            for backup in self.backup_history:
-                if backup['backup_id'] == backup_id:
-                    backup_info = backup
-                    break
-            
-            if not backup_info:
-                raise ValueError(f"Backup not found: {backup_id}")
-            
-            backup_path = backup_info['backup_path']
-            
-            if not os.path.exists(backup_path):
-                raise ValueError(f"Backup files not found: {backup_path}")
-            
-            print(f"Restoring from backup: {backup_id}")
-            
-            # Simulate restore process
-            restore_info = {
-                'restore_id': f"restore_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                'backup_id': backup_id,
-                'timestamp': datetime.now().isoformat(),
-                'status': 'completed',
-                'duration_seconds': 120.5,
-                'restored_state': backup_info['database_state']
-            }
-            
-            logging_system.app_logger.info(f"Restore completed successfully from backup: {backup_id}")
-            
-            return restore_info
-            
-        except Exception as e:
-            restore_info = {
-                'restore_id': f"restore_failed_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                'backup_id': backup_id,
-                'timestamp': datetime.now().isoformat(),
-                'status': 'failed',
-                'error': str(e)
-            }
-            
-            logging_system.app_logger.error(f"Restore failed: {str(e)}")
-            return restore_info
-    
-    def schedule_automated_backups(self):
-        """Schedule automated backup jobs with fallback"""
-        if SCHEDULE_AVAILABLE:
-            if self.backup_schedule == "daily":
-                schedule.every().day.at("02:00").do(self.create_database_backup)
-            elif self.backup_schedule == "hourly":
-                schedule.every().hour.do(self.create_database_backup)
-            
-            print(f"✓ Automated backups scheduled: {self.backup_schedule}")
-        else:
-            print(f"⚠️ Schedule library not available - backup scheduling simulated: {self.backup_schedule}")
-    
-    def get_backup_status(self) -> dict:
-        """Get backup system status"""
-        return {
-            'total_backups': len(self.backup_history),
-            'latest_backup': self.backup_history[-1] if self.backup_history else None,
-            'backup_directory': self.backup_directory,
-            'retention_days': self.retention_days,
-            'schedule': self.backup_schedule,
-            'disk_usage': self._get_backup_disk_usage()
-        }
-    
-    def _get_backup_disk_usage(self) -> dict:
-        """Calculate backup directory disk usage"""
-        total_size = 0
-        file_count = 0
-        
-        try:
-            for root, dirs, files in os.walk(self.backup_directory):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    if os.path.exists(file_path):
-                        total_size += os.path.getsize(file_path)
-                        file_count += 1
-        except Exception as e:
-            logging_system.app_logger.warning(f"Error calculating backup disk usage: {e}")
-        
-        return {
-            'total_size_mb': round(total_size / (1024 * 1024), 2),
-            'file_count': file_count
-        }
+CREATE (tech_corp)-[:HOLDS_POLICY {
+  start_date: cyber_policy.effective_date,
+  policy_role: "Named Insured"
+}]->(cyber_policy)
 
-# Initialize backup system
-backup_system = BackupAutomationSystem(prod_config.get_config("production"))
-print("✓ Backup automation system configured")
+CREATE (gl_policy)-[:BASED_ON {
+  underwriting_date: gl_policy.effective_date,
+  risk_assessment: "Approved - Technology Sector"
+}]->(general_liability)
+
+CREATE (wc_policy)-[:BASED_ON {
+  underwriting_date: wc_policy.effective_date,
+  risk_assessment: "Approved - Experience Credit"
+}]->(workers_comp)
+
+CREATE (cyber_policy)-[:BASED_ON {
+  underwriting_date: cyber_policy.effective_date,
+  risk_assessment: "Approved - High Security Standards"
+}]->(cyber_insurance)
+
+RETURN tech_corp.business_name AS business,
+       gl_policy.policy_number AS general_liability,
+       wc_policy.policy_number AS workers_comp,
+       cyber_policy.policy_number AS cyber
+"""
+
+commercial_results = run_query(commercial_query)
+print("Commercial Insurance Integration Created:")
+for record in commercial_results:
+    print(f"  Business: {record['business']}")
+    print(f"  General Liability: {record['general_liability']}")
+    print(f"  Workers Compensation: {record['workers_comp']}")
+    print(f"  Cyber Liability: {record['cyber']}")
 ```
 
 ---
 
-## Part 5: CI/CD Pipeline and Container Orchestration
+## Part 2: Specialty Products & Reinsurance (18 minutes)
 
-### Docker Container Configuration
+### Step 5: Specialty Insurance Products
 ```python
-class DockerDeploymentManager:
-    """Docker container deployment and orchestration"""
-    
-    def __init__(self):
-        try:
-            self.docker_client = docker.from_env()
-            print("✓ Docker client connected")
-        except Exception as e:
-            print(f"⚠ Docker client connection failed: {e}")
-            self.docker_client = None
-    
-    def create_production_containers(self):
-        """Create production container configuration"""
-        
-        # Neo4j Database Container Configuration
-        neo4j_config = {
-            'image': 'neo4j:enterprise',
-            'name': 'neo4j-production',
-            'environment': {
-                'NEO4J_AUTH': 'neo4j/prod_ultra_secure_password_456',
-                'NEO4J_ACCEPT_LICENSE_AGREEMENT': 'yes',
-                'NEO4J_EDITION': 'enterprise',
-                'NEO4J_apoc_export_file_enabled': 'true',
-                'NEO4J_apoc_import_file_enabled': 'true',
-                'NEO4J_apoc_import_file_use__neo4j__config': 'true',
-                'NEO4J_PLUGINS': '["apoc", "graph-data-science"]',
-                'NEO4J_dbms_memory_heap_initial__size': '1G',
-                'NEO4J_dbms_memory_heap_max__size': '2G',
-                'NEO4J_dbms_memory_pagecache_size': '1G',
-                'NEO4J_dbms_security_procedures_unrestricted': 'apoc.*,gds.*'
-            },
-            'ports': {'7474/tcp': 7474, '7687/tcp': 7687},
-            'volumes': {
-                '/var/lib/neo4j/data': {'bind': '/data', 'mode': 'rw'},
-                '/var/lib/neo4j/logs': {'bind': '/logs', 'mode': 'rw'},
-                '/var/lib/neo4j/import': {'bind': '/var/lib/neo4j/import', 'mode': 'rw'},
-                '/var/lib/neo4j/plugins': {'bind': '/plugins', 'mode': 'rw'},
-                '/var/lib/neo4j/backups': {'bind': '/var/lib/neo4j/backups', 'mode': 'rw'}
-            },
-            'restart_policy': {'Name': 'unless-stopped'},
-            'mem_limit': '4g',
-            'healthcheck': {
-                'test': ['CMD-SHELL', 'cypher-shell -u neo4j -p prod_ultra_secure_password_456 "RETURN 1"'],
-                'interval': 30000000000,  # 30 seconds in nanoseconds
-                'timeout': 10000000000,   # 10 seconds in nanoseconds
-                'retries': 3,
-                'start_period': 40000000000  # 40 seconds in nanoseconds
-            }
-        }
-        
-        # Application Container Configuration
-        app_config = {
-            'image': 'insurance-web-app:production',
-            'name': 'insurance-app-production',
-            'environment': {
-                'ENVIRONMENT': 'production',
-                'NEO4J_URI': 'bolt://neo4j-production:7687',
-                'NEO4J_USER': 'neo4j',
-                'NEO4J_PASSWORD': 'prod_ultra_secure_password_456',
-                'JWT_SECRET': security_manager.encryption_key.decode(),
-                'API_VERSION': 'v1.0.0',
-                'LOG_LEVEL': 'INFO'
-            },
-            'ports': {'8000/tcp': 8000},
-            'links': ['neo4j-production'],
-            'restart_policy': {'Name': 'unless-stopped'},
-            'mem_limit': '2g',
-            'healthcheck': {
-                'test': ['CMD-SHELL', 'curl -f http://localhost:8000/health || exit 1'],
-                'interval': 30000000000,
-                'timeout': 10000000000,
-                'retries': 3,
-                'start_period': 60000000000
-            }
-        }
-        
-        # Load Balancer Configuration (Nginx)
-        nginx_config = {
-            'image': 'nginx:alpine',
-            'name': 'nginx-load-balancer',
-            'ports': {'80/tcp': 80, '443/tcp': 443},
-            'links': ['insurance-app-production'],
-            'volumes': {
-                '/etc/nginx/conf.d': {'bind': '/etc/nginx/conf.d', 'mode': 'ro'},
-                '/etc/ssl/certs': {'bind': '/etc/ssl/certs', 'mode': 'ro'}
-            },
-            'restart_policy': {'Name': 'unless-stopped'},
-            'mem_limit': '512m'
-        }
-        
-        # Monitoring Container (Prometheus)
-        prometheus_config = {
-            'image': 'prom/prometheus:latest',
-            'name': 'prometheus-monitoring',
-            'ports': {'9090/tcp': 9091},  # Different port to avoid conflicts
-            'volumes': {
-                '/etc/prometheus': {'bind': '/etc/prometheus', 'mode': 'ro'}
-            },
-            'command': [
-                '--config.file=/etc/prometheus/prometheus.yml',
-                '--storage.tsdb.path=/prometheus',
-                '--web.console.libraries=/etc/prometheus/console_libraries',
-                '--web.console.templates=/etc/prometheus/consoles',
-                '--web.enable-lifecycle'
-            ],
-            'restart_policy': {'Name': 'unless-stopped'},
-            'mem_limit': '1g'
-        }
-        
-        return {
-            'neo4j': neo4j_config,
-            'application': app_config,
-            'load_balancer': nginx_config,
-            'monitoring': prometheus_config
-        }
-    
-    def deploy_containers(self, configurations: dict):
-        """Deploy containers using configurations"""
-        deployment_results = {}
-        
-        for service_name, config in configurations.items():
-            try:
-                print(f"Deploying {service_name} container...")
-                
-                # Remove existing container if it exists
-                try:
-                    existing_container = self.docker_client.containers.get(config['name'])
-                    existing_container.stop()
-                    existing_container.remove()
-                    print(f"Removed existing {service_name} container")
-                except docker.errors.NotFound:
-                    pass
-                
-                # Create and start new container
-                if self.docker_client:
-                    # Simulate container creation (in real environment, this would create actual containers)
-                    deployment_results[service_name] = {
-                        'status': 'deployed',
-                        'container_name': config['name'],
-                        'image': config['image'],
-                        'ports': config.get('ports', {}),
-                        'health_status': 'healthy',
-                        'deployment_time': datetime.now().isoformat()
-                    }
-                    print(f"✓ {service_name} container deployed successfully")
-                else:
-                    deployment_results[service_name] = {
-                        'status': 'simulated',
-                        'message': 'Docker not available - deployment simulated',
-                        'deployment_time': datetime.now().isoformat()
-                    }
-                
-            except Exception as e:
-                deployment_results[service_name] = {
-                    'status': 'failed',
-                    'error': str(e),
-                    'deployment_time': datetime.now().isoformat()
-                }
-                print(f"✗ {service_name} deployment failed: {e}")
-        
-        return deployment_results
-    
-    def create_docker_compose_file(self, configurations: dict):
-        """Generate docker-compose.yml for production deployment"""
-        
-        compose_content = {
-            'version': '3.8',
-            'services': {},
-            'networks': {
-                'insurance-network': {
-                    'driver': 'bridge'
-                }
-            },
-            'volumes': {
-                'neo4j-data': {},
-                'neo4j-logs': {},
-                'neo4j-backups': {},
-                'prometheus-data': {}
-            }
-        }
-        
-        # Convert configurations to docker-compose format
-        for service_name, config in configurations.items():
-            service_config = {
-                'image': config['image'],
-                'container_name': config['name'],
-                'restart': 'unless-stopped',
-                'networks': ['insurance-network']
-            }
-            
-            if 'environment' in config:
-                service_config['environment'] = config['environment']
-            
-            if 'ports' in config:
-                service_config['ports'] = [f"{host}:{container}" for container, host in config['ports'].items()]
-            
-            if 'volumes' in config:
-                service_config['volumes'] = [f"{host}:{container}" for host, container in config['volumes'].items()]
-            
-            if 'mem_limit' in config:
-                service_config['mem_limit'] = config['mem_limit']
-            
-            if 'healthcheck' in config:
-                service_config['healthcheck'] = config['healthcheck']
-            
-            compose_content['services'][service_name] = service_config
-        
-        # Save docker-compose.yml
-        compose_file_path = 'docker-compose.production.yml'
-        try:
-            import yaml
-            with open(compose_file_path, 'w') as f:
-                yaml.dump(compose_content, f, default_flow_style=False, indent=2)
-            print(f"✓ Docker Compose file created: {compose_file_path}")
-        except ImportError:
-            # Fallback to JSON if PyYAML not available
-            compose_file_path = 'docker-compose.production.json'
-            with open(compose_file_path, 'w') as f:
-                json.dump(compose_content, f, indent=2)
-            print(f"✓ Docker Compose file created as JSON: {compose_file_path}")
-        
-        return compose_file_path
+# Create specialty insurance products
+specialty_query = """
+// Create Specialty Insurance Products
+CREATE (prof_liability:Product:Insurance:Specialty {
+  id: randomUUID(),
+  product_id: "PROD-SPEC-001",
+  product_name: "Professional Liability Elite",
+  product_type: "Specialty",
+  insurance_line: "Professional Liability",
+  coverage_type: "Claims Made",
+  
+  // Coverage details
+  min_coverage: 1000000.00,
+  max_coverage: 25000000.00,
+  aggregate_coverage: "2x Per Claim",
+  retroactive_date: "Available",
+  
+  // Professional specific
+  covered_professions: ["Technology", "Consulting", "Engineering", "Healthcare"],
+  regulatory_defense: true,
+  disciplinary_proceedings: true,
+  cyber_liability_extension: true,
+  
+  // Features
+  worldwide_coverage: true,
+  extended_reporting_period: "3 Years",
+  prior_acts_coverage: true,
+  
+  created_at: datetime(),
+  created_by: "specialty_products",
+  version: 1
+})
 
-# Initialize Docker deployment manager
-docker_manager = DockerDeploymentManager()
-container_configs = docker_manager.create_production_containers()
-print("✓ Docker deployment configurations created")
+CREATE (umbrella_coverage:Product:Insurance:Specialty {
+  id: randomUUID(),
+  product_id: "PROD-SPEC-002",
+  product_name: "Commercial Umbrella Shield",
+  product_type: "Specialty",
+  insurance_line: "Umbrella Liability",
+  coverage_type: "Excess over Primary",
+  
+  // Coverage details
+  min_coverage: 1000000.00,
+  max_coverage: 100000000.00,
+  attachment_point: "Primary Limits",
+  drop_down_coverage: true,
+  
+  // Underlying requirements
+  required_auto_liability: 1000000.00,
+  required_general_liability: 1000000.00,
+  required_employers_liability: 1000000.00,
+  
+  // Features
+  worldwide_coverage: true,
+  broad_form_coverage: true,
+  defense_costs: "In Addition to Limits",
+  
+  created_at: datetime(),
+  created_by: "specialty_products",
+  version: 1
+})
+
+// Create Specialty Policies
+CREATE (prof_policy:Policy:Specialty:Active {
+  id: randomUUID(),
+  policy_number: "POL-PROF-001500",
+  product_type: "Specialty",
+  business_type: "Professional Liability",
+  
+  // Coverage details
+  coverage_limit: 5000000.00,
+  aggregate_limit: 10000000.00,
+  deductible: 25000.00,
+  annual_premium: 18500.00,
+  
+  // Policy dates
+  effective_date: date("2024-06-01"),
+  expiration_date: date("2025-06-01"),
+  retroactive_date: date("2016-01-01"),
+  
+  // Professional liability specific
+  covered_services: ["Software Development", "IT Consulting", "System Integration"],
+  geographic_scope: "Worldwide",
+  prior_acts_coverage: true,
+  regulatory_coverage: true,
+  
+  // Claims made provisions
+  extended_reporting_period: "3 Years Available",
+  discovery_period: "60 Days",
+  notice_requirements: "As Soon As Practicable",
+  
+  // Status
+  policy_status: "Active",
+  premium_status: "Current",
+  last_payment_date: date("2024-06-01"),
+  next_payment_due: date("2024-12-01"),
+  
+  created_at: datetime(),
+  created_by: "specialty_underwriting",
+  version: 1
+})
+
+CREATE (umbrella_policy:Policy:Specialty:Active {
+  id: randomUUID(),
+  policy_number: "POL-UMB-001500",
+  product_type: "Specialty",
+  business_type: "Umbrella Liability",
+  
+  // Coverage details
+  coverage_limit: 10000000.00,
+  deductible: 10000.00,
+  annual_premium: 8750.00,
+  
+  // Policy dates
+  effective_date: date("2024-06-01"),
+  expiration_date: date("2025-06-01"),
+  
+  // Umbrella specific
+  attachment_point: 2000000.00,
+  underlying_policies: ["POL-GL-001500", "POL-WC-001500"],
+  drop_down_coverage: true,
+  aggregate_erosion: false,
+  
+  // Coverage territory
+  geographic_scope: "Worldwide",
+  defense_costs: "In Addition",
+  broad_form_coverage: true,
+  
+  // Retained limits
+  self_insured_retention: 10000.00,
+  retention_basis: "Per Occurrence",
+  
+  // Status
+  policy_status: "Active",
+  premium_status: "Current",
+  last_payment_date: date("2024-06-01"),
+  next_payment_due: date("2024-12-01"),
+  
+  created_at: datetime(),
+  created_by: "specialty_underwriting",
+  version: 1
+})
+
+// Create Relationships
+CREATE (tech_corp)-[:HOLDS_POLICY {
+  start_date: prof_policy.effective_date,
+  policy_role: "Named Insured"
+}]->(prof_policy)
+
+CREATE (tech_corp)-[:HOLDS_POLICY {
+  start_date: umbrella_policy.effective_date,
+  policy_role: "Named Insured"
+}]->(umbrella_policy)
+
+CREATE (prof_policy)-[:BASED_ON {
+  underwriting_date: prof_policy.effective_date,
+  risk_assessment: "Approved - Technology Risks"
+}]->(prof_liability)
+
+CREATE (umbrella_policy)-[:BASED_ON {
+  underwriting_date: umbrella_policy.effective_date,
+  risk_assessment: "Approved - Excess Coverage"
+}]->(umbrella_coverage)
+
+RETURN prof_policy.policy_number AS professional,
+       umbrella_policy.policy_number AS umbrella
+"""
+
+specialty_results = run_query(specialty_query)
+print("Specialty Insurance Products Created:")
+for record in specialty_results:
+    print(f"  Professional Liability: {record['professional']}")
+    print(f"  Umbrella Coverage: {record['umbrella']}")
 ```
 
-### CI/CD Pipeline Configuration
+### Step 6: Reinsurance Networks and Treaty Management
 ```python
-def create_cicd_pipeline():
-    """Create CI/CD pipeline configuration for production deployment"""
-    
-    # Connect to Neo4j to store pipeline configuration
-    driver = GraphDatabase.driver(
-        prod_config.get_config("production")["neo4j_uri"],
-        auth=(
-            prod_config.get_config("production")["neo4j_user"],
-            prod_config.get_config("production")["neo4j_password"]
-        )
-    )
-    
-    create_cicd_query = """
-    // Create CI/CD Pipeline Configuration
-    CREATE (pipeline:CICDPipeline {
-        id: randomUUID(),
-        pipeline_name: 'Insurance Platform Production Deployment',
-        version: '1.0.0',
-        created_at: datetime(),
-        environment: 'production',
-        deployment_strategy: 'blue-green',
-        approval_required: true,
-        automated_testing: true,
-        rollback_enabled: true
-    })
-    
-    // Create Build Stage
-    CREATE (build_stage:BuildStage {
-        id: randomUUID(),
-        stage_name: 'Build and Test',
-        stage_order: 1,
-        steps: [
-            'Clone repository',
-            'Install dependencies',
-            'Run unit tests',
-            'Run integration tests',
-            'Build Docker images',
-            'Push to registry'
-        ],
-        estimated_duration: 'PT15M',
-        parallel_execution: true,
-        failure_action: 'stop_pipeline'
-    })
-    
-    // Create Security Stage
-    CREATE (security_stage:SecurityStage {
-        id: randomUUID(),
-        stage_name: 'Security Scanning',
-        stage_order: 2,
-        steps: [
-            'Container vulnerability scan',
-            'Code security analysis',
-            'Dependency audit',
-            'License compliance check',
-            'Security policy validation'
-        ],
-        estimated_duration: 'PT10M',
-        required_approvals: ['Security Team'],
-        security_gates: [
-            'No critical vulnerabilities',
-            'All security policies pass',
-            'License compliance verified'
-        ]
-    })
-    
-    // Create Test Stage
-    CREATE (test_stage:TestStage {
-        id: randomUUID(),
-        stage_name: 'Comprehensive Testing',
-        stage_order: 3,
-        steps: [
-            'Deploy to staging environment',
-            'Run API tests',
-            'Run UI tests',
-            'Performance testing',
-            'Load testing',
-            'Security penetration testing'
-        ],
-        estimated_duration: 'PT25M',
-        test_environments: ['staging'],
-        success_criteria: [
-            'All tests pass',
-            'Response time < 200ms',
-            'Zero critical issues'
-        ]
-    })
-    
-    // Create Deployment Stage
-    CREATE (deploy_stage:DeploymentStage {
-        id: randomUUID(),
-        stage_name: 'Production Deployment',
-        stage_order: 4,
-        deployment_strategy: 'blue-green',
-        steps: [
-            {name: 'Backup current state', duration: 'PT5M'},
-            {name: 'Deploy to green environment', duration: 'PT8M'},
-            {name: 'Run smoke tests', duration: 'PT3M'},
-            {name: 'Switch traffic gradually', duration: 'PT10M'},
-            {name: 'Monitor health metrics', duration: 'PT5M'},
-            {name: 'Cleanup blue environment', duration: 'PT2M'}
-        ],
-        rollback_triggers: [
-            'Health check failures',
-            'Error rate > 1%',
-            'Response time > 1000ms',
-            'Manual trigger'
-        ],
-        approval_required: true,
-        approvers: [
-            'Platform Engineering Lead',
-            'Security Architect',
-            'Product Owner'
-        ]
-    })
-    
-    // Create Monitoring Integration
-    CREATE (deployment_monitor:DeploymentMonitor {
-        id: randomUUID(),
-        monitor_name: 'Post-Deployment Monitoring',
-        monitoring_duration: 'PT2H',
-        metrics_tracked: [
-            'Application response time',
-            'Error rates',
-            'Database connections',
-            'Memory usage',
-            'CPU utilization',
-            'Transaction throughput'
-        ],
-        alert_channels: ['slack', 'email', 'pagerduty'],
-        automatic_rollback: {
-            enabled: true,
-            error_threshold: 5.0,
-            response_time_threshold: 2000.0,
-            evaluation_period: 'PT5M'
-        },
-        success_criteria: {
-            error_rate: '<0.1%',
-            response_time_p95: '<200ms',
-            availability: '>99.9%',
-            zero_data_loss: true
-        }
-    })
-    
-    // Create relationships
-    CREATE (pipeline)-[:CONTAINS]->(build_stage)
-    CREATE (pipeline)-[:CONTAINS]->(test_stage)
-    CREATE (pipeline)-[:CONTAINS]->(security_stage)
-    CREATE (pipeline)-[:CONTAINS]->(deploy_stage)
-    CREATE (deploy_stage)-[:MONITORED_BY]->(deployment_monitor)
-    
-    RETURN pipeline, build_stage, test_stage, security_stage, deploy_stage, deployment_monitor
-    """
-    
-    with driver.session() as session:
-        result = session.run(create_cicd_query)
-        pipeline_data = result.single()
-    
-    driver.close()
-    
-    print("✓ CI/CD pipeline configuration stored in Neo4j")
-    return pipeline_data
+# Create reinsurance infrastructure and partnerships
+reinsurance_query = """
+// Create Reinsurance Companies
+CREATE (munich_re:ReinsuranceCompany:PartnerOrganization {
+  id: randomUUID(),
+  company_id: "REIN-001",
+  company_name: "Munich Re America",
+  reinsurer_type: "Traditional",
+  am_best_rating: "A++",
+  financial_strength: "Superior",
+  geographic_scope: "Global",
+  
+  // Contact information
+  headquarters: "New York, NY",
+  regional_office: "Dallas, TX",
+  contact_person: "David Richardson",
+  contact_title: "Regional Director",
+  phone: "214-555-0300",
+  email: "drichardson@munichre.com",
+  
+  // Business metrics
+  surplus: 15000000000.00,
+  market_share: 0.12,
+  specialties: ["Property", "Casualty", "Life", "Specialty"],
+  
+  created_at: datetime(),
+  created_by: "reinsurance_management",
+  version: 1
+})
 
-# Create CI/CD pipeline
-cicd_pipeline = create_cicd_pipeline()
-print("✓ CI/CD pipeline created and configured")
+CREATE (swiss_re:ReinsuranceCompany:PartnerOrganization {
+  id: randomUUID(),
+  company_id: "REIN-002", 
+  company_name: "Swiss Re Corporate Solutions",
+  reinsurer_type: "Traditional",
+  am_best_rating: "A+",
+  financial_strength: "Superior",
+  geographic_scope: "Global",
+  
+  // Contact information
+  headquarters: "Zurich, Switzerland",
+  regional_office: "Austin, TX",
+  contact_person: "Maria Rodriguez",
+  contact_title: "Account Manager",
+  phone: "512-555-0400",
+  email: "mrodriguez@swissre.com",
+  
+  // Business metrics
+  surplus: 22000000000.00,
+  market_share: 0.15,
+  specialties: ["Cyber", "Technology", "Professional Lines"],
+  
+  created_at: datetime(),
+  created_by: "reinsurance_management",
+  version: 1
+})
+
+CREATE (berkshire:ReinsuranceCompany:PartnerOrganization {
+  id: randomUUID(),
+  company_id: "REIN-003",
+  company_name: "Berkshire Hathaway Reinsurance",
+  reinsurer_type: "Traditional",
+  am_best_rating: "A++",
+  financial_strength: "Superior",
+  geographic_scope: "Global",
+  
+  // Contact information
+  headquarters: "Omaha, NE",
+  regional_office: "Houston, TX",
+  contact_person: "Robert Williams",
+  contact_title: "Vice President",
+  phone: "713-555-0500",
+  email: "rwilliams@brk.com",
+  
+  // Business metrics
+  surplus: 85000000000.00,
+  market_share: 0.25,
+  specialties: ["Catastrophe", "Large Risks", "Alternative Risk"],
+  
+  created_at: datetime(),
+  created_by: "reinsurance_management",
+  version: 1
+})
+
+// Create Reinsurance Contracts (Treaties)
+CREATE (cat_treaty:ReinsuranceContract {
+  id: randomUUID(),
+  contract_number: "TREATY-CAT-2024-001",
+  treaty_type: "Catastrophe Excess of Loss",
+  coverage_line: "Property",
+  
+  // Treaty terms
+  effective_date: date("2024-01-01"),
+  expiration_date: date("2024-12-31"),
+  coverage_limit: 50000000.00,
+  attachment_point: 5000000.00,
+  
+  // Financial terms
+  rate: 0.045,
+  minimum_premium: 450000.00,
+  maximum_premium: 2250000.00,
+  reinstatement_provisions: "2 at 100%",
+  
+  // Coverage details
+  covered_perils: ["Wind", "Hail", "Tornado", "Hurricane"],
+  geographic_scope: "Texas, Oklahoma, Louisiana",
+  exclusions: ["Flood", "Earthquake", "Nuclear"],
+  
+  // Performance
+  premium_paid: 675000.00,
+  claims_paid: 0.00,
+  loss_ratio: 0.00,
+  profit_commission: 0.15,
+  
+  created_at: datetime(),
+  created_by: "reinsurance_management",
+  version: 1
+})
+
+CREATE (quota_share:ReinsuranceContract {
+  id: randomUUID(),
+  contract_number: "TREATY-QS-2024-002",
+  treaty_type: "Quota Share",
+  coverage_line: "Commercial Lines",
+  
+  // Treaty terms
+  effective_date: date("2024-01-01"),
+  expiration_date: date("2024-12-31"),
+  cession_percentage: 0.25,
+  commission_rate: 0.32,
+  
+  // Financial terms
+  minimum_ceding_commission: 0.28,
+  maximum_ceding_commission: 0.35,
+  profit_commission: 0.15,
+  loss_corridor: "75% - 95%",
+  
+  // Coverage details
+  covered_classes: ["General Liability", "Commercial Property", "Workers Compensation"],
+  retention_amount: 100000.00,
+  exclusions: ["Asbestos", "Environmental", "Nuclear"],
+  
+  // Performance year-to-date
+  ceded_premium: 1875000.00,
+  ceded_losses: 425000.00,
+  commission_earned: 600000.00,
+  loss_ratio: 0.227,
+  
+  created_at: datetime(),
+  created_by: "reinsurance_management",
+  version: 1
+})
+
+CREATE (specialty_treaty:ReinsuranceContract {
+  id: randomUUID(),
+  contract_number: "TREATY-SPEC-2024-003",
+  treaty_type: "Surplus Share",
+  coverage_line: "Professional Liability",
+  
+  // Treaty terms
+  effective_date: date("2024-01-01"),
+  expiration_date: date("2024-12-31"),
+  retention_limit: 1000000.00,
+  treaty_capacity: 10000000.00,
+  
+  // Financial terms
+  commission_rate: 0.30,
+  profit_commission: 0.20,
+  loss_ratio_threshold: 0.65,
+  sliding_scale_commission: true,
+  
+  // Coverage details
+  covered_classes: ["Technology E&O", "Professional Liability", "Cyber Liability"],
+  covered_territories: ["USA", "Canada", "Europe"],
+  exclusions: ["Bodily Injury", "Property Damage", "Criminal Acts"],
+  
+  // Performance
+  ceded_premium: 1250000.00,
+  ceded_losses: 185000.00,
+  commission_earned: 375000.00,
+  loss_ratio: 0.148,
+  
+  created_at: datetime(),
+  created_by: "reinsurance_management",
+  version: 1
+})
+
+// Create Reinsurance Relationships
+CREATE (cat_treaty)-[:REINSURED_BY {
+  participation_percentage: 0.40,
+  line_size: 20000000.00,
+  contract_role: "Lead Reinsurer"
+}]->(munich_re)
+
+CREATE (cat_treaty)-[:REINSURED_BY {
+  participation_percentage: 0.35,
+  line_size: 17500000.00,
+  contract_role: "Following Reinsurer"
+}]->(berkshire)
+
+CREATE (cat_treaty)-[:REINSURED_BY {
+  participation_percentage: 0.25,
+  line_size: 12500000.00,
+  contract_role: "Following Reinsurer"
+}]->(swiss_re)
+
+CREATE (quota_share)-[:REINSURED_BY {
+  participation_percentage: 1.00,
+  line_size: 25000000.00,
+  contract_role: "Sole Reinsurer"
+}]->(swiss_re)
+
+CREATE (specialty_treaty)-[:REINSURED_BY {
+  participation_percentage: 0.60,
+  line_size: 6000000.00,
+  contract_role: "Lead Reinsurer"
+}]->(swiss_re)
+
+CREATE (specialty_treaty)-[:REINSURED_BY {
+  participation_percentage: 0.40,
+  line_size: 4000000.00,
+  contract_role: "Following Reinsurer"
+}]->(munich_re)
+
+RETURN cat_treaty.contract_number AS catastrophe,
+       quota_share.contract_number AS quota,
+       specialty_treaty.contract_number AS specialty
+"""
+
+reinsurance_results = run_query(reinsurance_query)
+print("Reinsurance Networks Created:")
+for record in reinsurance_results:
+    print(f"  Catastrophe Treaty: {record['catastrophe']}")
+    print(f"  Quota Share Treaty: {record['quota']}")
+    print(f"  Specialty Treaty: {record['specialty']}")
 ```
 
 ---
 
-## Part 6: Production Database Setup and Final Verification
+## Part 3: Global Operations & Multi-Currency (15 minutes)
 
-### Production Database Configuration
+### Step 7: International Subsidiaries and Regulatory Frameworks
 ```python
-def setup_production_database():
-    """Setup production database with proper configuration"""
-    
-    # Connect to production Neo4j instance
-    production_config = prod_config.get_config("production")
-    
-    driver = GraphDatabase.driver(
-        production_config["neo4j_uri"],
-        auth=(production_config["neo4j_user"], production_config["neo4j_password"])
-    )
-    
-    production_setup_query = """
-    // Create Production Environment Entity
-    CREATE (prod_env:Environment {
-        id: randomUUID(),
-        name: 'Production Insurance Platform',
-        type: 'production',
-        version: '1.0.0',
-        deployment_date: datetime(),
-        compliance_level: 'enterprise',
-        security_hardened: true,
-        monitoring_enabled: true,
-        backup_enabled: true,
-        high_availability: true,
-        load_balanced: true,
-        auto_scaling: true,
-        disaster_recovery: true
-    })
-    
-    // Create Infrastructure Components
-    CREATE (database_cluster:DatabaseCluster {
-        id: randomUUID(),
-        cluster_name: 'Neo4j Production Cluster',
-        node_count: 3,
-        replication_factor: 2,
-        backup_schedule: 'daily',
-        monitoring_enabled: true,
-        auto_failover: true,
-        read_replicas: 2,
-        cluster_topology: 'core_read_replica'
-    })
-    
-    CREATE (app_servers:ApplicationServers {
-        id: randomUUID(),
-        server_pool: 'Insurance Web Application',
-        instance_count: 3,
-        load_balancer: 'nginx',
-        auto_scaling: true,
-        health_checks: true,
-        session_affinity: false,
-        ssl_termination: true
-    })
-    
-    CREATE (security_layer:SecurityLayer {
-        id: randomUUID(),
-        component_name: 'Enterprise Security Suite',
-        authentication: 'multi_factor',
-        authorization: 'role_based',
-        encryption_at_rest: true,
-        encryption_in_transit: true,
-        audit_logging: true,
-        intrusion_detection: true,
-        firewall_enabled: true,
-        certificate_management: 'automated'
-    })
-    
-    CREATE (monitoring_stack:MonitoringStack {
-        id: randomUUID(),
-        stack_name: 'Production Monitoring',
-        components: ['prometheus', 'grafana', 'alertmanager', 'jaeger'],
-        metrics_retention: '30_days',
-        alerting_enabled: true,
-        dashboard_count: 12,
-        uptime_monitoring: true,
-        log_aggregation: true,
-        distributed_tracing: true
-    })
-    
-    CREATE (backup_system:BackupSystem {
-        id: randomUUID(),
-        system_name: 'Automated Backup Solution',
-        backup_frequency: 'daily',
-        retention_period: '30_days',
-        backup_verification: true,
-        restore_testing: 'weekly',
-        offsite_replication: true,
-        encryption_enabled: true,
-        compression_enabled: true
-    })
-    
-    // Create Production Infrastructure Relationships
-    CREATE (prod_env)-[:RUNS_ON]->(database_cluster)
-    CREATE (prod_env)-[:HOSTS]->(app_servers)
-    CREATE (prod_env)-[:SECURED_BY]->(security_layer)
-    CREATE (prod_env)-[:MONITORED_BY]->(monitoring_stack)
-    CREATE (prod_env)-[:BACKED_UP_BY]->(backup_system)
-    
-    RETURN prod_env, database_cluster, app_servers, security_layer, monitoring_stack, backup_system
-    """
-    
-    with driver.session() as session:
-        result = session.run(production_setup_query)
-        infrastructure = result.single()
-    
-    # Add additional production entities to reach target state (850 nodes, 1100 relationships)
-    additional_entities_query = """
-    // Create additional production support entities
-    MATCH (prod_env:Environment {name: 'Production Insurance Platform'})
-    
-    // Create disaster recovery site
-    CREATE (dr_site:DisasterRecoverySite {
-        id: randomUUID(),
-        site_name: 'Secondary Data Center',
-        location: 'Dallas, TX',
-        rto_minutes: 15,
-        rpo_minutes: 5,
-        hot_standby: true,
-        automatic_failover: true,
-        replication_lag_ms: 100
-    })
-    
-    // Create compliance monitoring
-    CREATE (compliance_monitor:ComplianceMonitor {
-        id: randomUUID(),
-        monitor_name: 'Regulatory Compliance Tracker',
-        regulations_tracked: ['SOX', 'GDPR', 'CCPA', 'Texas Insurance Code'],
-        audit_frequency: 'quarterly',
-        automated_reporting: true,
-        violation_alerts: true,
-        remediation_tracking: true
-    })
-    
-    // Create performance baselines
-    CREATE (perf_baseline:PerformanceBaseline {
-        id: randomUUID(),
-        baseline_name: 'Production Performance Standards',
-        response_time_target_ms: 200,
-        throughput_target_rps: 1000,
-        availability_target_percent: 99.9,
-        error_rate_target_percent: 0.1,
-        concurrent_users_target: 500
-    })
-    
-    // Create maintenance schedules
-    CREATE (maintenance_schedule:MaintenanceSchedule {
-        id: randomUUID(),
-        schedule_name: 'Production Maintenance Window',
-        frequency: 'monthly',
-        duration_hours: 4,
-        preferred_day: 'Sunday',
-        preferred_time: '02:00',
-        automated_tasks: [
-            'Security patches',
-            'Database optimization',
-            'Log rotation',
-            'Certificate renewal'
-        ]
-    })
-    
-    // Connect to production environment
-    CREATE (prod_env)-[:RECOVERS_TO]->(dr_site)
-    CREATE (prod_env)-[:MONITORED_FOR_COMPLIANCE]->(compliance_monitor)
-    CREATE (prod_env)-[:MEASURED_AGAINST]->(perf_baseline)
-    CREATE (prod_env)-[:MAINTAINED_BY]->(maintenance_schedule)
-    
-    RETURN dr_site, compliance_monitor, perf_baseline, maintenance_schedule
-    """
-    
-    with driver.session() as session:
-        result = session.run(additional_entities_query)
-        additional_components = result.single()
-    
-    driver.close()
-    
-    print("✓ Production database infrastructure configured")
-    return infrastructure, additional_components
+# Create international operations infrastructure
+global_operations_query = """
+// Create International Subsidiaries
+CREATE (uk_subsidiary:Subsidiary:LegalEntity {
+  id: randomUUID(),
+  entity_id: "SUB-UK-001",
+  entity_name: "Apex Insurance UK Limited",
+  entity_type: "Private Limited Company",
+  incorporation_country: "United Kingdom",
+  incorporation_date: date("2018-03-15"),
+  
+  // UK Registration
+  company_number: "11234567",
+  registered_office: "Level 25, The Leadenhall Building, 122 Leadenhall Street, London EC3V 4AB",
+  vat_number: "GB987654321",
+  
+  // Regulatory details
+  fca_registration: "765432",
+  regulatory_status: "Authorized",
+  prudential_regulation: "PRA Supervised",
+  
+  // Financial information
+  share_capital: 15000000.00,
+  solvency_ratio: 1.85,
+  mcr_coverage: 2.45,
+  scr_coverage: 1.65,
+  
+  // Business metrics
+  gross_written_premium: 45000000.00,
+  employee_count: 125,
+  branch_locations: ["London", "Manchester", "Edinburgh"],
+  
+  created_at: datetime(),
+  created_by: "global_operations",
+  version: 1
+})
 
-# Setup production database
-prod_infrastructure, additional_components = setup_production_database()
-print("✓ Production environment infrastructure deployed")
+CREATE (canada_subsidiary:Subsidiary:LegalEntity {
+  id: randomUUID(),
+  entity_id: "SUB-CA-001",
+  entity_name: "Apex Insurance Canada Inc.",
+  entity_type: "Federal Corporation",
+  incorporation_country: "Canada",
+  incorporation_date: date("2019-08-22"),
+  
+  // Canadian Registration
+  corporation_number: "987654321",
+  registered_office: "Suite 4000, 421 7th Avenue SW, Calgary, AB T2P 4K9",
+  business_number: "123456789RC0001",
+  
+  // Regulatory details
+  osfi_registration: "INS-456789",
+  regulatory_status: "Licensed",
+  provincial_licenses: ["AB", "ON", "BC", "QC"],
+  
+  // Financial information (CAD)
+  share_capital: 20000000.00,
+  mccsr_ratio: 185.0,
+  surplus: 12500000.00,
+  
+  // Business metrics
+  gross_written_premium: 32000000.00,
+  employee_count: 85,
+  branch_locations: ["Calgary", "Toronto", "Vancouver"],
+  
+  created_at: datetime(),
+  created_by: "global_operations",
+  version: 1
+})
+
+// Create Regulatory Frameworks
+CREATE (uk_regulation:RegulatoryFramework {
+  id: randomUUID(),
+  framework_id: "REG-UK-001",
+  framework_name: "UK Solvency II Framework",
+  jurisdiction: "United Kingdom",
+  regulatory_body: "Financial Conduct Authority (FCA)",
+  
+  // Regulatory requirements
+  solvency_requirements: "Solvency II Directive",
+  capital_requirements: "SCR and MCR",
+  reporting_frequency: "Quarterly",
+  audit_requirements: "Annual External Audit",
+  
+  // Compliance requirements
+  conduct_rules: "Senior Managers & Certification Regime",
+  consumer_protection: "ICOBS and COBS",
+  data_protection: "UK GDPR",
+  
+  // Reporting obligations
+  rsrp_reporting: "Required",
+  orsa_requirement: "Annual",
+  pillar_3_disclosure: "Annual",
+  
+  effective_date: date("2016-01-01"),
+  last_updated: date("2024-01-01"),
+  
+  created_at: datetime(),
+  created_by: "regulatory_compliance",
+  version: 1
+})
+
+CREATE (canada_regulation:RegulatoryFramework {
+  id: randomUUID(),
+  framework_id: "REG-CA-001",
+  framework_name: "Canadian Insurance Regulatory Framework",
+  jurisdiction: "Canada",
+  regulatory_body: "Office of the Superintendent of Financial Institutions (OSFI)",
+  
+  // Regulatory requirements
+  solvency_requirements: "OSFI Capital Requirements",
+  capital_requirements: "MCCSR Guidelines",
+  reporting_frequency: "Quarterly",
+  audit_requirements: "Annual External Audit",
+  
+  // Compliance requirements
+  conduct_rules: "Market Conduct Guidelines",
+  consumer_protection: "Fair Treatment of Customers",
+  privacy_legislation: "PIPEDA",
+  
+  // Reporting obligations
+  annual_statement: "Required",
+  dscr_reporting: "Dynamic Solvency Testing",
+  capital_adequacy: "MCCSR Ratio > 150%",
+  
+  effective_date: date("2018-01-01"),
+  last_updated: date("2024-01-01"),
+  
+  created_at: datetime(),
+  created_by: "regulatory_compliance",
+  version: 1
+})
+
+// Create Currency Exchange Framework
+CREATE (usd_base:CurrencyExchange {
+  id: randomUUID(),
+  exchange_id: "CUR-USD-BASE",
+  base_currency: "USD",
+  quote_currency: "USD",
+  exchange_rate: 1.0000,
+  rate_date: date(),
+  rate_type: "Base",
+  
+  // Rate information
+  provider: "Internal",
+  rate_source: "Base Currency",
+  last_updated: datetime(),
+  
+  created_at: datetime(),
+  created_by: "treasury_operations",
+  version: 1
+})
+
+CREATE (gbp_exchange:CurrencyExchange {
+  id: randomUUID(),
+  exchange_id: "CUR-GBP-USD",
+  base_currency: "GBP",
+  quote_currency: "USD",
+  exchange_rate: 1.2675,
+  rate_date: date(),
+  rate_type: "Spot",
+  
+  // Rate information
+  bid_rate: 1.2670,
+  ask_rate: 1.2680,
+  provider: "Reuters",
+  rate_source: "Market Data",
+  last_updated: datetime(),
+  
+  created_at: datetime(),
+  created_by: "treasury_operations",
+  version: 1
+})
+
+CREATE (cad_exchange:CurrencyExchange {
+  id: randomUUID(),
+  exchange_id: "CUR-CAD-USD",
+  base_currency: "CAD",
+  quote_currency: "USD",
+  exchange_rate: 0.7385,
+  rate_date: date(),
+  rate_type: "Spot",
+  
+  // Rate information
+  bid_rate: 0.7380,
+  ask_rate: 0.7390,
+  provider: "Reuters",
+  rate_source: "Market Data",
+  last_updated: datetime(),
+  
+  created_at: datetime(),
+  created_by: "treasury_operations",
+  version: 1
+})
+
+// Create Subsidiary Relationships
+CREATE (uk_subsidiary)-[:OPERATES_UNDER {
+  license_date: date("2018-05-01"),
+  license_number: "765432",
+  compliance_status: "Current"
+}]->(uk_regulation)
+
+CREATE (canada_subsidiary)-[:OPERATES_UNDER {
+  license_date: date("2019-10-15"),
+  license_number: "INS-456789",
+  compliance_status: "Current"
+}]->(canada_regulation)
+
+CREATE (uk_subsidiary)-[:USES_CURRENCY {
+  primary_currency: true,
+  conversion_frequency: "Daily"
+}]->(gbp_exchange)
+
+CREATE (canada_subsidiary)-[:USES_CURRENCY {
+  primary_currency: true,
+  conversion_frequency: "Daily"
+}]->(cad_exchange)
+
+RETURN uk_subsidiary.entity_name AS uk_entity,
+       canada_subsidiary.entity_name AS canada_entity,
+       uk_regulation.framework_name AS uk_framework,
+       canada_regulation.framework_name AS canada_framework
+"""
+
+global_results = run_query(global_operations_query)
+print("Global Operations Infrastructure Created:")
+for record in global_results:
+    print(f"  UK Subsidiary: {record['uk_entity']}")
+    print(f"  Canada Subsidiary: {record['canada_entity']}")
+    print(f"  UK Regulatory Framework: {record['uk_framework']}")
+    print(f"  Canada Regulatory Framework: {record['canada_framework']}")
 ```
 
-### Final Production Deployment Verification
+### Step 8: Multi-Line Platform Verification and Final State
 ```python
-def verify_production_deployment():
-    """Comprehensive production deployment verification"""
-    
-    print("\n" + "="*60)
-    print("🎯 PRODUCTION DEPLOYMENT VERIFICATION")
-    print("="*60)
-    
-    verification_results = {
-        "environment_configuration": False,
-        "security_hardening": False,
-        "monitoring_systems": False,
-        "backup_automation": False,
-        "container_deployment": False,
-        "cicd_pipeline": False,
-        "database_infrastructure": False,
-        "high_availability": False,
-        "disaster_recovery": False
-    }
-    
-    try:
-        # 1. Environment Configuration
-        print("1. ENVIRONMENT CONFIGURATION:")
-        try:
-            config = prod_config.get_config("production")
-            if config and config.get("security_level") == "maximum":
-                print("   ✓ Production configuration loaded")
-                print(f"   ✓ Security level: {config['security_level']}")
-                print(f"   ✓ Monitoring enabled: {config['monitoring_enabled']}")
-                verification_results["environment_configuration"] = True
-            else:
-                print("   ✗ Production configuration incomplete")
-        except Exception as e:
-            print(f"   ✗ Configuration error: {e}")
-        
-        # 2. Security Hardening
-        print("2. SECURITY HARDENING:")
-        try:
-            if security_manager and auth_system:
-                print("   ✓ Security manager initialized")
-                print("   ✓ User authentication system active")
-                print("   ✓ JWT token generation configured")
-                print("   ✓ Rate limiting implemented")
-                print("   ✓ Password hashing secured")
-                verification_results["security_hardening"] = True
-            else:
-                print("   ✗ Security systems not properly initialized")
-        except Exception as e:
-            print(f"   ✗ Security verification failed: {e}")
-        
-        # 3. Monitoring Systems
-        print("3. MONITORING SYSTEMS:")
-        try:
-            if monitoring_system:
-                print("   ✓ Prometheus metrics server active")
-                print("   ✓ System metrics collection enabled")
-                print("   ✓ Database metrics monitoring configured")
-                print("   ✓ Health checks implemented")
-                print("   ✓ Alert thresholds configured")
-                verification_results["monitoring_systems"] = True
-            else:
-                print("   ✗ Monitoring system not initialized")
-        except Exception as e:
-            print(f"   ✗ Monitoring verification failed: {e}")
-        
-        # 4. Backup Automation
-        print("4. BACKUP AUTOMATION:")
-        try:
-            if backup_system:
-                backup_status = backup_system.get_backup_status()
-                print("   ✓ Backup automation system configured")
-                print(f"   ✓ Backup directory: {backup_status['backup_directory']}")
-                print(f"   ✓ Retention period: {backup_status['retention_days']} days")
-                print(f"   ✓ Schedule: {backup_status['schedule']}")
-                verification_results["backup_automation"] = True
-            else:
-                print("   ✗ Backup system not configured")
-        except Exception as e:
-            print(f"   ✗ Backup verification failed: {e}")
-        
-        # 5. Container Deployment
-        print("5. CONTAINER DEPLOYMENT:")
-        try:
-            if docker_manager and container_configs:
-                print("   ✓ Docker deployment manager ready")
-                print(f"   ✓ Container configurations created: {len(container_configs)}")
-                print("   ✓ Neo4j enterprise container configured")
-                print("   ✓ Application container configured")
-                print("   ✓ Load balancer container configured")
-                print("   ✓ Monitoring container configured")
-                verification_results["container_deployment"] = True
-            else:
-                print("   ✗ Container deployment not configured")
-        except Exception as e:
-            print(f"   ✗ Container verification failed: {e}")
-        
-        # 6. CI/CD Pipeline
-        print("6. CI/CD PIPELINE:")
-        try:
-            if cicd_pipeline:
-                print("   ✓ CI/CD pipeline configuration stored")
-                print("   ✓ Build stage configured")
-                print("   ✓ Security scanning stage configured")
-                print("   ✓ Testing stage configured")
-                print("   ✓ Deployment stage configured")
-                print("   ✓ Monitoring integration configured")
-                verification_results["cicd_pipeline"] = True
-            else:
-                print("   ✗ CI/CD pipeline not configured")
-        except Exception as e:
-            print(f"   ✗ CI/CD verification failed: {e}")
-        
-        # 7. Database Infrastructure
-        print("7. DATABASE INFRASTRUCTURE:")
-        try:
-            # Test production database connection
-            production_config = prod_config.get_config("production")
-            test_driver = GraphDatabase.driver(
-                production_config["neo4j_uri"],
-                auth=(production_config["neo4j_user"], production_config["neo4j_password"])
-            )
-            
-            with test_driver.session() as session:
-                # Check production environment exists
-                result = session.run("MATCH (env:Environment {name: 'Production Insurance Platform'}) RETURN env")
-                if result.single():
-                    print("   ✓ Production environment entity exists")
-                    print("   ✓ Database infrastructure configured")
-                    print("   ✓ High availability setup complete")
-                    verification_results["database_infrastructure"] = True
-                else:
-                    print("   ✗ Production environment not found in database")
-            
-            test_driver.close()
-            
-        except Exception as e:
-            print(f"   ✗ Database infrastructure verification failed: {e}")
-        
-        # 8. High Availability
-        print("8. HIGH AVAILABILITY:")
-        try:
-            if prod_infrastructure and additional_components:
-                print("   ✓ Database cluster configured")
-                print("   ✓ Application server pool configured")
-                print("   ✓ Load balancing implemented")
-                print("   ✓ Auto-scaling enabled")
-                print("   ✓ Health checks active")
-                verification_results["high_availability"] = True
-            else:
-                print("   ✗ High availability components not configured")
-        except Exception as e:
-            print(f"   ✗ High availability verification failed: {e}")
-        
-        # 9. Disaster Recovery
-        print("9. DISASTER RECOVERY:")
-        try:
-            if additional_components:
-                print("   ✓ Disaster recovery site configured")
-                print("   ✓ Hot standby replication active")
-                print("   ✓ Automatic failover enabled")
-                print("   ✓ RTO target: 15 minutes")
-                print("   ✓ RPO target: 5 minutes")
-                verification_results["disaster_recovery"] = True
-            else:
-                print("   ✗ Disaster recovery not configured")
-        except Exception as e:
-            print(f"   ✗ Disaster recovery verification failed: {e}")
-        
-        # Calculate overall deployment health
-        completed_components = sum(verification_results.values())
-        total_components = len(verification_results)
-        deployment_health = (completed_components / total_components) * 100
-        
-        print("\n" + "="*60)
-        print("PRODUCTION DEPLOYMENT SUMMARY")
-        print("="*60)
-        print(f"Completed Components: {completed_components}/{total_components}")
-        print(f"Deployment Health: {deployment_health:.1f}%")
-        
-        if deployment_health >= 90:
-            print("🎉 PRODUCTION DEPLOYMENT SUCCESSFUL!")
-            print("✅ All critical systems operational")
-            print("✅ Enterprise security hardening complete")
-            print("✅ Monitoring and alerting active")
-            print("✅ Backup and disaster recovery configured")
-            print("✅ High availability architecture deployed")
-        elif deployment_health >= 75:
-            print("⚠️ PRODUCTION DEPLOYMENT MOSTLY COMPLETE")
-            print("🔧 Review and address any failed components")
-        else:
-            print("❌ PRODUCTION DEPLOYMENT INCOMPLETE")
-            print("🛠️ Critical systems require attention")
-        
-        return verification_results
-        
-    except Exception as e:
-        print(f"❌ Verification process failed: {e}")
-        return verification_results
+# Verify the complete multi-line platform
+verification_query = """
+// Platform verification and node count
+MATCH (n)
+WITH labels(n)[0] AS node_type, count(n) AS count
+ORDER BY count DESC
 
-# Run production deployment verification
-final_verification = verify_production_deployment()
+WITH collect({type: node_type, count: count}) AS node_summary,
+     sum(count) AS total_nodes
+
+MATCH ()-[r]->()
+WITH node_summary, total_nodes, count(r) AS total_relationships
+
+UNWIND node_summary AS node_info
+RETURN node_info.type AS node_type,
+       node_info.count AS count,
+       total_nodes,
+       total_relationships
+ORDER BY count DESC
+"""
+
+verification_results = run_query(verification_query)
+total_nodes = verification_results[0]['total_nodes'] if verification_results else 0
+total_relationships = verification_results[0]['total_relationships'] if verification_results else 0
+
+print(f"\n=== Multi-Line Platform Database State ===")
+print(f"Total Nodes: {total_nodes}")
+print(f"Total Relationships: {total_relationships}")
+print("\nNode Distribution:")
+for record in verification_results:
+    print(f"  {record['node_type']}: {record['count']} nodes")
 ```
 
-### Create Production Database Backup
+### Step 9: Generate Multi-Line Platform Summary Report
 ```python
-def create_initial_production_backup():
-    """Create initial production backup after deployment"""
-    
-    print("\n🔄 Creating initial production backup...")
-    
-    try:
-        # Create comprehensive backup
-        backup_result = backup_system.create_database_backup()
-        
-        if backup_result['status'] == 'completed':
-            print(f"✅ Initial production backup created successfully")
-            print(f"   Backup ID: {backup_result['backup_id']}")
-            print(f"   Backup Size: {backup_result['size_mb']} MB")
-            print(f"   Duration: {backup_result['duration_seconds']} seconds")
-            print(f"   Database State: {backup_result['database_state']['nodes']} nodes, {backup_result['database_state']['relationships']} relationships")
-            
-            # Log the backup creation
-            logging_system.log_user_action(
-                user_id="system",
-                action="create_backup",
-                resource="production_database",
-                details={
-                    "backup_id": backup_result['backup_id'],
-                    "backup_type": "initial_production",
-                    "automated": True
-                }
-            )
-            
-            return backup_result
-        else:
-            print(f"❌ Backup creation failed: {backup_result.get('error', 'Unknown error')}")
-            return None
-            
-    except Exception as e:
-        print(f"❌ Backup creation error: {e}")
-        return None
-
-# Create initial backup
-initial_backup = create_initial_production_backup()
-```
-
-### Production Health Dashboard
-```python
-def generate_production_health_dashboard():
-    """Generate comprehensive production health dashboard"""
-    
-    print("\n📊 PRODUCTION HEALTH DASHBOARD")
-    print("="*60)
-    
-    try:
-        # Get database connection for production environment
-        production_config = prod_config.get_config("production")
-        driver = GraphDatabase.driver(
-            production_config["neo4j_uri"],
-            auth=(production_config["neo4j_user"], production_config["neo4j_password"])
-        )
-        
-        # Generate monitoring report
-        health_report = monitoring_system.generate_health_report(driver)
-        
-        # Display dashboard
-        print(f"📅 Report Generated: {health_report['timestamp']}")
-        print(f"🏥 Overall Health: {health_report['overall_health'].upper()}")
-        
-        # System metrics
-        if 'system_metrics' in health_report:
-            sys_data = health_report['system_metrics']
-            print(f"\n🖥️  SYSTEM METRICS:")
-            print(f"├─ CPU Usage: {sys_data.get('cpu_percent', 0):.1f}%")
-            print(f"├─ Memory Usage: {sys_data.get('memory_percent', 0):.1f}%")
-            print(f"└─ Disk Usage: {sys_data.get('disk_percent', 0):.1f}%")
-        
-        # Database metrics
-        if 'database_metrics' in health_report:
-            db_data = health_report['database_metrics']
-            print(f"\n🗄️  DATABASE METRICS:")
-            print(f"├─ Status: {db_data.get('database_status', 'unknown')}")
-            print(f"├─ Response Time: {db_data.get('query_response_time', 0)*1000:.1f}ms")
-            print(f"├─ Node Count: {db_data.get('node_count', 0):,}")
-            print(f"└─ Relationship Count: {db_data.get('relationship_count', 0):,}")
-        
-        # Security status
-        print(f"\n🔐 SECURITY STATUS:")
-        print(f"├─ Authentication: Active")
-        print(f"├─ Rate Limiting: Enabled")
-        print(f"├─ Encryption: At-rest & In-transit")
-        print(f"├─ Audit Logging: Active")
-        print(f"└─ Failed Login Attempts: {len(security_manager.failed_login_attempts)}")
-        
-        # Backup status
-        if backup_system:
-            backup_status = backup_system.get_backup_status()
-            print(f"\n💾 BACKUP STATUS:")
-            print(f"├─ Total Backups: {backup_status['total_backups']}")
-            print(f"├─ Latest Backup: {backup_status['latest_backup']['backup_id'] if backup_status['latest_backup'] else 'None'}")
-            print(f"├─ Disk Usage: {backup_status['disk_usage']['total_size_mb']} MB")
-            print(f"└─ Retention: {backup_status['retention_days']} days")
-        
-        # Alerts
-        alerts = health_report.get('alerts', [])
-        if alerts:
-            print(f"\n🚨 ACTIVE ALERTS:")
-            for alert in alerts:
-                severity_icon = "🔴" if alert['severity'] == 'critical' else "🟡"
-                print(f"{severity_icon} {alert['message']}")
-        else:
-            print(f"\n✅ NO ACTIVE ALERTS")
-        
-        # Performance summary
-        print(f"\n⚡ PERFORMANCE SUMMARY:")
-        print(f"├─ Uptime: 99.9%")
-        print(f"├─ Avg Response Time: <200ms")
-        print(f"├─ Concurrent Users: 150/500")
-        print(f"├─ Throughput: 245 req/sec")
-        print(f"└─ Error Rate: 0.02%")
-        
-        driver.close()
-        return health_report
-        
-    except Exception as e:
-        print(f"❌ Dashboard generation failed: {e}")
-        return None
-
-# Generate production dashboard
-production_dashboard = generate_production_health_dashboard()
-```
-
-### Production Deployment Summary
-```python
-def generate_deployment_summary():
-    """Generate final deployment summary and next steps"""
-    
-    print("\n" + "="*70)
-    print("🎯 NEO4J LAB 15 COMPLETION SUMMARY")
+# Generate comprehensive platform summary
+def generate_platform_summary():
+    print("="*70)
+    print("🏢 MULTI-LINE INSURANCE PLATFORM SUMMARY")
     print("="*70)
     
-    # Final database state
-    try:
-        production_config = prod_config.get_config("production")
-        driver = GraphDatabase.driver(
-            production_config["neo4j_uri"],
-            auth=(production_config["neo4j_user"], production_config["neo4j_password"])
-        )
-        
-        with driver.session() as session:
-            # Count final entities
-            stats_query = """
-            MATCH (n) 
-            WITH labels(n)[0] as label, count(n) as count
-            RETURN label, count
-            ORDER BY count DESC
-            """
-            
-            relationship_query = """
-            MATCH ()-[r]->() 
-            RETURN count(r) as total_relationships
-            """
-            
-            node_result = session.run(stats_query)
-            rel_result = session.run(relationship_query)
-            
-            total_nodes = sum([record['count'] for record in node_result])
-            total_relationships = rel_result.single()['total_relationships']
-            
-            print(f"📊 FINAL DATABASE STATE:")
-            print(f"   Total Nodes: {total_nodes:,}")
-            print(f"   Total Relationships: {total_relationships:,}")
-            print(f"   Target Achievement: {total_nodes}/850 nodes, {total_relationships}/1100 relationships")
-            
-            # Show entity breakdown
-            node_result = session.run(stats_query)
-            print(f"\n📋 ENTITY BREAKDOWN:")
-            for record in node_result:
-                if record['label']:
-                    print(f"   {record['label']}: {record['count']}")
-        
-        driver.close()
-        
-    except Exception as e:
-        print(f"⚠️ Could not retrieve final database state: {e}")
+    print(f"\n📊 DATABASE METRICS:")
+    print(f"   Total Nodes: {total_nodes}")
+    print(f"   Total Relationships: {total_relationships}")
+    print(f"   Database Growth: +100 nodes, +100 relationships from Lab 14")
     
-    # Deployment achievements
-    print(f"\n🏆 PRODUCTION DEPLOYMENT ACHIEVEMENTS:")
-    print(f"   ✅ Enterprise-grade security implementation")
-    print(f"   ✅ Multi-environment deployment strategy")
-    print(f"   ✅ Comprehensive monitoring and alerting")
-    print(f"   ✅ Automated backup and disaster recovery")
-    print(f"   ✅ Container orchestration and CI/CD")
-    print(f"   ✅ High availability architecture")
-    print(f"   ✅ Performance optimization and scaling")
-    print(f"   ✅ Compliance and audit systems")
+    print(f"\n🏛️ INSURANCE PRODUCT LINES:")
+    print(f"   ✅ Personal Lines: Auto & Property Insurance")
+    print(f"   ✅ Life Insurance: Term Life & Whole Life Products")
+    print(f"   ✅ Commercial Lines: General Liability, Workers Comp, Cyber")
+    print(f"   ✅ Specialty Products: Professional Liability & Umbrella")
     
-    # Production URLs and access
-    print(f"\n🌐 PRODUCTION ACCESS:")
-    print(f"   Application: https://insurance.company.com")
-    print(f"   Admin Dashboard: https://admin.insurance.company.com")
-    print(f"   Monitoring: https://monitoring.insurance.company.com:9090")
-    print(f"   Grafana: https://grafana.insurance.company.com")
-    print(f"   Neo4j Browser: https://database.insurance.company.com:7474")
+    print(f"\n🏢 BUSINESS OPERATIONS:")
+    print(f"   ✅ Individual Customers: Personal insurance policyholders")
+    print(f"   ✅ Business Customers: Commercial insurance accounts")
+    print(f"   ✅ Life Insurance: Beneficiary management & cash values")
+    print(f"   ✅ Claims Management: Multi-line claims processing")
     
-    # Security credentials
-    print(f"\n🔐 PRODUCTION CREDENTIALS:")
-    print(f"   Admin User: production_admin")
-    print(f"   Lead Agent: lead_agent_001")
-    print(f"   Senior Adjuster: senior_adjuster_001")
-    print(f"   Compliance Auditor: compliance_audit")
-    print(f"   🚨 Change default passwords immediately!")
+    print(f"\n🌍 GLOBAL OPERATIONS:")
+    print(f"   ✅ US Operations: Primary market with state compliance")
+    print(f"   ✅ UK Subsidiary: FCA regulated with Solvency II compliance")
+    print(f"   ✅ Canada Subsidiary: OSFI regulated with MCCSR requirements")
+    print(f"   ✅ Multi-Currency: USD, GBP, CAD with real-time exchange rates")
     
-    # Operational procedures
-    print(f"\n📋 OPERATIONAL PROCEDURES:")
-    print(f"   🔄 Daily automated backups at 02:00 UTC")
-    print(f"   📊 Health checks every 30 seconds")
-    print(f"   🚨 Automated alerts to ops team")
-    print(f"   🔧 Monthly maintenance windows")
-    print(f"   📈 Performance monitoring 24/7")
-    print(f"   🔍 Security audit logs retained 90 days")
+    print(f"\n🤝 REINSURANCE NETWORKS:")
+    print(f"   ✅ Munich Re America: Traditional reinsurance partner")
+    print(f"   ✅ Swiss Re Corporate: Cyber & specialty coverage")
+    print(f"   ✅ Berkshire Hathaway: Catastrophe & large risk coverage")
+    print(f"   ✅ Treaty Management: Quota Share, Excess of Loss, Specialty")
     
-    # Next steps
-    print(f"\n🚀 NEXT STEPS:")
-    print(f"   1. Configure DNS and SSL certificates")
-    print(f"   2. Set up external monitoring integrations")
-    print(f"   3. Configure backup offsite replication")
-    print(f"   4. Train operations team on procedures")
-    print(f"   5. Conduct disaster recovery testing")
-    print(f"   6. Schedule security penetration testing")
-    print(f"   7. Implement business continuity plans")
+    print(f"\n📋 REGULATORY COMPLIANCE:")
+    print(f"   ✅ US Compliance: State insurance regulation frameworks")
+    print(f"   ✅ UK Compliance: FCA/PRA supervision under Solvency II")
+    print(f"   ✅ Canada Compliance: OSFI supervision with provincial licensing")
+    print(f"   ✅ Reporting: Quarterly regulatory reporting across jurisdictions")
+    
+    print(f"\n🔧 ENTERPRISE FEATURES:")
+    print(f"   ✅ Multi-Jurisdiction Operations: Seamless cross-border management")
+    print(f"   ✅ Currency Management: Automated USD conversion capabilities")
+    print(f"   ✅ Risk Distribution: Comprehensive reinsurance risk transfer")
+    print(f"   ✅ Product Portfolio: Complete insurance value chain coverage")
+    
+    print(f"\n🎯 NEXT PHASE READINESS:")
+    print(f"   1. AI/ML Integration: Predictive analytics & automated underwriting")
+    print(f"   2. IoT Data Streams: Telematics & smart device integration")
+    print(f"   3. Blockchain Technology: Smart contracts & parametric insurance")
+    print(f"   4. Advanced Visualization: 3D network displays & real-time analytics")
+    print(f"   5. Real-time Streaming: Live data processing & instant risk assessment")
     
     # Course completion
     print(f"\n🎓 COURSE PROGRESSION:")
-    print(f"   ✅ Lab 15: Production Deployment - COMPLETED")
-    print(f"   ➡️  Next: Lab 16 - Multi-Line Insurance Platform")
-    print(f"   📚 Continue to advanced enterprise features")
+    print(f"   ✅ Lab 15: Multi-Line Insurance Platform - COMPLETED")
+    print(f"   ➡️  Next: Lab 17 - Innovation Showcase & Future Capabilities")
+    print(f"   🚀 Ready for cutting-edge InsurTech innovation")
     
     print("="*70)
 
 # Generate final summary
-generate_deployment_summary()
+generate_platform_summary()
 
 print("\n🎉 CONGRATULATIONS!")
-print("You have successfully deployed a production-ready Neo4j insurance platform")
-print("with enterprise-grade security, monitoring, and operational excellence!")
-print("\n🔜 Ready for Lab 16: Multi-Line Insurance Platform")
+print("You have successfully built a comprehensive multi-line insurance platform")
+print("that rivals enterprise systems used by major global insurance companies!")
+print("\n🔜 Ready for Lab 17: Innovation Showcase & Future Capabilities")
 ```
 
 ---
 
-## Neo4j Lab 15 Summary
+## Lab 15 Summary
 
 **🎯 What You've Accomplished:**
 
-### **Enterprise Production Deployment**
-You've successfully deployed a comprehensive production environment for your Neo4j insurance platform, implementing enterprise-grade security, monitoring, and operational procedures that meet industry standards for mission-critical applications.
+### **Multi-Line Insurance Platform Implementation**
+- ✅ **Life insurance integration** with term, whole, and universal life products including beneficiary management
+- ✅ **Commercial insurance systems** supporting general liability, workers compensation, property, and cyber coverage
+- ✅ **Specialty insurance products** including professional liability, umbrella coverage, and directors & officers insurance
+- ✅ **Business customer management** with comprehensive commercial risk profiles and multi-policy relationships
 
-### **Key Production Features Implemented:**
-- **Multi-Environment Strategy:** Development, staging, and production configurations
-- **Security Hardening:** Multi-factor authentication, encryption, rate limiting, and audit logging
-- **Monitoring & Observability:** Prometheus metrics, health checks, alerting, and performance tracking
-- **Backup & Disaster Recovery:** Automated backups, retention policies, and hot standby replication
-- **Container Orchestration:** Docker deployment with load balancing and auto-scaling
-- **CI/CD Pipeline:** Automated build, test, security scanning, and deployment processes
+### **Global Operations & Reinsurance Networks**  
+- ✅ **Reinsurance partnerships** with major global reinsurers including Munich Re, Swiss Re, and Berkshire Hathaway
+- ✅ **Treaty management systems** supporting catastrophe excess, quota share, and specialty reinsurance arrangements
+- ✅ **International operations** with UK and Canadian subsidiaries including regulatory compliance frameworks
+- ✅ **Multi-currency support** with real-time exchange rates and automated USD conversion capabilities
 
-### **Enterprise Architecture Components:**
-- **High Availability:** Database clustering with read replicas and automatic failover
-- **Load Balancing:** Nginx reverse proxy with SSL termination and session management
-- **Security Layer:** Enterprise authentication, authorization, and threat detection
-- **Monitoring Stack:** Comprehensive observability with metrics, logs, and distributed tracing
-- **Backup System:** Automated backup with disaster recovery and business continuity
+### **Enterprise Platform Features**
+- ✅ **Regulatory compliance systems** supporting FCA (UK), OSFI (Canada), and US state insurance regulations
+- ✅ **Multi-jurisdictional operations** with localized products, currency support, and regulatory reporting
+- ✅ **Advanced risk distribution** through comprehensive reinsurance networks and treaty structures
+- ✅ **Integrated analytics dashboard** providing real-time insights across all product lines and geographies
 
-### **Operational Excellence:**
-- **Health Monitoring:** Real-time system and application health dashboards
-- **Security Compliance:** Role-based access control with audit trails
-- **Performance Optimization:** Response time monitoring and capacity planning
-- **Business Continuity:** Disaster recovery with 15-minute RTO and 5-minute RPO
-- **Automated Operations:** Scheduled maintenance, backup automation, and self-healing systems
+### **Node Types Added (8 types):**
+- ✅ **Policy:Life** - Life insurance policies with beneficiaries, cash values, and term structures
+- ✅ **Policy:Commercial** - Commercial policies supporting liability, workers comp, property, and cyber coverage  
+- ✅ **Beneficiary:Person** - Life insurance beneficiary management with verification and documentation
+- ✅ **Customer:Business** - Commercial customers with industry classifications and revenue profiles
+- ✅ **ReinsuranceCompany:PartnerOrganization** - Global reinsurance partners with financial strength ratings
+- ✅ **ReinsuranceContract** - Treaty management with quota share, excess of loss, and catastrophe coverage
+- ✅ **RegulatoryFramework** - International compliance frameworks for multi-jurisdictional operations
+- ✅ **CurrencyExchange** - Multi-currency support with real-time exchange rate management
 
-**🏆 Final Database State:** 850 nodes, 1100 relationships with complete production infrastructure, security hardening, and enterprise operational capabilities successfully deployed.
+### **Database State:** 950 nodes, 1200 relationships with complete multi-line operations
+
+### **Enterprise Insurance Platform Capabilities**
+- ✅ **Complete product portfolio** spanning personal lines, commercial coverage, life insurance, and specialty products
+- ✅ **Global scalability** with multi-country operations, regulatory compliance, and currency management
+- ✅ **Risk management excellence** through comprehensive reinsurance networks and treaty structures
+- ✅ **Operational efficiency** with integrated systems supporting the complete insurance value chain
 
 ---
 
-## Access Your Production Environment
+## Next Steps
 
-### **Production URLs:**
-- **Main Application:** `https://insurance.company.com`
-- **Admin Dashboard:** `https://admin.insurance.company.com`
-- **Monitoring:** `https://monitoring.insurance.company.com:9090`
-- **Database Browser:** `https://database.insurance.company.com:7474`
+You're now ready for **Lab 17: Innovation Showcase & Future Capabilities**, where you'll:
+- Integrate AI/ML capabilities for predictive risk assessment and automated underwriting
+- Implement IoT data streams from telematics, smart homes, and wearable devices
+- Build blockchain integration for smart contracts and parametric insurance products
+- Create advanced visualization interfaces with 3D network displays and real-time streaming analytics
+- **Database Evolution:** 950 nodes → 1000+ nodes, 1200 relationships → 1300+ relationships
 
-### **Production Credentials:**
-- **Admin:** `production_admin` / `ProdAdmin@2024!`
-- **Agent:** `lead_agent_001` / `Agent@Secure123`
-- **Adjuster:** `senior_adjuster_001` / `Adjuster@Pro456`
-- **Auditor:** `compliance_audit` / `Audit@Secure789`
-
-### **Monitoring & Operations:**
-- **Prometheus Metrics:** Port 9090
-- **Health Checks:** Every 30 seconds
-- **Automated Backups:** Daily at 02:00 UTC
-- **Log Retention:** 90 days for security audits
-- **Disaster Recovery:** 15-minute RTO, 5-minute RPO
-                
+**Congratulations!** You've successfully built a comprehensive multi-line insurance platform that rivals enterprise systems used by major global insurance companies, complete with international operations, sophisticated reinsurance networks, and advanced regulatory compliance capabilities.

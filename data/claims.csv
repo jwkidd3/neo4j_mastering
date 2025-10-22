@@ -1,0 +1,19 @@
+claim_number,policy_number,claim_date,claim_type,claim_status,claim_amount,settled_amount,claim_description,adjuster_name,filed_date,settled_date
+CLM-001,POL-AUTO-001001,2021-06-15,Auto,Settled,3500.00,3200.00,Rear-end collision at intersection,Mike Anderson,2021-06-15,2021-07-22
+CLM-002,POL-HOME-001001,2021-09-10,Property,Settled,12000.00,11500.00,Hail damage to roof,Sarah Chen,2021-09-10,2021-10-05
+CLM-003,POL-AUTO-001004,2022-03-22,Auto,Settled,5200.00,4800.00,Side-swipe accident on highway,Mike Anderson,2022-03-22,2022-04-18
+CLM-004,POL-HOME-001003,2022-07-08,Property,Settled,8500.00,8500.00,Water damage from burst pipe,Jennifer Lopez,2022-07-08,2022-08-12
+CLM-005,POL-AUTO-001008,2023-01-14,Auto,Open,4300.00,0.00,Front-end collision,Mike Anderson,2023-01-14,
+CLM-006,POL-HOME-001005,2023-02-20,Property,In Review,15000.00,0.00,Wind damage during storm,Sarah Chen,2023-02-20,
+CLM-007,POL-AUTO-001012,2023-05-11,Auto,Settled,2800.00,2600.00,Parking lot damage,Mike Anderson,2023-05-11,2023-06-08
+CLM-008,POL-HOME-001007,2023-08-03,Property,Settled,22000.00,20000.00,Fire damage to kitchen,Jennifer Lopez,2023-08-03,2023-10-15
+CLM-009,POL-AUTO-001002,2023-09-25,Auto,Settled,6100.00,5800.00,Multi-vehicle accident,Mike Anderson,2023-09-25,2023-11-02
+CLM-010,POL-HOME-001009,2023-11-18,Property,Open,9500.00,0.00,Tree fell on garage,Sarah Chen,2023-11-18,
+CLM-011,POL-AUTO-001018,2024-01-30,Auto,In Review,3900.00,0.00,Hit and run damage,Mike Anderson,2024-01-30,
+CLM-012,POL-HOME-001013,2024-03-12,Property,Settled,18500.00,17800.00,Flood damage in basement,Jennifer Lopez,2024-03-12,2024-05-20
+CLM-013,POL-AUTO-001005,2024-04-22,Auto,Settled,4700.00,4500.00,Intersection collision,Mike Anderson,2024-04-22,2024-06-10
+CLM-014,POL-HOME-001015,2024-06-08,Property,Open,11200.00,0.00,HVAC system damage,Sarah Chen,2024-06-08,
+CLM-015,POL-AUTO-001010,2024-07-15,Auto,Settled,3200.00,3000.00,Fender bender,Mike Anderson,2024-07-15,2024-08-22
+CLM-016,POL-HOME-001017,2024-08-29,Property,In Review,13800.00,0.00,Lightning strike damage,Jennifer Lopez,2024-08-29,
+CLM-017,POL-AUTO-001015,2024-09-14,Auto,Open,5500.00,0.00,Highway accident,Mike Anderson,2024-09-14,
+CLM-018,POL-HOME-001019,2024-10-05,Property,Settled,7200.00,7200.00,Window damage from hail,Sarah Chen,2024-10-05,2024-10-18
