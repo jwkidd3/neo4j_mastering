@@ -88,13 +88,62 @@ RETURN a.first_name + ' ' + a.last_name AS agent,
 ORDER BY total_premium DESC;
 ```
 
-## Usage in Labs
+## Data Files and Lab Mapping
 
-These CSV files support:
-- Lab 4: Bulk Data Import
-- Lab 5: Advanced Cypher Queries
-- Lab 6: Data Quality & Validation
-- Lab 7: Graph Algorithms
+### CSV Files (for Bulk Import)
+All 6 CSV files are primarily used in **Lab 4: Bulk Data Import & Quality Control**:
+- `customers.csv` - Customer demographics and risk profiles (20 records)
+- `policies.csv` - Auto and Property insurance policies (30 records)
+- `claims.csv` - Insurance claims with settlement history (18 records)
+- `agents.csv` - Insurance agents with performance metrics (10 records)
+- `products.csv` - Insurance product offerings (8 records)
+- `branches.csv` - Branch office locations (5 records)
+
+See `BULK_LOAD_GUIDE.md` for step-by-step CSV loading instructions.
+
+### Data Reload Scripts (Cumulative Lab Data)
+Data reload scripts are **cumulative** - each script includes all previous lab data plus new additions:
+
+| Script | Lab(s) Covered | Purpose | New Data Added |
+|--------|----------------|---------|----------------|
+| `lab_01_data_reload.cypher` | Lab 1 | Enterprise Setup & Docker Connection | Foundation: Customers, Agents, Products, Policies, Basic Relationships |
+| `lab_02_data_reload.cypher` | Labs 1-2 | Cypher Query Fundamentals | + Organizational Structure, Departments, Branch Hierarchy |
+| `lab_03_data_reload.cypher` | Labs 1-3 | Claims Processing & Financial Modeling | + Assets, Claims, Vendors, Financial Transactions, Payment History |
+| `lab_04_data_reload.cypher` | Labs 1-4 | Bulk Data Import & Quality Control | + Constraints, Indexes, Bulk Customer/Policy Data, Additional Agents |
+| `lab_05_data_reload.cypher` | Labs 1-5 | Advanced Analytics Foundation | + Analytics Foundation, Risk Assessments, KPIs, Metrics |
+| `lab_06_data_reload.cypher` | Labs 1-6 | Customer Intelligence & Segmentation | + Customer Profiles, Behavioral Analytics, Segmentation Data |
+| `lab_07_data_reload.cypher`* | Lab 15 | Multi-Line Insurance Platform | + Life Insurance, Commercial Insurance, Specialty Products, Reinsurance |
+
+**Note:** `lab_07_data_reload.cypher` is named this way for historical reasons but actually contains data for Lab 15 (Multi-Line Insurance Platform). Labs 7-14 work with the data from Labs 1-6 without requiring new data reload scripts.
+
+### Labs Without Dedicated Reload Scripts
+The following labs work with existing data (Labs 1-6) and don't require new data:
+- **Lab 7:** Performance Optimization - Optimizes existing data with indexes and query tuning
+- **Lab 8:** Advanced Fraud Detection - Analyzes existing claims and transactions
+- **Lab 9:** Enterprise Compliance & Audit - Monitors existing data
+- **Lab 10:** Predictive Analytics & Machine Learning - Analyzes existing patterns
+- **Lab 11:** Python Driver & Service Architecture - Uses existing database
+- **Lab 12:** Production Insurance API - Accesses existing data via API
+- **Lab 13:** Interactive Insurance Web Application - Visualizes existing data
+- **Lab 14:** Production Deployment - Deploys existing infrastructure
+- **Lab 15:** Multi-Line Insurance Platform - Uses `lab_07_data_reload.cypher`
+
+## Quick Reference: Which Data File to Load?
+
+**Starting a specific lab from scratch?** Use this guide:
+
+- **Lab 1:** Run `lab_01_data_reload.cypher`
+- **Lab 2:** Run `lab_02_data_reload.cypher` (includes Lab 1 data)
+- **Lab 3:** Run `lab_03_data_reload.cypher` (includes Labs 1-2 data)
+- **Lab 4:** Run `lab_04_data_reload.cypher` + Load CSV files using `BULK_LOAD_GUIDE.md`
+- **Lab 5:** Run `lab_05_data_reload.cypher` (includes Labs 1-4 data)
+- **Lab 6:** Run `lab_06_data_reload.cypher` (includes Labs 1-5 data)
+- **Labs 7-14:** Run `lab_06_data_reload.cypher` (Labs 7-14 work with Labs 1-6 data)
+- **Lab 15:** Run `lab_07_data_reload.cypher` (includes Labs 1-14 data + multi-line insurance)
+
+**Pro Tip:** To jump directly to any lab, simply run that lab's reload script. It includes all prerequisite data from previous labs.
+
+---
 
 ## Data Quality
 

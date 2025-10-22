@@ -1,15 +1,18 @@
-// Neo4j Lab 16 - Data Reload Script
-// Complete data setup for Lab 16: Multi-Line Insurance Platform
-// Run this script if you need to reload the Lab 16 data state
-// Includes Labs 1-15 data + Multi-Line Insurance Infrastructure
+// Neo4j Lab 15 - Data Reload Script
+// Complete data setup for Lab 15: Multi-Line Insurance Platform
+// Run this script if you need to reload the Lab 15 data state
+// NOTE: This file is named lab_07_data_reload.cypher for historical reasons,
+// but it actually contains data for Lab 15 (Multi-Line Insurance Platform).
+// Labs 7-14 don't require new data reload scripts - they work with Labs 1-6 data.
+// Includes Labs 1-14 data + Multi-Line Insurance Infrastructure
 
 // ===================================
-// STEP 1: LOAD LAB 15 FOUNDATION
+// STEP 1: LOAD LABS 1-6 FOUNDATION
 // ===================================
-// This builds on Lab 15 - ensure you have the foundation
+// This builds on Labs 1-6 - ensure you have the foundation data loaded
 
-// Import Lab 15 data first (this is a prerequisite)
-// The lab_15_data_reload.cypher should be run first or data should exist
+// Import Labs 1-6 data first (this is a prerequisite)
+// The lab_01 through lab_06 data should be loaded, or use lab_06_data_reload.cypher
 
 // ===================================
 // STEP 2: MULTI-LINE INSURANCE ENTITIES
