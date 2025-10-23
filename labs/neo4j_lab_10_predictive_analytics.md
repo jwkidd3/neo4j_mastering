@@ -1,20 +1,29 @@
-# Neo4j Lab 10: Predictive Analytics & Machine Learning
+# Neo4j Lab 10: Predictive Analytics & Machine Learning Integration
 
 ## Overview
-**Duration:** 45 minutes  
-**Objective:** Implement machine learning models and predictive analytics for churn prediction, claims forecasting, risk scoring, and premium optimization using graph-enhanced features
+**Duration:** 45 minutes
+**Objective:** Learn how to integrate Neo4j with external machine learning systems by extracting graph-based features, storing ML predictions, and querying prediction results for business operations
 
-Building on Lab 7's compliance systems, you'll now create sophisticated predictive models that leverage graph relationships and network features to forecast customer behavior, predict claims patterns, and optimize business operations through advanced analytics.
+Building on Lab 7's compliance systems, you'll now learn the complete ML workflow: using Cypher to extract graph-enhanced features from customer networks, simulating external ML model predictions (Python/scikit-learn), storing those predictions back in Neo4j, and querying prediction results to drive business decisions.
+
+**Key Concept:** Neo4j doesn't perform ML training - it excels at extracting rich graph features for ML models and storing/querying prediction results. The actual ML computation happens in Python frameworks (scikit-learn, TensorFlow, PyTorch).
 
 ---
 
 ## Part 1: Customer Churn Prediction and Retention (15 minutes)
 
-### Step 1: Create Advanced Churn Prediction Model
-Let's build a sophisticated churn prediction system that combines behavioral, financial, and network features:
+**Workflow Overview:**
+1. Extract graph-based features using Cypher (Step 1)
+2. External ML model generates predictions (Step 2 - Python example)
+3. Store predictions in Neo4j using Cypher (Step 3)
+4. Query and analyze predictions (Step 4)
+5. Create retention plans based on predictions (Step 5)
+
+### Step 1: Extract Graph-Based Features for ML Model
+First, we extract features from the graph that will be fed into an external ML model:
 
 ```cypher
-// Create comprehensive churn prediction model for all customers
+// Extract graph-enhanced features for churn prediction ML model
 MATCH (customer:Customer)
 OPTIONAL MATCH (customer)-[:HOLDS_POLICY]->(policies:Policy)
 OPTIONAL MATCH (customer)-[:FILED_CLAIM]->(claims:Claim)
@@ -26,14 +35,11 @@ WITH customer,
      collect(claims) AS customer_claims,
      collect(payments) AS customer_payments,
      profile,
-
-     // Calculate behavioral features
      size(collect(policies)) AS policy_count,
      avg(policies.annual_premium) AS avg_premium,
      count(claims) AS claims_count
 
 WITH customer, customer_policies, customer_claims, customer_payments, profile, policy_count, avg_premium, claims_count,
-     // Payment behavior analysis - split nested aggregate
      [p IN customer_payments WHERE p.payment_method IS NOT NULL |
           CASE p.payment_method
             WHEN "Auto Pay" THEN 5
@@ -47,109 +53,140 @@ WITH customer, customer_policies, customer_claims, customer_payments, profile, p
           THEN reduce(sum = 0.0, score IN payment_scores | sum + score) / size(payment_scores)
           ELSE 2.5 END AS payment_convenience_score
 
+RETURN
+  customer.customer_number AS customer_id,
+
+  // Demographic features
+  duration.between(customer.date_of_birth, date()).years AS customer_age,
+  duration.between(customer.created_date, date()).days AS customer_tenure_days,
+  COALESCE(customer.credit_score, 650) AS credit_score,
+
+  // Policy portfolio features
+  policy_count AS total_policies,
+  COALESCE(reduce(s = 0, p IN customer_policies | s + p.annual_premium), 0) AS total_annual_premium,
+  COALESCE(avg_premium, 0) AS avg_policy_premium,
+  size(reduce(unique = [], p IN customer_policies |
+    CASE WHEN p.policy_type IN unique THEN unique ELSE unique + p.policy_type END
+  )) AS policy_diversity,
+
+  // Claims behavior features
+  claims_count AS total_claims,
+  CASE WHEN duration.between(customer.created_date, date()).days > 0
+       THEN (claims_count * 365.0) / duration.between(customer.created_date, date()).days
+       ELSE 0 END AS claims_frequency,
+  CASE WHEN claims_count > 0
+       THEN reduce(s = 0.0, c IN customer_claims | s + c.claim_amount) / size(customer_claims)
+       ELSE 0 END AS avg_claim_amount,
+
+  // Payment behavior features
+  payment_convenience_score,
+  CASE WHEN size(customer_payments) > 0
+       THEN 1.0 - (size([p IN customer_payments WHERE p.payment_status = "Late"]) * 1.0 / size(customer_payments))
+       ELSE 0.8 END AS payment_consistency,
+
+  // Graph network features (unique to Neo4j!)
+  COALESCE(profile.network_centrality, 0.1) AS network_score,
+  COALESCE(profile.referral_count, 0) AS referral_activity
+
+// Note: This query returns features that would be used as input to an ML model
+// In production, you'd export this data to train/apply your ML model
+```
+
+### Step 2: External ML Model (Python Example - Not Executed in Neo4j)
+```python
+# Example: How an external ML model would use the extracted features
+# This code runs in Python, NOT in Neo4j!
+
+from neo4j import GraphDatabase
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+import pickle
+
+# Connect and extract features
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
+
+with driver.session() as session:
+    # Run the feature extraction query from Step 1
+    result = session.run("""
+        // ... feature extraction query from Step 1 ...
+    """)
+    features_df = pd.DataFrame([dict(record) for record in result])
+
+# Prepare features for ML
+X = features_df[[
+    'customer_age', 'customer_tenure_days', 'credit_score',
+    'total_policies', 'total_annual_premium', 'policy_diversity',
+    'total_claims', 'claims_frequency', 'payment_consistency',
+    'network_score', 'referral_activity'  # Graph features!
+]]
+
+# Load pre-trained model (or train new one)
+# model = RandomForestClassifier()  # Training code omitted
+model = pickle.load(open('churn_model_v3.2.pkl', 'rb'))
+
+# Generate predictions
+predictions = model.predict_proba(X)[:, 1]  # Probability of churn
+confidence_scores = model.predict_proba(X).max(axis=1)
+
+# Prepare results for loading back into Neo4j
+results_df = pd.DataFrame({
+    'customer_id': features_df['customer_id'],
+    'churn_probability': predictions,
+    'confidence_score': confidence_scores,
+    'model_version': '3.2',
+    'prediction_date': pd.Timestamp.now().date()
+})
+
+# Results would be saved to CSV or directly loaded to Neo4j
+# results_df.to_csv('churn_predictions.csv', index=False)
+```
+
+### Step 3: Store ML Predictions in Neo4j
+Now we load the ML-generated predictions back into Neo4j for operational use:
+
+```cypher
+// Load ML-generated churn predictions into Neo4j
+// In production: LOAD CSV or Python driver to bulk insert predictions
+// For this lab, we'll simulate with sample prediction values
+
+MATCH (customer:Customer)
+WITH customer, rand() AS random_value
+
+// Simulate ML prediction results (in production, these come from your ML model)
+WITH customer,
+     // Simulate churn probability based on simplified logic for demo
+     CASE
+       WHEN customer.credit_score < 600 THEN 0.65 + (random_value * 0.25)
+       WHEN customer.credit_score < 700 THEN 0.35 + (random_value * 0.25)
+       ELSE 0.10 + (random_value * 0.20)
+     END AS churn_probability
+
+// Create prediction node with ML results
 CREATE (churn_prediction:ChurnPrediction {
   id: randomUUID(),
   prediction_id: "CHURN-" + customer.customer_number + "-" + toString(date()),
   customer_id: customer.customer_number,
   prediction_date: date(),
   model_version: "3.2",
-  
-  // Customer features
-  customer_age: duration.between(customer.date_of_birth, date()).years,
-  customer_tenure_days: duration.between(customer.created_date, date()).days,
-  credit_score: COALESCE(customer.credit_score, 650),
-  
-  // Policy features
-  total_policies: policy_count,
-  total_annual_premium: COALESCE(reduce(s = 0, p IN customer_policies | s + p.annual_premium), 0),
-  avg_policy_premium: COALESCE(avg_premium, 0),
-  policy_diversity: size(reduce(unique = [], p IN customer_policies |
-    CASE WHEN p.policy_type IN unique THEN unique ELSE unique + p.policy_type END
-  )),
-  
-  // Claims behavior
-  total_claims: claims_count,
-  claims_frequency: CASE WHEN customer.customer_tenure_days > 0
-                   THEN (claims_count * 365.0) / duration.between(customer.created_date, date()).days
-                   ELSE 0 END,
-  avg_claim_amount: CASE WHEN claims_count > 0
-                   THEN reduce(s = 0.0, c IN customer_claims | s + c.claim_amount) / size(customer_claims)
-                   ELSE 0 END,
-  
-  // Payment behavior
-  payment_convenience_score: payment_convenience_score,
-  payment_consistency: CASE WHEN size(customer_payments) > 0
-                       THEN 1.0 - (size([p IN customer_payments WHERE p.payment_status = "Late"]) * 1.0 / size(customer_payments))
-                       ELSE 0.8 END,
-  
-  // Network features
-  network_score: COALESCE(profile.network_centrality, 0.1),
-  referral_activity: COALESCE(profile.referral_count, 0),
-  
-  // Calculated churn probability using weighted scoring
-  churn_probability: null  // Will be calculated below
+
+  // ML model output (would come from Python ML system)
+  churn_probability: churn_probability,
+  confidence_score: 0.75 + (rand() * 0.15),  // Simulated confidence
+
+  // Risk classification based on probability
+  churn_risk_level: CASE
+    WHEN churn_probability >= 0.6 THEN "High Risk"
+    WHEN churn_probability >= 0.3 THEN "Medium Risk"
+    WHEN churn_probability >= 0.15 THEN "Low Risk"
+    ELSE "Very Low Risk"
+  END,
+
+  // Metadata
+  created_at: datetime(),
+  created_by: "ml_prediction_system"
 })
 
-// Calculate churn probability using multi-factor model
-SET churn_prediction.churn_probability = 
-  // Base risk from tenure (higher for very new and very old customers)
-  (CASE WHEN churn_prediction.customer_tenure_days < 90 THEN 0.3
-        WHEN churn_prediction.customer_tenure_days > 2555 THEN 0.2  // 7+ years
-        ELSE 0.1 END) +
-        
-  // Credit score impact (inverse relationship)
-  (CASE WHEN churn_prediction.credit_score < 600 THEN 0.25
-        WHEN churn_prediction.credit_score < 700 THEN 0.15
-        WHEN churn_prediction.credit_score < 800 THEN 0.05
-        ELSE 0.0 END) +
-        
-  // Claims frequency impact
-  (CASE WHEN churn_prediction.claims_frequency > 2.0 THEN 0.2
-        WHEN churn_prediction.claims_frequency > 1.0 THEN 0.1
-        ELSE 0.0 END) +
-        
-  // Payment behavior impact
-  ((1.0 - churn_prediction.payment_consistency) * 0.3) +
-  ((5.0 - churn_prediction.payment_convenience_score) * 0.05) +
-  
-  // Policy portfolio impact (diversified = lower risk)
-  (CASE WHEN churn_prediction.policy_diversity >= 3 THEN -0.1
-        WHEN churn_prediction.policy_diversity >= 2 THEN -0.05
-        ELSE 0.1 END) +
-        
-  // Premium level impact (higher premiums = higher attention)
-  (CASE WHEN churn_prediction.total_annual_premium > 5000 THEN -0.1
-        WHEN churn_prediction.total_annual_premium > 2000 THEN -0.05
-        WHEN churn_prediction.total_annual_premium < 500 THEN 0.15
-        ELSE 0.0 END) +
-        
-  // Network effects (connected customers less likely to churn)
-  ((0.5 - churn_prediction.network_score) * 0.2) +
-  
-  // Referral activity (advocates less likely to churn)
-  (CASE WHEN churn_prediction.referral_activity > 2 THEN -0.15
-        WHEN churn_prediction.referral_activity > 0 THEN -0.05
-        ELSE 0.0 END)
-
-// Ensure probability is within bounds
-SET churn_prediction.churn_probability = 
-  CASE WHEN churn_prediction.churn_probability > 1.0 THEN 1.0
-       WHEN churn_prediction.churn_probability < 0.0 THEN 0.0
-       ELSE churn_prediction.churn_probability END
-
-// Set risk categories
-SET churn_prediction.churn_risk_level = 
-  CASE WHEN churn_prediction.churn_probability >= 0.6 THEN "High Risk"
-       WHEN churn_prediction.churn_probability >= 0.3 THEN "Medium Risk"
-       WHEN churn_prediction.churn_probability >= 0.15 THEN "Low Risk"
-       ELSE "Very Low Risk" END
-
-SET churn_prediction.confidence_score = 
-  CASE WHEN churn_prediction.customer_tenure_days > 365 AND churn_prediction.total_claims > 0 THEN 0.85
-       WHEN churn_prediction.customer_tenure_days > 180 THEN 0.75
-       ELSE 0.65 END
-
-// Connect prediction to customer
+// Link prediction to customer
 CREATE (customer)-[:HAS_CHURN_PREDICTION {
   prediction_date: date(),
   model_version: "3.2",
@@ -159,9 +196,33 @@ CREATE (customer)-[:HAS_CHURN_PREDICTION {
 RETURN count(churn_prediction) AS churn_predictions_created
 ```
 
-### Step 2: Create Targeted Retention Plans
+### Step 4: Query and Analyze Stored Predictions
+Now we can query the ML predictions stored in Neo4j:
+
 ```cypher
-// Create personalized retention plans for at-risk customers
+// Analyze churn predictions across customer base
+MATCH (customer:Customer)-[:HAS_CHURN_PREDICTION]->(prediction:ChurnPrediction)
+
+RETURN
+  prediction.churn_risk_level AS risk_level,
+  count(*) AS customer_count,
+  round(avg(prediction.churn_probability) * 100, 2) AS avg_churn_probability_pct,
+  round(avg(prediction.confidence_score) * 100, 2) AS avg_confidence_pct,
+  round(min(prediction.churn_probability) * 100, 2) AS min_churn_prob_pct,
+  round(max(prediction.churn_probability) * 100, 2) AS max_churn_prob_pct
+
+ORDER BY
+  CASE risk_level
+    WHEN "High Risk" THEN 1
+    WHEN "Medium Risk" THEN 2
+    WHEN "Low Risk" THEN 3
+    ELSE 4
+  END
+```
+
+### Step 5: Create Targeted Retention Plans Based on Stored Predictions
+```cypher
+// Create personalized retention plans for at-risk customers based on ML predictions
 MATCH (customer:Customer)-[:HAS_CHURN_PREDICTION]->(prediction:ChurnPrediction)
 WHERE prediction.churn_risk_level IN ["High Risk", "Medium Risk"]
 
@@ -273,58 +334,67 @@ RETURN count(retention_plan) AS retention_plans_created
 
 ## Part 2: Claims Prediction and Severity Modeling (12 minutes)
 
-### Step 3: Create Claims Prediction Models
+**Workflow Overview:**
+1. Register ML model metadata in Neo4j (Step 6)
+2. Extract features for claims prediction (Step 7)
+3. External ML model generates predictions (Step 8 - Python example)
+4. Store claims predictions in Neo4j (Step 9)
+5. Query and analyze predictions (Step 10)
+
+### Step 6: Register Claims Prediction Model Metadata
+Before storing predictions, register the ML model metadata in Neo4j for tracking and governance:
+
 ```cypher
-// Create comprehensive claims prediction model
+// Register ML model metadata for tracking and governance
 CREATE (claims_model:ClaimsPredictionModel {
   id: randomUUID(),
   model_id: "CLAIMS-PRED-V2.8",
   model_name: "Claims Frequency and Severity Prediction",
   model_type: "Ensemble Model - Frequency + Severity",
-  
-  // Model components
+
+  // Model components (trained externally in Python)
   frequency_model: "Poisson Regression with Graph Features",
   severity_model: "Gamma GLM with Network Effects",
   ensemble_method: "Weighted Average",
-  
-  // Model performance metrics
+
+  // Model performance metrics (from validation)
   frequency_accuracy: 0.74,
   severity_mae: 1250.50,  // Mean Absolute Error
   combined_accuracy: 0.71,
   validation_r_squared: 0.68,
-  
-  // Feature importance
+
+  // Feature importance (from Python ML model)
   top_frequency_features: [
     "customer_age: 0.18",
-    "claims_history: 0.22", 
+    "claims_history: 0.22",
     "policy_type: 0.15",
     "geographic_risk: 0.12",
     "credit_score: 0.14",
     "network_effects: 0.19"
   ],
-  
+
   top_severity_features: [
     "claim_type: 0.25",
     "vehicle_age: 0.18",
-    "repair_network: 0.16", 
+    "repair_network: 0.16",
     "geographic_costs: 0.14",
     "policy_limits: 0.12",
     "vendor_relationships: 0.15"
   ],
-  
+
   // Training data
   training_period: "2020-01-01 to 2023-12-31",
   training_sample_size: 45000,
   holdout_sample_size: 12000,
-  
+
   // Model deployment
   deployment_date: date(),
   last_retrained: date() - duration({months: 2}),
   next_retraining: date() + duration({months: 4}),
-  
+
   model_status: "Production",
   monitoring_frequency: "Weekly",
-  
+
   created_at: datetime(),
   created_by: "ml_engineering_team",
   version: 1
@@ -333,9 +403,11 @@ CREATE (claims_model:ClaimsPredictionModel {
 RETURN claims_model
 ```
 
-### Step 4: Generate Individual Customer Claims Predictions
+### Step 7: Extract Features for Claims Prediction ML Model
+Extract graph-based features that will be used by the external ML model:
+
 ```cypher
-// Generate claims predictions for all customers
+// Extract features for claims frequency and severity prediction
 MATCH (customer:Customer)
 OPTIONAL MATCH (customer)-[:HOLDS_POLICY]->(policies:Policy)
 OPTIONAL MATCH (customer)-[:FILED_CLAIM]->(historical_claims:Claim)
@@ -345,8 +417,6 @@ WITH customer,
      collect(policies) AS customer_policies,
      collect(historical_claims) AS past_claims,
      location,
-
-     // Calculate customer risk factors
      count(policies) AS policy_count,
      count(historical_claims) AS historical_claims_count
 
@@ -362,6 +432,113 @@ WITH customer, customer_policies, past_claims, location, policy_count, historica
           THEN reduce(sum = 0.0, amt IN historical_claim_amounts | sum + amt) / size(historical_claim_amounts)
           ELSE 0.0 END AS avg_historical_claim
 
+RETURN
+  customer.customer_number AS customer_id,
+
+  // Demographic features
+  duration.between(customer.date_of_birth, date()).years AS customer_age,
+  duration.between(customer.created_date, date()).days AS customer_tenure,
+  COALESCE(customer.credit_score, 650) AS credit_score,
+
+  // Policy portfolio features
+  policy_count AS total_policies,
+  avg_deductible AS avg_policy_deductible,
+  [p IN customer_policies WHERE p.policy_type IS NOT NULL | p.policy_type] AS policy_types,
+  reduce(s = 0, p IN customer_policies | s + COALESCE(p.coverage_limit, 50000)) AS total_coverage_limit,
+
+  // Historical claims features
+  historical_claims_count,
+  avg_historical_claim AS avg_historical_claim_amount,
+  CASE WHEN size(past_claims) > 0
+       THEN duration.between(
+         reduce(maxDate = past_claims[0].claim_date, c IN past_claims |
+           CASE WHEN c.claim_date > maxDate THEN c.claim_date ELSE maxDate END
+         ), date()).days
+       ELSE 9999 END AS last_claim_days_ago,
+
+  // Geographic risk factors (graph feature!)
+  COALESCE(location.risk_score, 0.5) AS location_risk_score,
+  COALESCE(location.weather_risk_level, "Medium") AS weather_risk
+
+// Note: This query returns features for ML model input
+// In production, export to Python for prediction
+```
+
+### Step 8: External ML Model for Claims Prediction (Python Example)
+```python
+# Example: External ML model for claims frequency and severity prediction
+# This runs in Python, NOT in Neo4j!
+
+from neo4j import GraphDatabase
+import pandas as pd
+from sklearn.ensemble import GradientBoostingRegressor
+import pickle
+
+# Connect and extract features
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
+
+with driver.session() as session:
+    result = session.run("""
+        // ... feature extraction query from Step 7 ...
+    """)
+    features_df = pd.DataFrame([dict(record) for record in result])
+
+# Prepare features
+X = features_df[[
+    'customer_age', 'customer_tenure', 'credit_score',
+    'total_policies', 'avg_policy_deductible', 'total_coverage_limit',
+    'historical_claims_count', 'avg_historical_claim_amount',
+    'last_claim_days_ago', 'location_risk_score'
+]]
+
+# Load pre-trained models
+frequency_model = pickle.load(open('claims_frequency_model_v2.8.pkl', 'rb'))
+severity_model = pickle.load(open('claims_severity_model_v2.8.pkl', 'rb'))
+
+# Generate predictions
+predicted_frequency = frequency_model.predict(X)  # Claims per year
+predicted_severity = severity_model.predict(X)    # Average claim amount
+predicted_annual_cost = predicted_frequency * predicted_severity
+
+# Prepare results
+results_df = pd.DataFrame({
+    'customer_id': features_df['customer_id'],
+    'predicted_frequency': predicted_frequency,
+    'predicted_severity': predicted_severity,
+    'predicted_annual_claims_cost': predicted_annual_cost,
+    'frequency_confidence': 0.74,  # From model metrics
+    'severity_confidence': 0.71,
+    'model_version': '2.8',
+    'prediction_date': pd.Timestamp.now().date()
+})
+
+# Save for loading to Neo4j
+# results_df.to_csv('claims_predictions.csv', index=False)
+```
+
+### Step 9: Store ML-Generated Claims Predictions in Neo4j
+Load the predictions from the external ML model into Neo4j:
+
+```cypher
+// Load ML-generated claims predictions into Neo4j
+// In production: LOAD CSV or Python driver to bulk load predictions
+// For this lab, we'll simulate with sample prediction values
+
+MATCH (customer:Customer)
+WITH customer, rand() AS random_value
+
+// Simulate ML prediction results (in production, these come from Python ML models)
+WITH customer,
+     // Simulated frequency prediction (claims per year)
+     CASE
+       WHEN customer.credit_score < 600 THEN 0.8 + (random_value * 0.6)
+       WHEN customer.credit_score < 700 THEN 0.4 + (random_value * 0.4)
+       ELSE 0.15 + (random_value * 0.25)
+     END AS predicted_frequency,
+     // Simulated severity prediction (average claim amount)
+     1500.0 + (random_value * 2500.0) AS predicted_severity
+
+// Create prediction node with ML results
 CREATE (claims_prediction:ClaimsPrediction {
   id: randomUUID(),
   prediction_id: "CLAIMS-" + customer.customer_number + "-" + toString(date()),
@@ -369,118 +546,31 @@ CREATE (claims_prediction:ClaimsPrediction {
   prediction_date: date(),
   prediction_horizon: "12 months",
   model_version: "2.8",
-  
-  // Customer characteristics
-  customer_age: duration.between(customer.date_of_birth, date()).years,
-  customer_tenure: duration.between(customer.created_date, date()).days,
-  credit_score: COALESCE(customer.credit_score, 650),
-  
-  // Policy portfolio features
-  total_policies: policy_count,
-  avg_policy_deductible: avg_deductible,
-  policy_types: [p IN customer_policies WHERE p.policy_type IS NOT NULL | p.policy_type],
-  total_coverage_limit: reduce(s = 0, p IN customer_policies | s + COALESCE(p.coverage_limit, 50000)),
-  
-  // Historical claims features  
-  historical_claims_count: historical_claims_count,
-  avg_historical_claim_amount: avg_historical_claim,
-  last_claim_days_ago: CASE WHEN size(past_claims) > 0
-                       THEN duration.between(
-                         reduce(maxDate = past_claims[0].claim_date, c IN past_claims |
-                           CASE WHEN c.claim_date > maxDate THEN c.claim_date ELSE maxDate END
-                         ), date()).days
-                       ELSE 9999 END,
-  
-  // Geographic risk factors
-  location_risk_score: COALESCE(location.risk_score, 0.5),
-  weather_risk: COALESCE(location.weather_risk_level, "Medium"),
-  
-  // Predicted frequency (claims per year)
-  predicted_frequency: null,  // Will be calculated
-  frequency_confidence: null,
-  
-  // Predicted severity (average claim amount)
-  predicted_severity: null,   // Will be calculated  
-  severity_confidence: null,
-  
-  // Combined prediction
-  predicted_annual_claims_cost: null,  // Will be calculated
-  cost_prediction_confidence: null
+
+  // ML model outputs (would come from Python ML system)
+  predicted_frequency: predicted_frequency,
+  predicted_severity: predicted_severity,
+  predicted_annual_claims_cost: predicted_frequency * predicted_severity,
+
+  // Confidence scores (from ML model)
+  frequency_confidence: 0.74 + (rand() * 0.1),
+  severity_confidence: 0.71 + (rand() * 0.1),
+  cost_prediction_confidence: 0.725 + (rand() * 0.1),
+
+  // Risk categorization based on predicted cost
+  cost_risk_category: CASE
+    WHEN (predicted_frequency * predicted_severity) >= 4000 THEN "High Cost Risk"
+    WHEN (predicted_frequency * predicted_severity) >= 2000 THEN "Medium Cost Risk"
+    WHEN (predicted_frequency * predicted_severity) >= 1000 THEN "Low Cost Risk"
+    ELSE "Very Low Cost Risk"
+  END,
+
+  // Metadata
+  created_at: datetime(),
+  created_by: "ml_prediction_system"
 })
 
-// Calculate predicted frequency using risk factors
-SET claims_prediction.predicted_frequency = 
-  // Base frequency by age group
-  (CASE WHEN claims_prediction.customer_age < 25 THEN 0.45
-        WHEN claims_prediction.customer_age < 35 THEN 0.28
-        WHEN claims_prediction.customer_age < 50 THEN 0.22
-        WHEN claims_prediction.customer_age < 65 THEN 0.26
-        ELSE 0.35 END) *
-        
-  // Historical claims multiplier
-  (CASE WHEN claims_prediction.historical_claims_count = 0 THEN 0.7
-        WHEN claims_prediction.historical_claims_count = 1 THEN 1.0
-        WHEN claims_prediction.historical_claims_count = 2 THEN 1.4
-        ELSE 1.8 END) *
-        
-  // Credit score adjustment
-  (CASE WHEN claims_prediction.credit_score >= 750 THEN 0.85
-        WHEN claims_prediction.credit_score >= 650 THEN 1.0
-        WHEN claims_prediction.credit_score >= 550 THEN 1.2
-        ELSE 1.4 END) *
-        
-  // Location risk adjustment
-  (0.5 + claims_prediction.location_risk_score) *
-  
-  // Policy portfolio adjustment
-  (CASE WHEN claims_prediction.total_policies > 2 THEN 1.1
-        WHEN claims_prediction.total_policies = 2 THEN 1.05
-        ELSE 1.0 END)
-
-// Calculate predicted severity
-SET claims_prediction.predicted_severity = 
-  // Base severity by policy types and coverage
-  (claims_prediction.total_coverage_limit / claims_prediction.total_policies) * 0.15 +
-  
-  // Historical severity influence
-  (CASE WHEN claims_prediction.avg_historical_claim_amount > 0 
-        THEN claims_prediction.avg_historical_claim_amount * 0.7
-        ELSE 2500 END) +
-        
-  // Geographic cost adjustment
-  (CASE WHEN claims_prediction.location_risk_score > 0.7 THEN 1200
-        WHEN claims_prediction.location_risk_score > 0.4 THEN 800
-        ELSE 500 END) +
-        
-  // Deductible impact (higher deductible = higher reported claims)
-  (claims_prediction.avg_policy_deductible * 0.8)
-
-// Calculate combined annual cost prediction
-SET claims_prediction.predicted_annual_claims_cost = 
-  claims_prediction.predicted_frequency * claims_prediction.predicted_severity
-
-// Set confidence scores
-SET claims_prediction.frequency_confidence = 
-  CASE WHEN claims_prediction.customer_tenure > 730 AND claims_prediction.historical_claims_count > 0 THEN 0.82
-       WHEN claims_prediction.customer_tenure > 365 THEN 0.74
-       ELSE 0.66 END
-
-SET claims_prediction.severity_confidence = 
-  CASE WHEN claims_prediction.historical_claims_count >= 2 THEN 0.78
-       WHEN claims_prediction.historical_claims_count = 1 THEN 0.70
-       ELSE 0.62 END
-
-SET claims_prediction.cost_prediction_confidence = 
-  (claims_prediction.frequency_confidence + claims_prediction.severity_confidence) / 2
-
-// Risk categorization
-SET claims_prediction.cost_risk_category = 
-  CASE WHEN claims_prediction.predicted_annual_claims_cost >= 4000 THEN "High Cost Risk"
-       WHEN claims_prediction.predicted_annual_claims_cost >= 2000 THEN "Medium Cost Risk"
-       WHEN claims_prediction.predicted_annual_claims_cost >= 1000 THEN "Low Cost Risk"
-       ELSE "Very Low Cost Risk" END
-
-// Connect prediction to customer
+// Link prediction to customer
 CREATE (customer)-[:HAS_CLAIMS_PREDICTION {
   prediction_date: date(),
   model_version: "2.8",
@@ -490,13 +580,45 @@ CREATE (customer)-[:HAS_CLAIMS_PREDICTION {
 RETURN count(claims_prediction) AS claims_predictions_created
 ```
 
+### Step 10: Query and Analyze Stored Claims Predictions
+Query the ML predictions to analyze claims risk across the customer base:
+
+```cypher
+// Analyze claims predictions by risk category
+MATCH (customer:Customer)-[:HAS_CLAIMS_PREDICTION]->(prediction:ClaimsPrediction)
+
+RETURN
+  prediction.cost_risk_category AS risk_category,
+  count(*) AS customer_count,
+  round(avg(prediction.predicted_frequency), 2) AS avg_predicted_frequency,
+  round(avg(prediction.predicted_severity), 2) AS avg_predicted_severity,
+  round(avg(prediction.predicted_annual_claims_cost), 2) AS avg_predicted_annual_cost,
+  round(sum(prediction.predicted_annual_claims_cost), 2) AS total_predicted_claims_cost,
+  round(avg(prediction.cost_prediction_confidence) * 100, 2) AS avg_confidence_pct
+
+ORDER BY
+  CASE risk_category
+    WHEN "High Cost Risk" THEN 1
+    WHEN "Medium Cost Risk" THEN 2
+    WHEN "Low Cost Risk" THEN 3
+    ELSE 4
+  END
+```
+
 ---
 
 ## Part 3: Dynamic Risk Scoring and Assessment (10 minutes)
 
-### Step 5: Create Real-Time Risk Assessment System
+**Purpose:** Aggregate stored ML predictions into composite risk scores for operational decision-making.
+
+This section demonstrates how to **use** ML predictions stored in Neo4j (from Parts 1 and 2) to create composite risk assessments. We're not doing ML here - we're combining stored churn and claims predictions with business rules to create actionable risk profiles.
+
+### Step 11: Create Composite Risk Assessment from Stored ML Predictions
+Combine stored churn and claims predictions into overall customer risk scores:
+
 ```cypher
-// Create dynamic risk scoring system that updates based on multiple factors
+// Aggregate stored ML predictions into composite risk assessments
+// This is NOT ML - it's business logic combining ML results
 MATCH (customer:Customer)
 OPTIONAL MATCH (customer)-[:HAS_CHURN_PREDICTION]->(churn:ChurnPrediction)
 OPTIONAL MATCH (customer)-[:HAS_CLAIMS_PREDICTION]->(claims:ClaimsPrediction)
@@ -709,7 +831,11 @@ RETURN count(risk_assessment) AS risk_assessments_created
 
 ## Part 4: ML Performance Monitoring and Model Operations (8 minutes)
 
-### Step 6: Create ML Performance Dashboard
+**Purpose:** Monitor ML model performance and track business impact of predictions.
+
+This section shows how to create monitoring infrastructure for ML systems integrated with Neo4j. These queries track model performance, data quality, and business outcomes.
+
+### Step 12: Create ML Performance Dashboard
 ```cypher
 // Create comprehensive ML performance monitoring dashboard
 CREATE (ml_dashboard:MLPerformanceDashboard {
@@ -833,7 +959,7 @@ CREATE (ml_dashboard:MLPerformanceDashboard {
 RETURN ml_dashboard
 ```
 
-### Step 7: Create Model Validation and Testing Framework
+### Step 13: Create Model Validation and Testing Framework
 ```cypher
 // Create comprehensive model validation system
 CREATE (model_validation:ModelValidation {
@@ -954,7 +1080,7 @@ CREATE (model_validation:ModelValidation {
 RETURN model_validation
 ```
 
-### Step 8: Create ML Model Performance Summary
+### Step 14: Create ML Model Performance Summary
 ```cypher
 // Create comprehensive ML performance summary
 CREATE (ml_summary:MLPerformanceSummary {
@@ -1046,37 +1172,50 @@ RETURN "Predictive Analytics System Validation" AS status,
 
 **🎯 What You've Accomplished:**
 
-### **Churn Prediction and Retention**
-- ✅ **Advanced churn prediction model** with network features and graph-enhanced analytics
-- ✅ **Customer-specific churn scores** incorporating behavioral, financial, and network factors
-- ✅ **Targeted retention programs** with risk-based intervention strategies and success tracking
-- ✅ **68% prevention success rate** through machine learning-driven customer retention
+### **Understanding the Neo4j + ML Workflow**
+- ✅ **Learned the complete ML integration pattern**: Extract features → Train/predict externally → Store results → Query for decisions
+- ✅ **Mastered feature extraction** using Cypher to prepare graph-enhanced features for ML models
+- ✅ **Understood the separation of concerns**: Neo4j for data, Python/sklearn for ML, Neo4j for operational queries
+- ✅ **Simulated production ML pipelines** showing how real-world systems integrate Neo4j with ML frameworks
 
-### **Claims Prediction and Cost Forecasting**
-- ✅ **Ensemble claims prediction model** combining frequency and severity forecasting
-- ✅ **Individual customer claims forecasts** with 12-month prediction horizons
-- ✅ **Risk-based premium optimization** leveraging predictive cost models
-- ✅ **74% prediction accuracy** for claims cost and business impact assessment
+### **Churn Prediction Integration (Part 1)**
+- ✅ **Extracted graph features** including network centrality, referral activity, and customer behavior
+- ✅ **Stored ML predictions** from external churn models in Neo4j for operational use
+- ✅ **Created retention plans** based on ML-generated risk scores
+- ✅ **Queried prediction results** to analyze churn risk across customer segments
 
-### **Dynamic Risk Scoring System**
-- ✅ **Multi-factor risk assessment** with real-time updates and composite scoring
-- ✅ **Risk classification framework** from Very Low Risk to Very High Risk categories
-- ✅ **Actionable risk management** with specific recommendations for each risk level
-- ✅ **85% calibration accuracy** ensuring reliable risk assessment and pricing
+### **Claims Prediction Integration (Part 2)**
+- ✅ **Registered ML model metadata** for tracking frequency and severity prediction models
+- ✅ **Extracted features** combining historical claims, geography, and policy portfolio data
+- ✅ **Stored claims forecasts** generated by external ML models (frequency × severity)
+- ✅ **Analyzed cost predictions** by risk category for portfolio management
 
-### **ML Operations and Model Governance**
-- ✅ **Performance monitoring dashboard** tracking model accuracy and business impact
-- ✅ **Model validation framework** with quarterly reviews and business metric correlation
-- ✅ **Production ML infrastructure** supporting 145,000+ predictions with 23ms latency
-- ✅ **$3.75M annual value generation** through predictive analytics and optimization
+### **Composite Risk Scoring (Part 3)**
+- ✅ **Aggregated stored ML predictions** from churn and claims models
+- ✅ **Created composite risk assessments** combining multiple ML outputs with business rules
+- ✅ **Generated actionable recommendations** for account management and intervention
+- ✅ **Demonstrated Neo4j's role** in integrating multiple ML prediction sources
 
-### **Database State:** 600 nodes, 750 relationships with predictive modeling capabilities
+### **ML Monitoring and Governance (Part 4)**
+- ✅ **Built performance dashboards** tracking model accuracy, business impact, and data quality
+- ✅ **Created validation frameworks** ensuring ML predictions remain reliable over time
+- ✅ **Monitored prediction usage** in operational systems and business processes
+- ✅ **Tracked business value** generated by ML-driven decisions
 
-### **Enterprise ML Readiness**
-- ✅ **Real-time prediction capabilities** with automated model updates and monitoring
-- ✅ **Business-aligned metrics** demonstrating clear ROI and operational improvements
-- ✅ **Scalable ML architecture** supporting multiple models and high-volume predictions
-- ✅ **Governance and validation** ensuring model reliability and regulatory compliance
+### **Key Technical Skills Acquired**
+- ✅ **Feature engineering with Cypher** - extracting graph features for ML models
+- ✅ **Prediction storage patterns** - loading ML results efficiently into Neo4j
+- ✅ **Operational querying** - using stored predictions for real-time decisions
+- ✅ **ML metadata management** - tracking models, versions, and performance in Neo4j
+
+### **Database State:** 600 nodes, 750 relationships with ML prediction nodes
+
+### **Production ML Integration Patterns Learned**
+- ✅ **Extract** - Cypher queries export graph features for ML training/prediction
+- ✅ **Train/Predict** - Python ML frameworks (sklearn, TensorFlow) generate predictions
+- ✅ **Load** - Predictions stored in Neo4j via CSV/driver for operational use
+- ✅ **Query** - Cypher analyzes predictions for business decisions and interventions
+- ✅ **Monitor** - Track model performance and business impact over time
 
 ---
 
@@ -1089,7 +1228,7 @@ You're now ready for **Session 3 - Lab 7: Python Integration & Service Architect
 - Design scalable application architectures with dependency injection and clean patterns
 - **Database Evolution:** 600 nodes → 650 nodes, 750 relationships → 800 relationships
 
-**Congratulations!** You've successfully implemented a comprehensive predictive analytics and machine learning system that provides sophisticated customer insights, accurate claims forecasting, dynamic risk assessment, and measurable business value through advanced graph-enhanced modeling techniques.
+**Congratulations!** You've successfully learned how to integrate Neo4j with external machine learning systems! You now understand how to extract graph-enhanced features from Neo4j, how external ML models generate predictions using those features, how to store ML results back in Neo4j, and how to query predictions for operational business decisions. This complete workflow reflects real-world production ML systems where Neo4j provides rich graph features and serves as the operational data store for ML predictions.
 
 ## Troubleshooting
 
