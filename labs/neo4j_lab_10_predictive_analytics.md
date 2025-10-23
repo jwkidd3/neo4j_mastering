@@ -355,8 +355,12 @@ WITH customer, customer_policies, past_claims, location, policy_count, historica
      [c IN past_claims | c.claim_amount] AS historical_claim_amounts
 
 WITH customer, customer_policies, past_claims, location, policy_count, historical_claims_count,
-     COALESCE(avg(deductibles), 500) AS avg_deductible,
-     COALESCE(avg(historical_claim_amounts), 0) AS avg_historical_claim
+     CASE WHEN size(deductibles) > 0
+          THEN reduce(sum = 0.0, d IN deductibles | sum + d) / size(deductibles)
+          ELSE 500.0 END AS avg_deductible,
+     CASE WHEN size(historical_claim_amounts) > 0
+          THEN reduce(sum = 0.0, amt IN historical_claim_amounts | sum + amt) / size(historical_claim_amounts)
+          ELSE 0.0 END AS avg_historical_claim
 
 CREATE (claims_prediction:ClaimsPrediction {
   id: randomUUID(),
