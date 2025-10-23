@@ -384,8 +384,11 @@ CREATE (claims_prediction:ClaimsPrediction {
   // Historical claims features  
   historical_claims_count: historical_claims_count,
   avg_historical_claim_amount: avg_historical_claim,
-  last_claim_days_ago: CASE WHEN size(past_claims) > 0 
-                       THEN duration.between(max([c IN past_claims | c.claim_date]), date()).days
+  last_claim_days_ago: CASE WHEN size(past_claims) > 0
+                       THEN duration.between(
+                         reduce(maxDate = past_claims[0].claim_date, c IN past_claims |
+                           CASE WHEN c.claim_date > maxDate THEN c.claim_date ELSE maxDate END
+                         ), date()).days
                        ELSE 9999 END,
   
   // Geographic risk factors
