@@ -516,7 +516,9 @@ WITH customer, churn, claims, customer_policies, recent_claims, total_policies, 
      [p IN customer_policies | p.annual_premium] AS premiums
 
 WITH customer, churn, claims, customer_policies, recent_claims, total_policies, recent_claims_count,
-     sum(premiums) AS total_premium
+     CASE WHEN size(premiums) > 0
+          THEN reduce(sum = 0.0, p IN premiums | sum + p)
+          ELSE 0.0 END AS total_premium
 
 CREATE (risk_assessment:DynamicRiskAssessment {
   id: randomUUID(),
