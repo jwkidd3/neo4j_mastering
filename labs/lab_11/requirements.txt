@@ -1,0 +1,31 @@
+# Lab 11: Python Driver & Service Architecture
+# Python 3.8+ required
+
+# Database Driver
+neo4j==5.14.1
+
+# Data Validation & Models
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Environment Management
+python-dotenv==1.0.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# Monitoring (Optional)
+psutil==5.9.6
+
+# Development
+jupyterlab==4.0.9
+ipython==8.18.1
+
+# Type Checking (Optional)
+mypy==1.7.1
+
+# Code Quality (Optional)
+black==23.12.1
+pylint==3.0.3
