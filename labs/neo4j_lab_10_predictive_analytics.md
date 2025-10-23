@@ -44,7 +44,7 @@ WITH customer, customer_policies, customer_claims, customer_payments, profile, p
 
 WITH customer, customer_policies, customer_claims, customer_payments, profile, policy_count, avg_premium, claims_count,
      CASE WHEN size(payment_scores) > 0
-          THEN avg(payment_scores)
+          THEN reduce(sum = 0.0, score IN payment_scores | sum + score) / size(payment_scores)
           ELSE 2.5 END AS payment_convenience_score
 
 CREATE (churn_prediction:ChurnPrediction {
