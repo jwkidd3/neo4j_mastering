@@ -15,8 +15,15 @@ Let's start by measuring current query performance and identifying optimization 
 
 ```cypher
 // Check current database statistics
-CALL apoc.meta.stats() YIELD labels, relTypes, stats
-RETURN labels, relTypes, stats.nodes AS total_nodes, stats.relationships AS total_relationships
+MATCH (n)
+WITH labels(n) AS nodeLabels, count(n) AS nodeCount
+UNWIND nodeLabels AS label
+WITH label, sum(nodeCount) AS labelCount, sum(nodeCount) AS totalNodes
+WITH collect({label: label, count: labelCount}) AS labelStats, sum(totalNodes) AS total_nodes
+MATCH ()-[r]->()
+WITH labelStats, total_nodes, type(r) AS relType, count(r) AS relCount
+WITH labelStats, total_nodes, collect({type: relType, count: relCount}) AS relStats, sum(relCount) AS total_relationships
+RETURN labelStats AS labels, relStats AS relTypes, total_nodes, total_relationships
 ```
 
 ### Step 2: Analyze Current Index Status
@@ -475,10 +482,13 @@ RETURN a.first_name + " " + a.last_name AS agent_name,
 ```
 
 ```cypher
-// Check index usage statistics
-CALL apoc.meta.stats() YIELD stats
-RETURN stats.nodes AS total_nodes,
-       stats.relationships AS total_relationships,
+// Check database statistics after optimization
+MATCH (n)
+WITH count(n) AS total_nodes
+MATCH ()-[r]->()
+WITH total_nodes, count(r) AS total_relationships
+RETURN total_nodes,
+       total_relationships,
        "Performance optimization complete" AS status
 ```
 

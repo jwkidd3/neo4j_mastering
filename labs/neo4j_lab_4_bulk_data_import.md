@@ -499,8 +499,9 @@ You're now ready for **Lab 5: Advanced Analytics Foundation**, where you'll:
 
 ### If bulk import performance is slow:
 - Monitor with PROFILE to identify bottlenecks
-- Consider batch processing for larger datasets: `CALL apoc.periodic.iterate()`
+- Consider breaking large imports into smaller batches using UNWIND with LIMIT
 - Use `EXPLAIN` to verify index usage in queries
+- Process data in chunks of 1000-5000 rows for optimal performance
 
 ### If data validation finds issues:
 - Use UPDATE queries to fix data quality problems

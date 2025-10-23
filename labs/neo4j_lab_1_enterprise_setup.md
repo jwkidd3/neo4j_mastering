@@ -40,14 +40,14 @@ docker exec neo4j neo4j version
 ```
 
 ### Step 3: Confirm Enterprise Features Available
-Verify that APOC is available:
+Verify that enterprise features are enabled:
 
 ```bash
-# List installed plugins
-docker exec neo4j ls /var/lib/neo4j/plugins/
+# Check Neo4j version and edition
+docker exec neo4j cypher-shell -u neo4j -p password "CALL dbms.components() YIELD name, versions, edition RETURN name, versions[0] AS version, edition"
 
 # Should show:
-# apoc-[version].jar
+# Neo4j Kernel | 5.26.0 | enterprise
 ```
 
 **✅ Verification Complete:** You now have Neo4j Enterprise 2025.06.0 running in Docker with enterprise features enabled.
@@ -114,14 +114,14 @@ Enterprise Neo4j supports multiple databases for **multi-tenancy** in insurance 
 
 ## Part 4: Enterprise Features Exploration (10 minutes)
 
-### Step 8: Explore APOC Procedures for Insurance
-APOC (Awesome Procedures on Cypher) provides enterprise-grade functionality for insurance operations:
+### Step 8: Explore Available Database Functions
+Neo4j provides built-in functions for enterprise insurance operations:
 
 ```cypher
-// List available APOC procedures relevant to insurance
-CALL apoc.help("") YIELD name, text
-WHERE name CONTAINS "date" OR name CONTAINS "uuid" OR name CONTAINS "math"
-RETURN name, text
+// List available functions for insurance operations
+SHOW FUNCTIONS YIELD name, description
+WHERE name CONTAINS "date" OR name CONTAINS "uuid" OR name CONTAINS "random"
+RETURN name, description
 LIMIT 10
 ```
 
@@ -540,16 +540,23 @@ RETURN name, versions[0] AS version, edition
 ```
 
 ```cypher
-// Available insurance-relevant procedures
+// Available built-in database procedures
 SHOW PROCEDURES YIELD name
-WHERE name STARTS WITH "apoc" OR name STARTS WITH "gds"
-RETURN count(*) AS enterprise_procedures_available
+WHERE name STARTS WITH "db." OR name STARTS WITH "dbms."
+RETURN count(*) AS built_in_procedures_available
 ```
 
 ```cypher
 // Insurance database statistics
-CALL apoc.meta.stats() YIELD labels, relTypes, nodeCount, relCount
-RETURN labels, relTypes, nodeCount, relCount
+MATCH (n)
+WITH labels(n) AS nodeLabels, count(n) AS nodeCount
+UNWIND nodeLabels AS label
+WITH label, sum(nodeCount) AS labelCount, sum(nodeCount) AS totalNodes
+WITH collect({label: label, count: labelCount}) AS labelStats, sum(totalNodes) AS nodeCount
+MATCH ()-[r]->()
+WITH labelStats, nodeCount, type(r) AS relType, count(r) AS relCount
+WITH labelStats, nodeCount, collect({type: relType, count: relCount}) AS relStats, sum(relCount) AS totalRels
+RETURN labelStats AS labels, relStats AS relTypes, nodeCount, totalRels AS relCount
 ```
 
 ### Step 18: Insurance Query Performance Baseline
@@ -582,7 +589,7 @@ RETURN c, r1, p, r2, prod, a, r3
 - ✅ **Docker Neo4j Enterprise 2025.06.0** running with full enterprise features for insurance operations
 - ✅ **Professional client-server architecture** using Neo4j Desktop remote connections for insurance environments
 - ✅ **Multi-database environment** with dedicated insurance database for regulatory compliance
-- ✅ **Enterprise features verification** with APOC for insurance analytics
+- ✅ **Enterprise features verification** with native procedures for insurance analytics
 
 ### **Insurance Domain Modeling**
 - ✅ **Customer lifecycle management** with comprehensive policyholder data and risk assessments

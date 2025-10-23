@@ -63,7 +63,9 @@ CREATE (churn_prediction:ChurnPrediction {
   total_policies: policy_count,
   total_annual_premium: COALESCE(reduce(s = 0, p IN customer_policies | s + p.annual_premium), 0),
   avg_policy_premium: COALESCE(avg_premium, 0),
-  policy_diversity: size(apoc.coll.toSet([p IN customer_policies | p.policy_type])),
+  policy_diversity: size(reduce(unique = [], p IN customer_policies |
+    CASE WHEN p.policy_type IN unique THEN unique ELSE unique + p.policy_type END
+  )),
   
   // Claims behavior
   total_claims: claims_count,

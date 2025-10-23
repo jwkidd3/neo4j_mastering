@@ -596,9 +596,14 @@ class ProductionMonitoringSystem:
             with driver.session() as session:
                 # Database statistics
                 stats_query = """
-                CALL apoc.monitor.kernel()
-                YIELD kernelStartTime, kernelVersion, storeId
-                RETURN kernelStartTime, kernelVersion, storeId
+                CALL dbms.components()
+                YIELD name, versions, edition
+                WITH name, versions[0] AS version, edition
+                CALL dbms.listConfig()
+                YIELD name AS configName, value
+                WHERE configName = 'dbms.db.timezone'
+                RETURN version AS kernelVersion, edition, value AS timezone
+                LIMIT 1
                 """
                 
                 # Query performance
@@ -1086,14 +1091,9 @@ class DockerDeploymentManager:
                 'NEO4J_AUTH': 'neo4j/prod_ultra_secure_password_456',
                 'NEO4J_ACCEPT_LICENSE_AGREEMENT': 'yes',
                 'NEO4J_EDITION': 'enterprise',
-                'NEO4J_apoc_export_file_enabled': 'true',
-                'NEO4J_apoc_import_file_enabled': 'true',
-                'NEO4J_apoc_import_file_use__neo4j__config': 'true',
-                'NEO4J_PLUGINS': '["apoc", "graph-data-science"]',
                 'NEO4J_dbms_memory_heap_initial__size': '1G',
                 'NEO4J_dbms_memory_heap_max__size': '2G',
-                'NEO4J_dbms_memory_pagecache_size': '1G',
-                'NEO4J_dbms_security_procedures_unrestricted': 'apoc.*,gds.*'
+                'NEO4J_dbms_memory_pagecache_size': '1G'
             },
             'ports': {'7474/tcp': 7474, '7687/tcp': 7687},
             'volumes': {

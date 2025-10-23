@@ -479,7 +479,10 @@ class APIConnectionManager:
                 
                 # Database statistics
                 stats_result = session.run("""
-                    CALL apoc.meta.stats() YIELD nodeCount, relCount, labelCount, relTypeCount
+                    MATCH (n)
+                    WITH count(n) AS nodeCount, count(DISTINCT labels(n)) AS labelCount
+                    MATCH ()-[r]->()
+                    WITH nodeCount, labelCount, count(r) AS relCount, count(DISTINCT type(r)) AS relTypeCount
                     RETURN nodeCount, relCount, labelCount, relTypeCount
                 """)
                 stats = stats_result.single()
@@ -2321,7 +2324,10 @@ print("="*50)
 # Final database state summary
 try:
     final_stats_query = """
-    CALL apoc.meta.stats() YIELD nodeCount, relCount, labelCount, relTypeCount
+    MATCH (n)
+    WITH count(n) AS nodeCount, count(DISTINCT labels(n)) AS labelCount
+    MATCH ()-[r]->()
+    WITH nodeCount, labelCount, count(r) AS relCount, count(DISTINCT type(r)) AS relTypeCount
     RETURN nodeCount, relCount, labelCount, relTypeCount
     """
     
