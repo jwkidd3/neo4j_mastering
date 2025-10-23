@@ -13,3 +13,8 @@ SET claim.fraud_score = <calculated score>,
       ELSE "LOW"
     END
 
+CSV Extraction using Python
+# Python example
+result = session.run("MATCH (n:Customer) RETURN n.name, n.email")
+df = result.to_df()
+df.to_csv("output.csv")
