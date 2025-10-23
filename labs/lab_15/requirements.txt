@@ -1,0 +1,23 @@
+# Lab 15: Multi-Line Insurance Platform
+# Python 3.8+ required
+
+# Database
+neo4j==5.14.1
+
+# Data Analysis
+pandas==2.1.4
+numpy==1.26.2
+
+# Environment Management
+python-dotenv==1.0.0
+
+# Development
+jupyterlab==4.0.9
+ipython==8.18.1
+
+# Testing
+pytest==7.4.3
+
+# Optional: Data Visualization
+matplotlib==3.8.2
+seaborn==0.13.0
