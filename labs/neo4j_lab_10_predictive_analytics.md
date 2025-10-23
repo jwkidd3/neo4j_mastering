@@ -378,7 +378,7 @@ CREATE (claims_prediction:ClaimsPrediction {
   // Policy portfolio features
   total_policies: policy_count,
   avg_policy_deductible: avg_deductible,
-  policy_types: [p IN customer_policies | p.policy_type],
+  policy_types: [p IN customer_policies WHERE p.policy_type IS NOT NULL | p.policy_type],
   total_coverage_limit: reduce(s = 0, p IN customer_policies | s + COALESCE(p.coverage_limit, 50000)),
   
   // Historical claims features  
